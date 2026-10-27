@@ -3,6 +3,7 @@ import { Catalogue, Scenario } from './DesignSystem.js';
 import ProjectBrief from './ProjectBrief.js';
 import { ParapenteApp } from './ParapenteApp.js';
 import TokenPreview from './TokenPreview.js';
+import Review from './Review.js';
 import { useTokenDraft } from './useTokenDraft.js';
 import {
   bootstrap,
@@ -120,6 +121,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [reviewing, setReviewing] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const cancelButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -310,13 +312,7 @@ export default function App() {
         </div>
       </header>
       <div className="intro">
-        <div>
-          <span className="eyebrow">STARTER PÉDAGOGIQUE / M2 UX/UI</span>
-          <h1>Une source. Toutes les vues.</h1>
-          <p>
-            Explorez, proposez, validez. Construisez ensuite votre propre outil.
-          </p>
-        </div>
+        <h1 className="pp-sr">DS-Studio · atelier du Design System</h1>
         <div className="intro-actions">
           <button onClick={() => void perform(exportTokens)}>
             Exporter les tokens
@@ -376,30 +372,48 @@ export default function App() {
                   <time>{new Date(event.date).toLocaleString('fr-FR')}</time>
                   <p>{event.patches.map((p) => p.key).join(', ')}</p>
                 </div>
-                <button
-                  onClick={() =>
-                    void perform(async () =>
-                      setProposal(
-                        await request('undo', {
-                          revision: state.revision,
-                          id: event.id,
-                        }),
-                      ),
-                    )
-                  }
-                >
-                  Annuler la révision {event.revision}
-                </button>
+                <div className="history-actions">
+                  <button
+                    aria-expanded={reviewing === event.id}
+                    onClick={() =>
+                      setReviewing(reviewing === event.id ? null : event.id)
+                    }
+                  >
+                    Revoir la révision {event.revision}
+                  </button>
+                  <button
+                    onClick={() =>
+                      void perform(async () =>
+                        setProposal(
+                          await request('undo', {
+                            revision: state.revision,
+                            id: event.id,
+                          }),
+                        ),
+                      )
+                    }
+                  >
+                    Annuler la révision {event.revision}
+                  </button>
+                </div>
+                {reviewing === event.id && (
+                  <div className="history-review">
+                    <p>
+                      Avant et après cette révision ; les autres tokens prennent
+                      leur valeur actuelle.
+                    </p>
+                    <Review
+                      tokens={state.tokens}
+                      patches={event.patches}
+                      labels={['Avant', 'Après']}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ol>
         </section>
       )}
-      <nav className="panel-nav" aria-label="Panneaux de l’atelier">
-        <a href="#agent-title">1 · Contexte et assistant</a>
-        <a href="#ds-title">2 · Tokens et composants</a>
-        <a href="#mobile-title">3 · Aperçu responsive</a>
-      </nav>
       <main className="studio-grid">
         <section className="panel agent-panel" aria-labelledby="agent-title">
           <div className="panel-heading">
@@ -852,6 +866,13 @@ export default function App() {
             </tbody>
           </table>
         </div>
+        {proposal && (
+          <Review
+            key={proposal.id}
+            tokens={state.tokens}
+            patches={proposal.patches}
+          />
+        )}
         {error && (
           <p role="alert" className="error">
             {error}
