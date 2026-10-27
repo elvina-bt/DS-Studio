@@ -153,7 +153,36 @@ test('requêtes malformées et trop grandes refusées', async (t) => {
     400,
   );
   assert.equal((await post('proposals', {})).status, 400);
-  assert.equal((await post('agent', { data: 'x'.repeat(129000) })).status, 413);
+  assert.equal(
+    (await post('proposals', { data: 'x'.repeat(129000) })).status,
+    413,
+  );
+  // Le chat accepte des captures, mais reste borné.
+  assert.equal(
+    (await post('agent', { data: 'x'.repeat(8_600_000) })).status,
+    413,
+  );
+  const png =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+  const ask = { agent: 'claude', revision: 0, message: 'Vu ?', history: [] };
+  assert.equal(
+    (
+      await post('agent', {
+        ...ask,
+        images: Array(4).fill({ mediaType: 'image/png', data: png }),
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await post('agent', {
+        ...ask,
+        images: [{ mediaType: 'image/jpeg', data: png }],
+      })
+    ).status,
+    400,
+  );
   const boot = await (await fetch(origin + '/api/bootstrap')).json();
   assert.equal(
     (

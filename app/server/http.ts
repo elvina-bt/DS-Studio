@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import { proposeSchema } from '../shared/model.js';
+import { imageSchema, maxImages, proposeSchema } from '../shared/model.js';
 import { Store, StudioError } from './store.js';
 import { ProjectStore } from './project.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
@@ -134,9 +134,11 @@ export async function createStudioServer(options: {
           throw new StudioError('JSON requis.', 415);
         const chunks: Buffer[] = [];
         let size = 0;
+        // Seul le chat accepte des captures ; les autres routes restent à 128 Ko.
+        const limit = url.pathname === '/api/agent' ? 8_500_000 : 128_000;
         for await (const chunk of req) {
           size += chunk.length;
-          if (size > 128_000)
+          if (size > limit)
             throw new StudioError('Requête trop volumineuse.', 413);
           chunks.push(chunk);
         }
@@ -198,6 +200,7 @@ export async function createStudioServer(options: {
                     .strict(),
                 )
                 .max(10),
+              images: z.array(imageSchema).max(maxImages).default([]),
             })
             .strict()
             .parse(body);
@@ -224,6 +227,7 @@ export async function createStudioServer(options: {
                   JSON.stringify((await project.read()).project),
                 rules: await context('DESIGN_RULES.md'),
                 history: b.history,
+                images: b.images,
               },
               controller.signal,
             );

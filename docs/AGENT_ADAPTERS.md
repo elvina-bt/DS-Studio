@@ -61,6 +61,14 @@ refusée ; essai réel non connecté (« Not logged in » normalisé), puis conn
 réponse simple et proposition `color.border` renvoyée en diff sans changer la
 révision. Non testé : Windows, Linux, épuisement du quota.
 
+Captures : jusqu’à 3 images PNG, JPEG, GIF ou WebP de 2 Mo maximum, jointes ou
+collées dans le chat. Le serveur vérifie la signature binaire du type annoncé et
+limite le corps de `/api/agent` à 8,5 Mo (128 Ko pour les autres routes). Elles
+partent en blocs `image` d’un message `stream-json` (`--input-format stream-json`),
+jamais recopiées dans le contexte texte, et ne sont ni stockées ni gardées dans
+l’historique. Codex les refuse explicitement. Testé réellement sous macOS : image
+décrite correctement, aucun token modifié.
+
 ## Gemini CLI — NOT IMPLEMENTED
 
 Point d’extension : `unvalidatedAdapter('gemini')`. La [référence headless officielle](https://geminicli.com/docs/cli/headless/)

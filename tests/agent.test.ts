@@ -11,6 +11,9 @@ import {
   claudeArgs,
   parseClaudeStream,
 } from '../connectors/agents/claude.js';
+import { CodexAdapter as Codex } from '../connectors/agents/codex.js';
+import { claudeInput } from '../connectors/agents/claude.js';
+import { imageSchema } from '../app/shared/model.js';
 import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -225,4 +228,59 @@ test('sortie UTF-8 scindée entre buffers conservée', async () => {
     '',
   );
   assert.equal(result, 'é');
+});
+
+const png =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+test('captures : type vérifié par signature, base64 strict', () => {
+  assert(imageSchema.safeParse({ mediaType: 'image/png', data: png }).success);
+  assert(
+    !imageSchema.safeParse({ mediaType: 'image/jpeg', data: png }).success,
+  );
+  assert(
+    !imageSchema.safeParse({
+      mediaType: 'image/png',
+      data: btoa('<svg></svg>'),
+    }).success,
+  );
+  assert(
+    !imageSchema.safeParse({ mediaType: 'image/png', data: 'pas du base64!' })
+      .success,
+  );
+  assert(
+    !imageSchema.safeParse({ mediaType: 'image/svg+xml', data: png }).success,
+  );
+});
+test('captures : blocs image pour Claude, jamais recopiées dans le contexte texte', () => {
+  const line = JSON.parse(
+    claudeInput('Analyse', {
+      tokens: {} as never,
+      brief: 'PFE',
+      rules: '',
+      history: [],
+      images: [{ mediaType: 'image/png', data: png }],
+    }),
+  );
+  const [image, text] = line.message.content;
+  assert.equal(line.type, 'user');
+  assert.deepEqual(image, {
+    type: 'image',
+    source: { type: 'base64', media_type: 'image/png', data: png },
+  });
+  assert.equal(text.type, 'text');
+  assert(!text.text.includes(png));
+  assert(text.text.includes('captures jointes'));
+});
+test('captures : Codex les refuse explicitement sans lancer le CLI', async () => {
+  await assert.rejects(
+    () =>
+      new Codex('ds-studio-definitely-missing-cli').reply('x', {
+        tokens: {} as never,
+        brief: '',
+        rules: '',
+        history: [],
+        images: [{ mediaType: 'image/png', data: png }],
+      }),
+    /captures non prises en charge/,
+  );
 });

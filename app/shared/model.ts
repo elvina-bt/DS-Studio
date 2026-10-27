@@ -113,6 +113,32 @@ export const agentReplySchema = z
   })
   .strict();
 export type AgentReply = z.infer<typeof agentReplySchema>;
+// Captures jointes au chat : types d'image courants, signature vérifiée, 2 Mo maximum.
+export const maxImages = 3;
+export const maxImageBytes = 2_000_000;
+const signatures: Record<string, (b: string) => boolean> = {
+  'image/png': (b) => b.startsWith('\x89PNG\r\n\x1a\n'),
+  'image/jpeg': (b) => b.startsWith('\xff\xd8\xff'),
+  'image/gif': (b) => b.startsWith('GIF87a') || b.startsWith('GIF89a'),
+  'image/webp': (b) => b.startsWith('RIFF') && b.slice(8, 12) === 'WEBP',
+};
+export const imageSchema = z
+  .object({
+    mediaType: z.enum(['image/png', 'image/jpeg', 'image/gif', 'image/webp']),
+    data: z
+      .string()
+      .max(Math.ceil(maxImageBytes / 3) * 4)
+      .regex(/^[A-Za-z0-9+/]+={0,2}$/, 'Image base64 attendue.'),
+  })
+  .strict()
+  .refine((image) => {
+    try {
+      return signatures[image.mediaType](atob(image.data.slice(0, 24)));
+    } catch {
+      return false;
+    }
+  }, 'Le contenu ne correspond pas au type d’image annoncé.');
+export type AgentImage = z.infer<typeof imageSchema>;
 export function applyChanges(
   tokens: Tokens,
   changes: { key: TokenKey; value: TokenValue }[],

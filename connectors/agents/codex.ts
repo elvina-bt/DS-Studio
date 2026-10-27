@@ -156,6 +156,10 @@ export class CodexAdapter implements AgentAdapter {
     }
   }
   async reply(message: string, context: AgentContext, signal?: AbortSignal) {
+    if (context.images?.length)
+      throw new Error(
+        'Codex : captures non prises en charge dans ce profil. Retirez les images ou choisissez Claude Code.',
+      );
     const status = await this.status();
     if (!status.available) throw new Error(status.detail);
     const cwd = await mkdtemp(path.join(tmpdir(), 'ds-studio-agent-'));

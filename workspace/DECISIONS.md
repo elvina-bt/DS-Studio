@@ -36,6 +36,9 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   inchangée sans validation.
 - **Limite** : consomme mon quota Claude ; Windows et Linux non testés ; le chat ne
   modifie que des tokens, pas le code ni Figma.
+- **Ajout** : captures d’écran dans le chat Claude (3 max, 2 Mo, type vérifié),
+  pour montrer un écran Figma ou un rendu. Envoyées au fournisseur, jamais stockées.
+  38 tests ; essai réel réussi.
 
 ## À compléter par l’étudiant
 

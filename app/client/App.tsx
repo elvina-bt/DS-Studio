@@ -12,7 +12,11 @@ import {
 } from './api.js';
 import {
   contrast,
+  imageSchema,
+  maxImageBytes,
+  maxImages,
   tokenKeys,
+  type AgentImage,
   type Proposal,
   type State,
   type TokenKey,
@@ -104,6 +108,7 @@ export default function App() {
   const [chat, setChat] = useState<
     { role: 'user' | 'assistant'; text: string }[]
   >([]);
+  const [images, setImages] = useState<AgentImage[]>([]);
   const [thinking, setThinking] = useState(false);
   const [saving, setSaving] = useState(false);
   const controller = useRef<AbortController | null>(null);
@@ -172,14 +177,51 @@ export default function App() {
     });
     setSaving(false);
   }
+  async function attach(files: File[]) {
+    clearError();
+    const added: AgentImage[] = [];
+    for (const file of files) {
+      if (images.length + added.length >= maxImages) {
+        setError(`${maxImages} captures maximum par message.`);
+        break;
+      }
+      if (file.size > maxImageBytes) {
+        setError(`${file.name} dépasse 2 Mo. Recadrez la capture.`);
+        continue;
+      }
+      const url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const parsed = imageSchema.safeParse({
+        mediaType: file.type,
+        data: url.slice(url.indexOf(',') + 1),
+      });
+      if (parsed.success) added.push(parsed.data);
+      else setError(`${file.name} : PNG, JPEG, GIF ou WebP attendu.`);
+    }
+    setImages((current) => [...current, ...added].slice(0, maxImages));
+  }
   async function sendMessage() {
     if (!state || !message.trim() || thinking) return;
     const text = message;
+    const sent = agent === 'claude' ? images : [];
     setMessage('');
+    setImages([]);
     setThinking(true);
     clearError();
     const previous = chat.slice(-10);
-    setChat([...chat, { role: 'user', text }]);
+    setChat([
+      ...chat,
+      {
+        role: 'user',
+        text: sent.length
+          ? `${text}\n(${sent.length} capture(s) jointe(s))`
+          : text,
+      },
+    ]);
     const abort = new AbortController();
     controller.current = abort;
     try {
@@ -188,7 +230,13 @@ export default function App() {
         proposal: Proposal | null;
       }>(
         'agent',
-        { agent, message: text, revision: state.revision, history: previous },
+        {
+          agent,
+          message: text,
+          revision: state.revision,
+          history: previous,
+          images: sent,
+        },
         abort.signal,
       );
       setChat((c) => [...c, { role: 'assistant', text: result.message }]);
@@ -395,8 +443,9 @@ export default function App() {
                 </p>
                 <p className="privacy-note">
                   Envoi à {agentName} : tokens, workspace/PFE.md, brief privé,
-                  DESIGN_RULES.md et 10 messages récents. Aucun outil ni
-                  commande ; propositions seulement.
+                  DESIGN_RULES.md et 10 messages récents
+                  {agent === 'claude' ? ', plus les captures jointes' : ''}.
+                  Aucun outil ni commande ; propositions seulement.
                 </p>
                 <div
                   className="chat-log"
@@ -421,11 +470,59 @@ export default function App() {
                     <textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
+                      onPaste={(e) => {
+                        if (agent !== 'claude') return;
+                        const files = [...e.clipboardData.files].filter((f) =>
+                          f.type.startsWith('image/'),
+                        );
+                        if (files.length) {
+                          e.preventDefault();
+                          void attach(files);
+                        }
+                      }}
                       maxLength={8000}
                       placeholder="Propose une couleur de marque plus chaleureuse."
                       disabled={thinking}
                     />
                   </label>
+                  {agent === 'claude' && (
+                    <div className="chat-attachments">
+                      <label className="field">
+                        Joindre une capture (ou collez-la avec Cmd+V)
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/gif,image/webp"
+                          multiple
+                          disabled={thinking || images.length >= maxImages}
+                          onChange={(e) => {
+                            void attach([...(e.target.files ?? [])]);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                      {images.length > 0 && (
+                        <ul aria-label="Captures jointes">
+                          {images.map((image, i) => (
+                            <li key={i}>
+                              <img
+                                src={`data:${image.mediaType};base64,${image.data}`}
+                                alt={`Capture ${i + 1}`}
+                              />
+                              <button
+                                type="button"
+                                aria-label={`Retirer la capture ${i + 1}`}
+                                onClick={() =>
+                                  setImages(images.filter((_, j) => j !== i))
+                                }
+                              >
+                                Retirer
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                   <button
                     className="studio-primary"
                     disabled={
