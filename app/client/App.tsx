@@ -112,10 +112,8 @@ export default function App() {
   const [device, setDevice] = useState(1);
   const [scenario, setScenario] = useState('cards');
   const [previewApp, setPreviewApp] = useState('parapente');
-  const [leftTab, setLeftTab] = useState<'variables' | 'assistant'>(
-    'variables',
-  );
-  const [agent, setAgent] = useState('manual');
+  const [dsTab, setDsTab] = useState<'composants' | 'apercu'>('composants');
+  const [agent, setAgent] = useState('claude');
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<
     { role: 'user' | 'assistant'; text: string }[]
@@ -419,43 +417,19 @@ export default function App() {
         </section>
       )}
       <main className="studio-grid">
-        <section className="panel agent-panel" aria-labelledby="agent-title">
+        <section
+          className="panel variables-panel"
+          aria-labelledby="variables-title"
+        >
           <div className="panel-heading">
-            <span className="panel-index">A</span>
             <div>
-              <h2 id="agent-title" tabIndex={-1}>
-                Variables et assistant
+              <h2 id="variables-title" tabIndex={-1}>
+                Variables
               </h2>
-              <p>Parcourir le DS, puis demander de l’aide</p>
+              <p>Collections et tokens, comme dans Figma</p>
             </div>
           </div>
-          <div className="left-tabs" role="tablist" aria-label="Panneau gauche">
-            {(
-              [
-                ['variables', 'Variables'],
-                ['assistant', 'Assistant'],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                id={`left-tab-${id}`}
-                aria-controls={`left-panel-${id}`}
-                aria-selected={leftTab === id}
-                onClick={() => setLeftTab(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div
-            className="panel-body"
-            role="tabpanel"
-            id="left-panel-variables"
-            aria-labelledby="left-tab-variables"
-            hidden={leftTab !== 'variables'}
-          >
+          <div className="panel-body">
             <VariablesPanel
               tokens={state.tokens}
               selected={key}
@@ -466,13 +440,275 @@ export default function App() {
               disabled={!boot}
             />
           </div>
+        </section>
+        <section className="panel ds-panel" aria-labelledby="ds-title">
+          <div className="panel-heading">
+            <div>
+              <h2 id="ds-title" tabIndex={-1}>
+                Design System
+              </h2>
+              <p>Composants et aperçu responsive</p>
+            </div>
+            <span className="revision-tag">r{state.revision}</span>
+          </div>
           <div
-            className="panel-body"
-            role="tabpanel"
-            id="left-panel-assistant"
-            aria-labelledby="left-tab-assistant"
-            hidden={leftTab !== 'assistant'}
+            className="panel-tabs"
+            role="tablist"
+            aria-label="Vue du Design System"
           >
+            {(
+              [
+                ['composants', 'Composants'],
+                ['apercu', 'Aperçu'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                id={`ds-tab-${id}`}
+                aria-controls={`ds-panel-${id}`}
+                aria-selected={dsTab === id}
+                onClick={() => setDsTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div
+            role="tabpanel"
+            id="ds-panel-composants"
+            aria-labelledby="ds-tab-composants"
+            hidden={dsTab !== 'composants'}
+          >
+            <div className="token-editor">
+              <div className="editor-title">
+                <h3>Tokens sémantiques</h3>
+                <span>{tokenKeys.length} tokens</span>
+              </div>
+              <label className="field token-search">
+                Rechercher un token
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="color, space, font…"
+                />
+              </label>
+              <p className="token-hint" role="status">
+                {matchingKeys.length} résultat(s).{' '}
+                {search && 'La sélection courante reste accessible.'}
+              </p>
+              <div className="swatches">
+                {matchingKeys
+                  .filter((k) => k.startsWith('color.'))
+                  .map((k) => (
+                    <button
+                      title={k}
+                      aria-label={`Sélectionner ${k}`}
+                      aria-pressed={key === k}
+                      key={k}
+                      style={{ background: String(state.tokens[k].$value) }}
+                      onClick={() => setKey(k)}
+                    >
+                      <span className="sr-only">{k}</span>
+                    </button>
+                  ))}
+              </div>
+              <form
+                className="token-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void proposeToken();
+                }}
+              >
+                <label className="field">
+                  Token
+                  <select
+                    value={key}
+                    onChange={(e) => setKey(e.target.value as TokenKey)}
+                  >
+                    {[...new Set([key, ...matchingKeys])].map((k) => (
+                      <option key={k}>{k}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  Valeur
+                  {state.tokens[key].$type === 'fontFamily' ? (
+                    <select
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                    >
+                      {['system-ui', 'Arial', 'Georgia', 'Verdana'].map((f) => (
+                        <option key={f}>{f}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      aria-label="Valeur du token"
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      required
+                      type={
+                        state.tokens[key].$type === 'dimension'
+                          ? 'number'
+                          : 'text'
+                      }
+                      min={
+                        state.tokens[key].$type === 'dimension' ? 0 : undefined
+                      }
+                      max={
+                        state.tokens[key].$type === 'dimension'
+                          ? 128
+                          : undefined
+                      }
+                      step={
+                        state.tokens[key].$type === 'dimension'
+                          ? 'any'
+                          : undefined
+                      }
+                      maxLength={20}
+                    />
+                  )}
+                </label>
+                <button
+                  className="studio-primary"
+                  disabled={!boot || draft === String(current)}
+                >
+                  Proposer
+                </button>
+              </form>
+              {state.tokens[key].$type === 'color' && (
+                <label className="color-picker">
+                  Choisir visuellement
+                  <input
+                    aria-label="Sélecteur de couleur"
+                    type="color"
+                    value={
+                      /^#[0-9a-fA-F]{6}$/.test(draft) ? draft : String(current)
+                    }
+                    onChange={(e) => setDraft(e.target.value)}
+                  />
+                </label>
+              )}
+              {draft !== String(current) && (
+                <p className="draft-status" role="status">
+                  {recovered
+                    ? 'Brouillon récupéré dans cet onglet.'
+                    : 'Brouillon non enregistré.'}{' '}
+                  Rien n’est appliqué.
+                  <button type="button" onClick={discard}>
+                    Abandonner le brouillon
+                  </button>
+                </p>
+              )}
+              <p className="token-hint">
+                {state.tokens[key].$type === 'color'
+                  ? '#RRGGBB · '
+                  : state.tokens[key].$type === 'dimension'
+                    ? 'Pixels, de 0 à 128 · '
+                    : ''}
+                Rien n’est écrit avant validation.
+              </p>
+              <p className="contrast" aria-live="polite">
+                Marque / texte sur marque :{' '}
+                <strong>
+                  {contrast(
+                    state.tokens['color.brand'].$value,
+                    state.tokens['color.onBrand'].$value,
+                  ).toFixed(2)}
+                  :1
+                </strong>{' '}
+                ·{' '}
+                {contrast(
+                  state.tokens['color.brand'].$value,
+                  state.tokens['color.onBrand'].$value,
+                ) >= 4.5
+                  ? 'AA texte courant'
+                  : 'Contraste à améliorer'}
+              </p>
+              {draftContrast !== undefined && draft !== String(current) && (
+                <p className="contrast" role="status">
+                  Contraste proposé :{' '}
+                  <strong>{draftContrast.toFixed(2)}:1</strong> ·{' '}
+                  {draftContrast >= 4.5
+                    ? 'AA texte courant'
+                    : 'Contraste à améliorer'}
+                  . Cette indication ne certifie pas tous les états du
+                  composant.
+                </p>
+              )}
+            </div>
+            <Catalogue tokens={state.tokens} />
+          </div>
+          <div
+            role="tabpanel"
+            id="ds-panel-apercu"
+            aria-labelledby="ds-tab-apercu"
+            hidden={dsTab !== 'apercu'}
+          >
+            <div className="preview-controls">
+              <label className="field">
+                Viewport
+                <select
+                  value={device}
+                  onChange={(e) => setDevice(Number(e.target.value))}
+                >
+                  {devices.map((d, i) => (
+                    <option key={d.width} value={i}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                Application
+                <select
+                  value={previewApp}
+                  onChange={(e) => setPreviewApp(e.target.value)}
+                >
+                  <option value="parapente">Mon app parapente</option>
+                  <option value="lisiere">Lisière · exemple du starter</option>
+                </select>
+              </label>
+              {previewApp === 'lisiere' && (
+                <label className="field">
+                  Scénario
+                  <select
+                    value={scenario}
+                    onChange={(e) => setScenario(e.target.value)}
+                  >
+                    <option value="cards">Découvrir</option>
+                    <option value="form">Inscription</option>
+                  </select>
+                </label>
+              )}
+            </div>
+            <div className="viewport-scroll">
+              <iframe
+                title="Aperçu responsive"
+                src={`/?preview=1&app=${previewApp}&scenario=${scenario}`}
+                width={devices[device].width}
+                height={760}
+              />
+            </div>
+            <div className="panel-foot">
+              {devices[device].width} px CSS · aucun zoom appliqué · défilez si
+              nécessaire
+            </div>
+          </div>
+        </section>
+        <section className="panel agent-panel" aria-labelledby="agent-title">
+          <div className="panel-heading">
+            <div>
+              <h2 id="agent-title" tabIndex={-1}>
+                Assistant
+              </h2>
+              <p>Un assistant, pas un pilote automatique</p>
+            </div>
+          </div>
+          <div className="panel-body">
             <ProjectBrief />
             <label className="field">
               Mode de travail
@@ -490,9 +726,8 @@ export default function App() {
                 <div className="line-icon">✳</div>
                 <h3>Le Design System vous appartient.</h3>
                 <p>
-                  Aucun compte nécessaire. Sélectionnez un token dans le panneau
-                  central, modifiez sa valeur et examinez le diff avant de
-                  l’appliquer.
+                  Aucun compte nécessaire. Sélectionnez une variable à gauche,
+                  modifiez sa valeur et examinez le diff avant de l’appliquer.
                 </p>
                 <ol>
                   <li>Choisissez une couleur.</li>
@@ -615,235 +850,6 @@ export default function App() {
           </div>
           <div className="panel-foot">
             Périmètre : contexte PFE + tokens autorisés
-          </div>
-        </section>
-        <section className="panel ds-panel" aria-labelledby="ds-title">
-          <div className="panel-heading">
-            <span className="panel-index">B</span>
-            <div>
-              <h2 id="ds-title" tabIndex={-1}>
-                Design System
-              </h2>
-              <p>Lisière · exemple fictif, sources locales</p>
-            </div>
-            <span className="revision-tag">r{state.revision}</span>
-          </div>
-          <div className="token-editor">
-            <div className="editor-title">
-              <h3>Tokens sémantiques</h3>
-              <span>{tokenKeys.length} tokens</span>
-            </div>
-            <label className="field token-search">
-              Rechercher un token
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="color, space, font…"
-              />
-            </label>
-            <p className="token-hint" role="status">
-              {matchingKeys.length} résultat(s).{' '}
-              {search && 'La sélection courante reste accessible.'}
-            </p>
-            <div className="swatches">
-              {matchingKeys
-                .filter((k) => k.startsWith('color.'))
-                .map((k) => (
-                  <button
-                    title={k}
-                    aria-label={`Sélectionner ${k}`}
-                    aria-pressed={key === k}
-                    key={k}
-                    style={{ background: String(state.tokens[k].$value) }}
-                    onClick={() => setKey(k)}
-                  >
-                    <span className="sr-only">{k}</span>
-                  </button>
-                ))}
-            </div>
-            <form
-              className="token-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void proposeToken();
-              }}
-            >
-              <label className="field">
-                Token
-                <select
-                  value={key}
-                  onChange={(e) => setKey(e.target.value as TokenKey)}
-                >
-                  {[...new Set([key, ...matchingKeys])].map((k) => (
-                    <option key={k}>{k}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                Valeur
-                {state.tokens[key].$type === 'fontFamily' ? (
-                  <select
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                  >
-                    {['system-ui', 'Arial', 'Georgia', 'Verdana'].map((f) => (
-                      <option key={f}>{f}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    aria-label="Valeur du token"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    required
-                    type={
-                      state.tokens[key].$type === 'dimension'
-                        ? 'number'
-                        : 'text'
-                    }
-                    min={
-                      state.tokens[key].$type === 'dimension' ? 0 : undefined
-                    }
-                    max={
-                      state.tokens[key].$type === 'dimension' ? 128 : undefined
-                    }
-                    step={
-                      state.tokens[key].$type === 'dimension'
-                        ? 'any'
-                        : undefined
-                    }
-                    maxLength={20}
-                  />
-                )}
-              </label>
-              <button
-                className="studio-primary"
-                disabled={!boot || draft === String(current)}
-              >
-                Proposer
-              </button>
-            </form>
-            {state.tokens[key].$type === 'color' && (
-              <label className="color-picker">
-                Choisir visuellement
-                <input
-                  aria-label="Sélecteur de couleur"
-                  type="color"
-                  value={
-                    /^#[0-9a-fA-F]{6}$/.test(draft) ? draft : String(current)
-                  }
-                  onChange={(e) => setDraft(e.target.value)}
-                />
-              </label>
-            )}
-            {draft !== String(current) && (
-              <p className="draft-status" role="status">
-                {recovered
-                  ? 'Brouillon récupéré dans cet onglet.'
-                  : 'Brouillon non enregistré.'}{' '}
-                Rien n’est appliqué.
-                <button type="button" onClick={discard}>
-                  Abandonner le brouillon
-                </button>
-              </p>
-            )}
-            <p className="token-hint">
-              {state.tokens[key].$type === 'color'
-                ? '#RRGGBB · '
-                : state.tokens[key].$type === 'dimension'
-                  ? 'Pixels, de 0 à 128 · '
-                  : ''}
-              Rien n’est écrit avant validation.
-            </p>
-            <p className="contrast" aria-live="polite">
-              Marque / texte sur marque :{' '}
-              <strong>
-                {contrast(
-                  state.tokens['color.brand'].$value,
-                  state.tokens['color.onBrand'].$value,
-                ).toFixed(2)}
-                :1
-              </strong>{' '}
-              ·{' '}
-              {contrast(
-                state.tokens['color.brand'].$value,
-                state.tokens['color.onBrand'].$value,
-              ) >= 4.5
-                ? 'AA texte courant'
-                : 'Contraste à améliorer'}
-            </p>
-            {draftContrast !== undefined && draft !== String(current) && (
-              <p className="contrast" role="status">
-                Contraste proposé :{' '}
-                <strong>{draftContrast.toFixed(2)}:1</strong> ·{' '}
-                {draftContrast >= 4.5
-                  ? 'AA texte courant'
-                  : 'Contraste à améliorer'}
-                . Cette indication ne certifie pas tous les états du composant.
-              </p>
-            )}
-          </div>
-          <Catalogue tokens={state.tokens} />
-        </section>
-        <section className="panel mobile-panel" aria-labelledby="mobile-title">
-          <div className="panel-heading">
-            <span className="panel-index">C</span>
-            <div>
-              <h2 id="mobile-title" tabIndex={-1}>
-                Aperçu responsive
-              </h2>
-              <p>De vrais composants, à largeur réelle</p>
-            </div>
-          </div>
-          <div className="preview-controls">
-            <label className="field">
-              Viewport
-              <select
-                value={device}
-                onChange={(e) => setDevice(Number(e.target.value))}
-              >
-                {devices.map((d, i) => (
-                  <option key={d.width} value={i}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Application
-              <select
-                value={previewApp}
-                onChange={(e) => setPreviewApp(e.target.value)}
-              >
-                <option value="parapente">Mon app parapente</option>
-                <option value="lisiere">Lisière · exemple du starter</option>
-              </select>
-            </label>
-            {previewApp === 'lisiere' && (
-              <label className="field">
-                Scénario
-                <select
-                  value={scenario}
-                  onChange={(e) => setScenario(e.target.value)}
-                >
-                  <option value="cards">Découvrir</option>
-                  <option value="form">Inscription</option>
-                </select>
-              </label>
-            )}
-          </div>
-          <div className="viewport-scroll">
-            <iframe
-              title="Aperçu responsive"
-              src={`/?preview=1&app=${previewApp}&scenario=${scenario}`}
-              width={devices[device].width}
-              height={760}
-            />
-          </div>
-          <div className="panel-foot">
-            {devices[device].width} px CSS · aucun zoom appliqué · défilez si
-            nécessaire
           </div>
         </section>
       </main>

@@ -185,9 +185,9 @@ small,
 }
 .studio-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.85fr) minmax(400px, 1.5fr) minmax(
-      360px,
-      1.2fr
+  grid-template-columns: minmax(270px, 0.85fr) minmax(420px, 1.6fr) minmax(
+      320px,
+      1fr
     );
   gap: 16px;
   padding: 0 28px;
@@ -211,15 +211,6 @@ small,
 .panel-heading p {
   font-size: 11px;
   margin: 3px 0 0;
-}
-.panel-index {
-  font-size: 11px;
-  font-weight: 650;
-  background: #eef1f8;
-  color: #44577e;
-  border: 1px solid #d8e0ef;
-  border-radius: 6px;
-  padding: 4px 8px;
 }
 .revision-tag {
   margin-left: auto;
@@ -1056,7 +1047,7 @@ del {
 }
 @media (min-width: 1800px) {
   .studio-grid {
-    grid-template-columns: 320px minmax(500px, 1fr) minmax(460px, 0.85fr);
+    grid-template-columns: 340px minmax(560px, 1fr) minmax(420px, 0.7fr);
   }
   .intro,
   .studio-grid,
@@ -1070,7 +1061,7 @@ del {
   .studio-grid {
     grid-template-columns: 280px minmax(400px, 1fr);
   }
-  .mobile-panel {
+  .agent-panel {
     grid-column: 1/-1;
   }
   .viewport-scroll {
@@ -1282,14 +1273,14 @@ h2[id] {
   }
 }
 
-/* Panneau gauche : onglets Variables / Assistant, variables façon Figma. */
-.left-tabs {
+/* Onglets Composants / Aperçu et panneau de variables façon Figma. */
+.panel-tabs {
   display: flex;
   gap: 4px;
   padding: 10px 18px 0;
   border-bottom: 1px solid #e4e7ee;
 }
-.left-tabs button {
+.panel-tabs button {
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -1297,7 +1288,7 @@ h2[id] {
   padding: 8px 10px;
   color: #68748b;
 }
-.left-tabs button[aria-selected='true'] {
+.panel-tabs button[aria-selected='true'] {
   color: #202b40;
   border-bottom-color: #294882;
 }
@@ -1461,4 +1452,14 @@ h2[id] {
 .variables-edit-row td {
   padding: 2px 6px 10px;
   background: #eef1f8;
+}
+
+/* L’assistant reste sous la main pendant le défilement (grand écran). */
+@media (min-width: 1171px) {
+  .agent-panel {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
 }

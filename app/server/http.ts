@@ -138,8 +138,11 @@ export async function createStudioServer(options: {
         const limit = url.pathname === '/api/agent' ? 8_500_000 : 128_000;
         for await (const chunk of req) {
           size += chunk.length;
-          if (size > limit)
+          if (size > limit) {
+            // Corps non lu jusqu'au bout : la connexion ne doit pas être réutilisée.
+            res.setHeader('Connection', 'close');
             throw new StudioError('Requête trop volumineuse.', 413);
+          }
           chunks.push(chunk);
         }
         const raw = Buffer.concat(chunks).toString('utf8');

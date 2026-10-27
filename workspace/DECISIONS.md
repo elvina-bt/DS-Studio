@@ -78,6 +78,20 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limite** : les nombres Primitives (16) et Breakpoints (4) sont écrits en dur,
   d’après la relecture Figma du jour ; ils ne se mettent pas à jour seuls.
 
+## 2026-10-27 — Disposition : Variables, Design System, Assistant
+
+- **Décision** : trois colonnes sans lettres A/B/C. À gauche **Variables** ; au
+  centre **Design System** avec onglets **Composants** (par défaut) et **Aperçu** ;
+  à droite **Assistant** (brief et chat), collé en haut de l’écran sur grand écran.
+  Mode par défaut : Claude Code (expérimental).
+- **Correctif** : une requête refusée en 413 ferme la connexion
+  (`Connection: close`). Avant, la requête suivante pouvait échouer (« fetch failed »,
+  environ une fois sur deux en test).
+- **Preuves** : 12 tests e2e, 38 tests unitaires (test HTTP 8/8 lancements),
+  rendu vérifié à 1440 px, macOS.
+- **Limite** : le mode Claude par défaut interroge le CLI au chargement ; sans
+  Claude Code installé, l’assistant l’indique et le mode Manuel reste disponible.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

@@ -13,9 +13,11 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
     page.getByText('Figma non connecté', { exact: true }),
   ).toBeVisible();
   const catalogue = page.locator('.ds-panel');
+  await page.getByRole('tab', { name: 'Aperçu' }).click();
   await page
     .getByRole('combobox', { name: 'Application', exact: true })
     .selectOption('lisiere');
+  await page.getByRole('tab', { name: 'Composants' }).click();
   const mobile = page.frameLocator('iframe');
   const mainButton = catalogue.getByRole('button', {
     name: 'Action principale',
@@ -37,6 +39,7 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
   await expect(
     catalogue.getByRole('button', { name: 'Réserver une place', exact: true }),
   ).toHaveCSS('background-color', 'rgb(138, 59, 32)');
+  await page.getByRole('tab', { name: 'Aperçu' }).click();
   await expect(
     mobile.getByRole('button', { name: 'Réserver une place', exact: true }),
   ).toHaveCSS('background-color', 'rgb(138, 59, 32)');
@@ -45,9 +48,11 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
   ).toHaveCSS('background-color', 'rgb(138, 59, 32)');
   await page.reload();
   await expect(mainButton).toHaveCSS('background-color', 'rgb(138, 59, 32)');
+  await page.getByRole('tab', { name: 'Aperçu' }).click();
   await page
     .getByRole('combobox', { name: 'Application', exact: true })
     .selectOption('lisiere');
+  await page.getByRole('tab', { name: 'Composants' }).click();
   await page
     .getByRole('combobox', { name: 'Token', exact: true })
     .selectOption('space.md');
@@ -61,6 +66,7 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
   await dialog.getByRole('button', { name: 'Valider et enregistrer' }).click();
   await expect(mainButton).toHaveCSS('background-color', 'rgb(49, 84, 196)');
   await expect(mainButton).toHaveCSS('padding-left', '22px');
+  await page.getByRole('tab', { name: 'Aperçu' }).click();
   await expect(
     mobile.getByRole('button', { name: 'Réserver une place', exact: true }),
   ).toHaveCSS('background-color', 'rgb(49, 84, 196)');
@@ -71,6 +77,7 @@ test('largeurs réelles, interactions, formulaire et desktop responsive', async 
   page,
 }) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Aperçu' }).click();
   await page
     .getByRole('combobox', { name: 'Application', exact: true })
     .selectOption('lisiere');
@@ -168,7 +175,7 @@ test('export navigateur, import valide avec diff, fichier invalide sans écritur
   const exported = JSON.parse(await readFile((await file.path())!, 'utf8'));
   expect(exported).toEqual(before.tokens);
   exported['color.success'].$value = '#125533';
-  await page.locator('input[type=file]').setInputFiles({
+  await page.getByLabel('Importer un JSON').setInputFiles({
     name: 'palette.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(exported)),
@@ -182,7 +189,7 @@ test('export navigateur, import valide avec diff, fichier invalide sans écritur
   await expect(dialog).not.toBeVisible();
   const after = await (await page.request.get('/api/state')).json();
   expect(after.tokens['color.success'].$value).toBe('#125533');
-  await page.locator('input[type=file]').setInputFiles({
+  await page.getByLabel('Importer un JSON').setInputFiles({
     name: 'invalid.json',
     mimeType: 'application/json',
     buffer: Buffer.from('{bad'),
@@ -216,7 +223,6 @@ test('V2 : brief privé persistant, indépendant du mode IA', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Assistant' }).click();
   await page.getByText('Mon PFE · brief privé', { exact: true }).click();
   await page
     .getByLabel('Nom du PFE', { exact: true })
@@ -230,14 +236,13 @@ test('V2 : brief privé persistant, indépendant du mode IA', async ({
   await page.getByRole('button', { name: 'Enregistrer le brief' }).click();
   await expect(page.getByText('Brief enregistré sur ce poste.')).toBeVisible();
   await page.reload();
-  await page.getByRole('tab', { name: 'Assistant' }).click();
   await page.getByText('Mon PFE · brief privé', { exact: true }).click();
   await expect(page.getByLabel('Nom du PFE', { exact: true })).toHaveValue(
     'Mon atelier accessible',
   );
   await expect(
     page.getByRole('combobox', { name: 'Mode de travail' }),
-  ).toHaveValue('manual');
+  ).toHaveValue('claude');
 });
 
 test('V2 : recherche, brouillon récupéré après recharge et abandon sans écriture', async ({
@@ -372,14 +377,15 @@ test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordemen
 }) => {
   await page.goto('/');
   const app = page.frameLocator('iframe');
-  await expect(
-    app.getByRole('heading', { name: 'Préparer', level: 1 }),
-  ).toBeVisible();
   // Les tests partagent l’état : on compare au bouton du catalogue, pas à une valeur fixe.
   const brand = await page
     .locator('.ds-panel')
     .getByRole('button', { name: 'Action principale', exact: true })
     .evaluate((el) => getComputedStyle(el).backgroundColor);
+  await page.getByRole('tab', { name: 'Aperçu' }).click();
+  await expect(
+    app.getByRole('heading', { name: 'Préparer', level: 1 }),
+  ).toBeVisible();
   await expect(
     app.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
   ).toHaveCSS('background-color', brand);
@@ -404,11 +410,7 @@ test('panneau Variables : groupes, recherche, édition sur place et diff sans é
 }) => {
   await page.goto('/');
   const before = await (await page.request.get('/api/state')).json();
-  const panel = page.locator('#left-panel-variables');
-  await expect(page.getByRole('tab', { name: 'Variables' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  const panel = page.locator('.variables-panel');
   await panel.getByRole('button', { name: /^Espacements/ }).click();
   await expect(panel.getByRole('rowheader')).toHaveCount(3);
   await panel.getByRole('button', { name: /^Toutes/ }).click();
