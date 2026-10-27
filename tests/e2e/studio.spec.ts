@@ -216,6 +216,7 @@ test('V2 : brief privé persistant, indépendant du mode IA', async ({
   page,
 }) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Assistant' }).click();
   await page.getByText('Mon PFE · brief privé', { exact: true }).click();
   await page
     .getByLabel('Nom du PFE', { exact: true })
@@ -229,6 +230,7 @@ test('V2 : brief privé persistant, indépendant du mode IA', async ({
   await page.getByRole('button', { name: 'Enregistrer le brief' }).click();
   await expect(page.getByText('Brief enregistré sur ce poste.')).toBeVisible();
   await page.reload();
+  await page.getByRole('tab', { name: 'Assistant' }).click();
   await page.getByText('Mon PFE · brief privé', { exact: true }).click();
   await expect(page.getByLabel('Nom du PFE', { exact: true })).toHaveValue(
     'Mon atelier accessible',
@@ -395,4 +397,35 @@ test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordemen
       .locator('body')
       .evaluate((el) => el.scrollWidth <= window.innerWidth),
   ).toBe(true);
+});
+
+test('panneau Variables : groupes, recherche, édition sur place et diff sans écriture', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const before = await (await page.request.get('/api/state')).json();
+  const panel = page.locator('#left-panel-variables');
+  await expect(page.getByRole('tab', { name: 'Variables' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await panel.getByRole('button', { name: /^Espacements/ }).click();
+  await expect(panel.getByRole('rowheader')).toHaveCount(3);
+  await panel.getByRole('button', { name: /^Toutes/ }).click();
+  await panel.getByLabel('Rechercher une variable').fill('heading');
+  await expect(panel.getByRole('rowheader')).toHaveCount(1);
+  await panel.getByRole('button', { name: 'heading', exact: true }).click();
+  const current = String(before.tokens['font.heading'].$value);
+  await expect(panel.getByLabel('Valeur de font.heading')).toHaveValue(current);
+  await expect(
+    page.getByRole('combobox', { name: 'Token', exact: true }),
+  ).toHaveValue('font.heading');
+  await panel.getByLabel('Valeur de font.heading').fill('31');
+  await expect(page.getByLabel('Valeur du token')).toHaveValue('31');
+  await panel.getByRole('button', { name: 'Proposer font.heading' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('font.heading');
+  await dialog.getByRole('button', { name: 'Ne pas appliquer' }).click();
+  const after = await (await page.request.get('/api/state')).json();
+  expect(after.revision).toBe(before.revision);
 });

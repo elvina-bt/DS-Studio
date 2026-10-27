@@ -1281,3 +1281,184 @@ h2[id] {
     margin: 0 14px 18px;
   }
 }
+
+/* Panneau gauche : onglets Variables / Assistant, variables façon Figma. */
+.left-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 18px 0;
+  border-bottom: 1px solid #e4e7ee;
+}
+.left-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  padding: 8px 10px;
+  color: #68748b;
+}
+.left-tabs button[aria-selected='true'] {
+  color: #202b40;
+  border-bottom-color: #294882;
+}
+.variables {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.variables h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #68748b;
+  margin: 0 0 4px;
+}
+.variables-collections {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.variables-collections button,
+.variables-groups button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 500;
+}
+.variables-collections button[aria-current='true'],
+.variables-groups button[aria-pressed='true'] {
+  background: #eef1f8;
+  color: #1f396b;
+}
+.variables-collections button:disabled {
+  opacity: 0.6;
+}
+.variables-collections span,
+.variables-groups span {
+  font-size: 11px;
+  color: #68748b;
+}
+.variables-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.variables-groups button {
+  border: 1px solid #dbe0e8;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.variables-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+.variables-table thead th {
+  font-size: 11px;
+  color: #68748b;
+  font-weight: 600;
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid #e4e7ee;
+}
+.variables-table thead th:first-child {
+  width: 45%;
+}
+.variables-group-row th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 650;
+  color: #44577e;
+  padding: 12px 6px 4px;
+}
+.variables-table tbody tr:not(.variables-group-row) {
+  border-bottom: 1px solid #f0f2f6;
+  cursor: pointer;
+}
+.variables-table tbody tr:not(.variables-group-row):hover {
+  background: #f7f8fb;
+}
+.variables-table tr.is-selected,
+.variables-table tr.is-selected:hover {
+  background: #eef1f8;
+  cursor: default;
+}
+.variables-table th[scope='row'],
+.variables-table td {
+  padding: 4px 6px;
+  text-align: left;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.variables-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  font-weight: 500;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.variables-name:hover {
+  background: none;
+}
+.variables-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid #c5cbd5;
+  font-size: 9px;
+  display: grid;
+  place-items: center;
+  color: #526079;
+}
+.variables-edited {
+  font-size: 10px;
+  color: #8a5a00;
+  background: #fff4dc;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.variables-value {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  color: #3b4760;
+  overflow-wrap: anywhere;
+}
+.variables-edit {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.variables-edit input,
+.variables-edit select {
+  flex: 1;
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.variables-edit input[type='color'] {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px;
+}
+.variables-edit button {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.variables-edit-row td {
+  padding: 2px 6px 10px;
+  background: #eef1f8;
+}

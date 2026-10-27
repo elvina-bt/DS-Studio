@@ -4,6 +4,7 @@ import ProjectBrief from './ProjectBrief.js';
 import { ParapenteApp } from './ParapenteApp.js';
 import TokenPreview from './TokenPreview.js';
 import Review from './Review.js';
+import VariablesPanel from './VariablesPanel.js';
 import { useTokenDraft } from './useTokenDraft.js';
 import {
   bootstrap,
@@ -111,6 +112,9 @@ export default function App() {
   const [device, setDevice] = useState(1);
   const [scenario, setScenario] = useState('cards');
   const [previewApp, setPreviewApp] = useState('parapente');
+  const [leftTab, setLeftTab] = useState<'variables' | 'assistant'>(
+    'variables',
+  );
   const [agent, setAgent] = useState('manual');
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<
@@ -420,12 +424,55 @@ export default function App() {
             <span className="panel-index">A</span>
             <div>
               <h2 id="agent-title" tabIndex={-1}>
-                Contexte et assistant
+                Variables et assistant
               </h2>
-              <p>Un assistant, pas un pilote automatique</p>
+              <p>Parcourir le DS, puis demander de l’aide</p>
             </div>
           </div>
-          <div className="panel-body">
+          <div className="left-tabs" role="tablist" aria-label="Panneau gauche">
+            {(
+              [
+                ['variables', 'Variables'],
+                ['assistant', 'Assistant'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                id={`left-tab-${id}`}
+                aria-controls={`left-panel-${id}`}
+                aria-selected={leftTab === id}
+                onClick={() => setLeftTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div
+            className="panel-body"
+            role="tabpanel"
+            id="left-panel-variables"
+            aria-labelledby="left-tab-variables"
+            hidden={leftTab !== 'variables'}
+          >
+            <VariablesPanel
+              tokens={state.tokens}
+              selected={key}
+              draft={draft}
+              onSelect={setKey}
+              onDraft={setDraft}
+              onPropose={() => void proposeToken()}
+              disabled={!boot}
+            />
+          </div>
+          <div
+            className="panel-body"
+            role="tabpanel"
+            id="left-panel-assistant"
+            aria-labelledby="left-tab-assistant"
+            hidden={leftTab !== 'assistant'}
+          >
             <ProjectBrief />
             <label className="field">
               Mode de travail

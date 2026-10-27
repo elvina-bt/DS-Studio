@@ -63,6 +63,21 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   (choix d’app non conservé au rechargement ; couleur de marque laissée par un
   test précédent). `npm run check` et `npm test` (38) passent.
 
+## 2026-10-27 — Panneau Variables façon Figma
+
+- **Problème** : pour parcourir les tokens, il fallait passer par une liste
+  déroulante, loin de mon usage du panneau de variables de Figma.
+- **Décision** : le panneau gauche s’ouvre sur un onglet **Variables** (l’assistant
+  et le brief passent dans l’onglet **Assistant**, conservés sans rechargement).
+  Collections (Semantics éditable ; Primitives et Breakpoints signalées « Figma »),
+  groupes, recherche et tableau Nom / Valeur. Une valeur éditée sur place partage
+  le brouillon de l’éditeur central et ouvre le même diff : rien n’est écrit avant
+  validation.
+- **Preuves** : 12 tests e2e (dont un nouveau : groupes, recherche, édition, diff
+  refusé, révision inchangée) et 38 tests unitaires, macOS ; rendu vérifié à 1440 px.
+- **Limite** : les nombres Primitives (16) et Breakpoints (4) sont écrits en dur,
+  d’après la relecture Figma du jour ; ils ne se mettent pas à jour seuls.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.
