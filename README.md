@@ -86,8 +86,10 @@ contenant des espaces est accepté. N’utilisez ni `sudo` ni installation de se
 
 1. Dans **Design System**, choisissez `color.brand`, remplacez la valeur par `#8A3B20`.
 2. Cliquez **Proposer**. Le diff montre l’ancienne et la nouvelle valeur, sans écriture.
-3. Cliquez **Valider et enregistrer**. Boutons, réservation et navigation changent dans les deux vues.
-4. Testez la réservation, puis les viewports 320, 375, 430 et 1024 px (défilement horizontal si nécessaire).
+3. Cliquez **Valider et enregistrer**. Boutons, carte de prévision et barre d’onglets changent
+   dans **Composants** et dans **Aperçu** : ce sont les mêmes composants (`app/client/ParapenteDS.tsx`).
+4. Dans **Aperçu**, parcourez les onglets de l’app, puis les viewports 320, 375, 430 et 1024 px.
+   L’exemple Lisière du starter reste sélectionnable dans **Application**.
 5. Rechargez ou redémarrez : la valeur reste. Dans **Historique**, annulez la révision,
    examinez son diff et validez. Les changements des autres tokens sont conservés.
 

@@ -20,7 +20,7 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
   await page.getByRole('tab', { name: 'Composants' }).click();
   const mobile = page.frameLocator('iframe');
   const mainButton = catalogue.getByRole('button', {
-    name: 'Action principale',
+    name: 'Nouvelle sortie',
     exact: true,
   });
   await expect(mainButton).toHaveCSS('background-color', 'rgb(49, 84, 196)');
@@ -37,8 +37,8 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
   await dialog.getByRole('button', { name: 'Valider et enregistrer' }).click();
   await expect(mainButton).toHaveCSS('background-color', 'rgb(138, 59, 32)');
   await expect(
-    catalogue.getByRole('button', { name: 'Réserver une place', exact: true }),
-  ).toHaveCSS('background-color', 'rgb(138, 59, 32)');
+    catalogue.getByRole('button', { name: 'Voir les sites', exact: true }),
+  ).toHaveCSS('color', 'rgb(138, 59, 32)');
   await page.getByRole('tab', { name: 'Aperçu' }).click();
   await expect(
     mobile.getByRole('button', { name: 'Réserver une place', exact: true }),
@@ -377,10 +377,23 @@ test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordemen
 }) => {
   await page.goto('/');
   const app = page.frameLocator('iframe');
+  // Le catalogue présente les composants dont l’app est faite.
+  for (const name of [
+    'Bouton',
+    'Titre et en-tête de section',
+    'Champ de recherche',
+    'Carte de prévision',
+    'Badge',
+    'Ligne de liste',
+    'Barre d’onglets',
+  ])
+    await expect(
+      page.locator('.ds-panel').getByRole('region', { name, exact: true }),
+    ).toBeVisible();
   // Les tests partagent l’état : on compare au bouton du catalogue, pas à une valeur fixe.
   const brand = await page
     .locator('.ds-panel')
-    .getByRole('button', { name: 'Action principale', exact: true })
+    .getByRole('button', { name: 'Nouvelle sortie', exact: true })
     .evaluate((el) => getComputedStyle(el).backgroundColor);
   await page.getByRole('tab', { name: 'Aperçu' }).click();
   await expect(

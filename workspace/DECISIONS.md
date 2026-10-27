@@ -92,6 +92,23 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limite** : le mode Claude par défaut interroge le CLI au chargement ; sans
   Claude Code installé, l’assistant l’indique et le mode Manuel reste disponible.
 
+## 2026-10-27 — Composants partagés entre catalogue et app
+
+- **Problème** : l’onglet Composants montrait le catalogue Lisière, alors que mon
+  app parapente avait ses propres éléments. Je validais des composants que l’app
+  n’utilisait pas.
+- **Décision** : `app/client/ParapenteDS.tsx` est la seule implémentation de
+  bouton, titre, en-tête de section, champ de recherche, carte de prévision,
+  badge, ligne de liste (et interrupteur) et barre d’onglets. L’onglet Composants,
+  l’app de l’Aperçu et la revue du diff les importent. Lisière reste dans l’Aperçu
+  comme exemple ; son ancien catalogue est retiré.
+- **Preuves** : 12 tests e2e (dont la présence des 7 sections du catalogue et la
+  couleur de marque identique catalogue / app) et 38 tests unitaires, macOS ; revue
+  du diff vérifiée sur `color.brand` (6 composants touchés), sans écriture.
+- **Limite** : le tableau prévu / vécu, les statistiques et le formulaire de
+  débrief restent propres à l’app ; à extraire s’ils entrent dans la bibliothèque
+  Figma PFE – Components.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

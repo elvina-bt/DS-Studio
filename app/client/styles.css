@@ -876,7 +876,7 @@ del {
   margin: 0 auto;
   box-sizing: border-box;
 }
-.ds .pp-screen h1 {
+.ds .pp-title {
   font-size: calc(var(--font-heading) * 1.2);
   margin: var(--space-md) 0 var(--space-md);
 }
@@ -1462,4 +1462,17 @@ h2[id] {
     max-height: calc(100vh - 32px);
     overflow-y: auto;
   }
+}
+
+/* Catalogue du DS parapente : mêmes composants que l’app, sur le fond de l’app. */
+.pp-catalogue {
+  background: var(--color-canvas);
+}
+.pp-catalogue .section-label {
+  margin-bottom: var(--space-sm);
+}
+.pp-tabbar-inline {
+  position: static;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-control) * 1.4);
 }

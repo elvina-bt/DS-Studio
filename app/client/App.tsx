@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Catalogue, Scenario } from './DesignSystem.js';
+import { Scenario } from './DesignSystem.js';
+import { ParapenteCatalogue } from './ParapenteDS.js';
 import ProjectBrief from './ProjectBrief.js';
 import { ParapenteApp } from './ParapenteApp.js';
 import TokenPreview from './TokenPreview.js';
@@ -640,7 +641,7 @@ export default function App() {
                 </p>
               )}
             </div>
-            <Catalogue tokens={state.tokens} />
+            <ParapenteCatalogue tokens={state.tokens} />
           </div>
           <div
             role="tabpanel"

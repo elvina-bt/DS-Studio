@@ -1,9 +1,20 @@
 import { useState, type ReactNode } from 'react';
 import type { Patch, TokenKey, Tokens } from '../shared/model.js';
-import { Button, DSProvider } from './DesignSystem.js';
+import { DSProvider } from './DesignSystem.js';
+import {
+  Badge,
+  Button,
+  Card,
+  ForecastCard,
+  LargeTitle,
+  ListRow,
+  SearchField,
+  SectionHeader,
+  TabBar,
+} from './ParapenteDS.js';
 
-// Revue façon « Review updates » de Figma : chaque composant touché par le
-// changement est rendu deux fois, avec les tokens avant et après.
+// Revue façon « Review updates » de Figma : chaque composant du DS parapente
+// touché par le changement est rendu deux fois, avec les tokens avant et après.
 const specimens: { name: string; uses: TokenKey[]; render: () => ReactNode }[] =
   [
     {
@@ -32,7 +43,26 @@ const specimens: { name: string; uses: TokenKey[]; render: () => ReactNode }[] =
       render: () => <Button variant="secondary">Voir les sites</Button>,
     },
     {
-      name: 'Champ de saisie',
+      name: 'Titre et en-tête de section',
+      uses: [
+        'font.heading',
+        'font.body',
+        'font.family',
+        'color.text',
+        'color.muted',
+        'color.canvas',
+        'space.md',
+        'space.lg',
+      ],
+      render: () => (
+        <div className="review-canvas">
+          <LargeTitle>Préparer</LargeTitle>
+          <SectionHeader>Prochaine sortie</SectionHeader>
+        </div>
+      ),
+    },
+    {
+      name: 'Champ de recherche',
       uses: [
         'color.border',
         'color.surface',
@@ -42,14 +72,7 @@ const specimens: { name: string; uses: TokenKey[]; render: () => ReactNode }[] =
         'space.md',
         'font.body',
       ],
-      render: () => (
-        <div className="ds-form">
-          <label>
-            Vent vécu (km/h)
-            <input defaultValue="22" />
-          </label>
-        </div>
-      ),
+      render: () => <SearchField label="Rechercher un site" />,
     },
     {
       name: 'Carte de prévision',
@@ -60,35 +83,63 @@ const specimens: { name: string; uses: TokenKey[]; render: () => ReactNode }[] =
         'color.text',
         'color.muted',
         'space.sm',
-        'space.lg',
+        'space.md',
         'radius.control',
         'font.body',
       ],
       render: () => (
-        <article className="ds-card">
-          <div className="card-kicker">SAINT-HILAIRE · 14 H</div>
-          <h3>Vent prévu 12–18 km/h</h3>
-          <p>Ouest, rafales possibles.</p>
-          <span className="ds-badge">Confiance moyenne</span>
-        </article>
+        <ForecastCard
+          place="Saint-Hilaire"
+          slot="sam. 14 h–16 h"
+          wind="12–18 km/h"
+          summary="Ouest, rafales possibles l’après-midi."
+          gusts="jusqu’à 25 km/h"
+          ceiling="2 400 m"
+          confidence="Moyenne · maille 1,3 km"
+        />
       ),
     },
     {
-      name: 'Titre et texte',
-      uses: [
-        'font.heading',
-        'font.body',
-        'font.family',
-        'color.text',
-        'color.muted',
-        'color.canvas',
-      ],
+      name: 'Badge',
+      uses: ['color.border', 'color.brand'],
       render: () => (
-        <div className="review-canvas">
-          <h1>Préparer</h1>
-          <p>Une synthèse lisible de la prévision.</p>
+        <div className="button-row">
+          <Badge>Confiance moyenne</Badge>
+          <Badge>Écart</Badge>
         </div>
       ),
+    },
+    {
+      name: 'Ligne de liste',
+      uses: [
+        'color.surface',
+        'color.border',
+        'color.text',
+        'color.muted',
+        'space.sm',
+        'space.md',
+        'radius.control',
+        'font.body',
+      ],
+      render: () => (
+        <Card list>
+          <ListRow label="Comprendre les rafales" chevron />
+          <ListRow label="Niveau" value="Brevet initial" chevron />
+        </Card>
+      ),
+    },
+    {
+      name: 'Barre d’onglets',
+      uses: [
+        'color.surface',
+        'color.border',
+        'color.brand',
+        'color.muted',
+        'space.sm',
+        'space.md',
+        'font.body',
+      ],
+      render: () => <TabBar current="Préparer" onChange={() => {}} inline />,
     },
     {
       name: 'Messages d’état',
@@ -96,7 +147,7 @@ const specimens: { name: string; uses: TokenKey[]; render: () => ReactNode }[] =
       render: () => (
         <div className="button-row">
           <span className="ds-feedback">Débrief enregistré</span>
-          <Button variant="danger">Supprimer</Button>
+          <Button variant="danger">Supprimer le vol</Button>
         </div>
       ),
     },
