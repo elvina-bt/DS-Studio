@@ -16,7 +16,6 @@ import {
   type Bootstrap,
 } from './api.js';
 import {
-  contrast,
   imageSchema,
   maxImageBytes,
   maxImages,
@@ -105,7 +104,6 @@ export default function App() {
     key,
     state?.tokens[key].$value,
   );
-  const [search, setSearch] = useState('');
   const [agents, setAgents] = useState<Bootstrap['agents']>([]);
   const [proposal, setProposal] = useState<Proposal>();
   const [error, setError] = useState('');
@@ -139,7 +137,6 @@ export default function App() {
         .then(setAgents)
         .catch((e) => setError(e.message));
   }, [agent]);
-  const current = state?.tokens[key].$value;
 
   useEffect(() => {
     if (proposal) {
@@ -275,23 +272,10 @@ export default function App() {
   const selectedAgent = agents.find((a) => a.id === agent);
   const agentName = agent === 'claude' ? 'Claude Code' : 'Codex';
   const staleProposal = !!proposal && proposal.revision !== state.revision;
-  const draftContrast =
-    /^#[0-9a-fA-F]{6}$/.test(draft) &&
-    (key === 'color.brand' || key === 'color.onBrand')
-      ? contrast(
-          key === 'color.brand' ? draft : state.tokens['color.brand'].$value,
-          key === 'color.onBrand'
-            ? draft
-            : state.tokens['color.onBrand'].$value,
-        )
-      : undefined;
-  const matchingKeys = tokenKeys.filter((k) =>
-    k.toLowerCase().includes(search.trim().toLowerCase()),
-  );
   return (
     <>
-      <a className="skip-link" href="#ds-title">
-        Aller aux tokens
+      <a className="skip-link" href="#variables-title">
+        Aller aux variables
       </a>
       <header className="studio-header">
         <div className="wordmark">
@@ -438,6 +422,8 @@ export default function App() {
               onSelect={setKey}
               onDraft={setDraft}
               onPropose={() => void proposeToken()}
+              recovered={recovered}
+              onDiscard={discard}
               disabled={!boot}
             />
           </div>
@@ -482,165 +468,6 @@ export default function App() {
             aria-labelledby="ds-tab-composants"
             hidden={dsTab !== 'composants'}
           >
-            <div className="token-editor">
-              <div className="editor-title">
-                <h3>Tokens sémantiques</h3>
-                <span>{tokenKeys.length} tokens</span>
-              </div>
-              <label className="field token-search">
-                Rechercher un token
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="color, space, font…"
-                />
-              </label>
-              <p className="token-hint" role="status">
-                {matchingKeys.length} résultat(s).{' '}
-                {search && 'La sélection courante reste accessible.'}
-              </p>
-              <div className="swatches">
-                {matchingKeys
-                  .filter((k) => k.startsWith('color.'))
-                  .map((k) => (
-                    <button
-                      title={k}
-                      aria-label={`Sélectionner ${k}`}
-                      aria-pressed={key === k}
-                      key={k}
-                      style={{ background: String(state.tokens[k].$value) }}
-                      onClick={() => setKey(k)}
-                    >
-                      <span className="sr-only">{k}</span>
-                    </button>
-                  ))}
-              </div>
-              <form
-                className="token-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void proposeToken();
-                }}
-              >
-                <label className="field">
-                  Token
-                  <select
-                    value={key}
-                    onChange={(e) => setKey(e.target.value as TokenKey)}
-                  >
-                    {[...new Set([key, ...matchingKeys])].map((k) => (
-                      <option key={k}>{k}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Valeur
-                  {state.tokens[key].$type === 'fontFamily' ? (
-                    <select
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                    >
-                      {['system-ui', 'Arial', 'Georgia', 'Verdana'].map((f) => (
-                        <option key={f}>{f}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      aria-label="Valeur du token"
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      required
-                      type={
-                        state.tokens[key].$type === 'dimension'
-                          ? 'number'
-                          : 'text'
-                      }
-                      min={
-                        state.tokens[key].$type === 'dimension' ? 0 : undefined
-                      }
-                      max={
-                        state.tokens[key].$type === 'dimension'
-                          ? 128
-                          : undefined
-                      }
-                      step={
-                        state.tokens[key].$type === 'dimension'
-                          ? 'any'
-                          : undefined
-                      }
-                      maxLength={20}
-                    />
-                  )}
-                </label>
-                <button
-                  className="studio-primary"
-                  disabled={!boot || draft === String(current)}
-                >
-                  Proposer
-                </button>
-              </form>
-              {state.tokens[key].$type === 'color' && (
-                <label className="color-picker">
-                  Choisir visuellement
-                  <input
-                    aria-label="Sélecteur de couleur"
-                    type="color"
-                    value={
-                      /^#[0-9a-fA-F]{6}$/.test(draft) ? draft : String(current)
-                    }
-                    onChange={(e) => setDraft(e.target.value)}
-                  />
-                </label>
-              )}
-              {draft !== String(current) && (
-                <p className="draft-status" role="status">
-                  {recovered
-                    ? 'Brouillon récupéré dans cet onglet.'
-                    : 'Brouillon non enregistré.'}{' '}
-                  Rien n’est appliqué.
-                  <button type="button" onClick={discard}>
-                    Abandonner le brouillon
-                  </button>
-                </p>
-              )}
-              <p className="token-hint">
-                {state.tokens[key].$type === 'color'
-                  ? '#RRGGBB · '
-                  : state.tokens[key].$type === 'dimension'
-                    ? 'Pixels, de 0 à 128 · '
-                    : ''}
-                Rien n’est écrit avant validation.
-              </p>
-              <p className="contrast" aria-live="polite">
-                Marque / texte sur marque :{' '}
-                <strong>
-                  {contrast(
-                    state.tokens['color.brand'].$value,
-                    state.tokens['color.onBrand'].$value,
-                  ).toFixed(2)}
-                  :1
-                </strong>{' '}
-                ·{' '}
-                {contrast(
-                  state.tokens['color.brand'].$value,
-                  state.tokens['color.onBrand'].$value,
-                ) >= 4.5
-                  ? 'AA texte courant'
-                  : 'Contraste à améliorer'}
-              </p>
-              {draftContrast !== undefined && draft !== String(current) && (
-                <p className="contrast" role="status">
-                  Contraste proposé :{' '}
-                  <strong>{draftContrast.toFixed(2)}:1</strong> ·{' '}
-                  {draftContrast >= 4.5
-                    ? 'AA texte courant'
-                    : 'Contraste à améliorer'}
-                  . Cette indication ne certifie pas tous les états du
-                  composant.
-                </p>
-              )}
-            </div>
             <ParapenteCatalogue tokens={state.tokens} />
           </div>
           <div

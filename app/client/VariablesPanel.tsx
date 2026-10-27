@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { tokenKeys, type TokenKey, type Tokens } from '../shared/model.js';
+import {
+  contrast,
+  tokenKeys,
+  type TokenKey,
+  type Tokens,
+} from '../shared/model.js';
 
 // Panneau de variables façon Figma : collections, groupes, tableau Nom / Valeur.
-// Seule la collection Semantics vit dans DS-Studio ; une édition prépare le
-// brouillon et passe par le même diff que l'éditeur central.
+// Seule la collection Semantics vit dans DS-Studio. C'est l'unique éditeur de
+// tokens : une édition prépare le brouillon (récupérable après recharge) et
+// ouvre le diff ; rien n'est écrit avant validation.
 const groups = [
   { id: 'color', label: 'Couleurs' },
   { id: 'font', label: 'Typographie' },
@@ -23,6 +29,8 @@ export default function VariablesPanel({
   onSelect,
   onDraft,
   onPropose,
+  recovered,
+  onDiscard,
   disabled,
 }: {
   tokens: Tokens;
@@ -31,6 +39,8 @@ export default function VariablesPanel({
   onSelect: (key: TokenKey) => void;
   onDraft: (value: string) => void;
   onPropose: () => void;
+  recovered: boolean;
+  onDiscard: () => void;
   disabled: boolean;
 }) {
   const [group, setGroup] = useState('all');
@@ -44,6 +54,21 @@ export default function VariablesPanel({
         k.toLowerCase().includes(query),
     );
   const shown = groups.filter((g) => visible(g.id).length);
+  const count = shown.reduce((n, g) => n + visible(g.id).length, 0);
+  const brand = String(tokens['color.brand'].$value);
+  const onBrand = String(tokens['color.onBrand'].$value);
+  const current = contrast(brand, onBrand);
+  const proposed =
+    /^#[0-9a-fA-F]{6}$/.test(draft) &&
+    (selected === 'color.brand' || selected === 'color.onBrand') &&
+    draft !== String(tokens[selected].$value)
+      ? contrast(
+          selected === 'color.brand' ? draft : brand,
+          selected === 'color.onBrand' ? draft : onBrand,
+        )
+      : undefined;
+  const level = (ratio: number) =>
+    ratio >= 4.5 ? 'AA texte courant' : 'Contraste à améliorer';
   return (
     <div className="variables">
       <nav className="variables-collections" aria-label="Collections">
@@ -88,6 +113,9 @@ export default function VariablesPanel({
           placeholder="brand, md, heading…"
         />
       </label>
+      <p className="token-hint" role="status">
+        {count} résultat(s).
+      </p>
       <table className="variables-table">
         <thead>
           <tr>
@@ -119,6 +147,7 @@ export default function VariablesPanel({
                       type="button"
                       className="variables-name"
                       aria-pressed={isSelected}
+                      aria-label={k}
                       onClick={() => onSelect(k)}
                       title={`Figma : ${k.replace('.', '/')} · CSS : var(--${k.replace('.', '-')})`}
                     >
@@ -160,7 +189,7 @@ export default function VariablesPanel({
                         )}
                         {token.$type === 'fontFamily' ? (
                           <select
-                            aria-label={`Valeur de ${k}`}
+                            aria-label="Valeur du token"
                             value={value}
                             onChange={(e) => onDraft(e.target.value)}
                           >
@@ -170,7 +199,7 @@ export default function VariablesPanel({
                           </select>
                         ) : (
                           <input
-                            aria-label={`Valeur de ${k}`}
+                            aria-label="Valeur du token"
                             value={value}
                             onChange={(e) => onDraft(e.target.value)}
                             type={
@@ -188,11 +217,37 @@ export default function VariablesPanel({
                         <button
                           className="studio-primary"
                           disabled={disabled || !edited}
-                          aria-label={`Proposer ${k}`}
                         >
-                          Voir le diff
+                          Proposer
                         </button>
                       </form>
+                      <p className="token-hint">
+                        {token.$type === 'color'
+                          ? '#RRGGBB · '
+                          : token.$type === 'dimension'
+                            ? 'Pixels, de 0 à 128 · '
+                            : ''}
+                        Rien n’est écrit avant validation.
+                      </p>
+                      {edited && (
+                        <p className="draft-status" role="status">
+                          {recovered
+                            ? 'Brouillon récupéré dans cet onglet.'
+                            : 'Brouillon non enregistré.'}{' '}
+                          Rien n’est appliqué.
+                          <button type="button" onClick={onDiscard}>
+                            Abandonner le brouillon
+                          </button>
+                        </p>
+                      )}
+                      {proposed !== undefined && (
+                        <p className="contrast" role="status">
+                          Contraste proposé :{' '}
+                          <strong>{proposed.toFixed(2)}:1</strong> ·{' '}
+                          {level(proposed)}. Cette indication ne certifie pas
+                          tous les états du composant.
+                        </p>
+                      )}
                     </td>
                   </tr>
                 ),
@@ -202,8 +257,12 @@ export default function VariablesPanel({
         ))}
       </table>
       {!shown.length && <p className="token-hint">Aucune variable trouvée.</p>}
+      <p className="contrast" aria-live="polite">
+        Marque / texte sur marque : <strong>{current.toFixed(2)}:1</strong> ·{' '}
+        {level(current)}
+      </p>
       <p className="token-hint">
-        Une valeur modifiée ici ouvre le même diff que l’éditeur central. Rien
+        Une valeur modifiée ici ouvre le diff et la revue des composants. Rien
         n’est écrit avant validation. Primitives et Breakpoints restent dans
         Figma.
       </p>

@@ -109,6 +109,16 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   débrief restent propres à l’app ; à extraire s’ils entrent dans la bibliothèque
   Figma PFE – Components.
 
+## 2026-10-27 — Un seul éditeur de tokens : le panneau Variables
+
+- **Problème** : l’éditeur de l’onglet Composants doublait le panneau Variables.
+- **Décision** : éditeur retiré ; l’onglet Composants ne montre que le catalogue.
+  Le panneau Variables reprend le contraste marque / texte sur marque, le contraste
+  proposé, l’état du brouillon (récupéré après recharge) et « Abandonner le
+  brouillon ». Le lien d’évitement mène aux variables.
+- **Preuves** : 12 tests e2e adaptés (sélection par variable plutôt que par liste
+  déroulante) et 38 tests unitaires, macOS ; parcours vérifié à 1440 px.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

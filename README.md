@@ -84,7 +84,7 @@ contenant des espaces est accepté. N’utilisez ni `sudo` ni installation de se
 
 ## Votre première boucle, en deux minutes
 
-1. Dans **Design System**, choisissez `color.brand`, remplacez la valeur par `#8A3B20`.
+1. Dans **Variables**, choisissez `color.brand`, remplacez la valeur par `#8A3B20`.
 2. Cliquez **Proposer**. Le diff montre l’ancienne et la nouvelle valeur, sans écriture.
 3. Cliquez **Valider et enregistrer**. Boutons, carte de prévision et barre d’onglets changent
    dans **Composants** et dans **Aperçu** : ce sont les mêmes composants (`app/client/ParapenteDS.tsx`).

@@ -53,9 +53,7 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
     .getByRole('combobox', { name: 'Application', exact: true })
     .selectOption('lisiere');
   await page.getByRole('tab', { name: 'Composants' }).click();
-  await page
-    .getByRole('combobox', { name: 'Token', exact: true })
-    .selectOption('space.md');
+  await page.getByRole('button', { name: 'space.md', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('22');
   await page.getByRole('button', { name: 'Proposer', exact: true }).click();
   await dialog.getByRole('button', { name: 'Valider et enregistrer' }).click();
@@ -165,7 +163,7 @@ test('export navigateur, import valide avec diff, fichier invalide sans écritur
 }) => {
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Tokens sémantiques' }),
+    page.getByRole('heading', { name: 'Variables', exact: true }),
   ).toBeVisible();
   const before = await (await page.request.get('/api/state')).json();
   const download = page.waitForEvent('download');
@@ -204,9 +202,7 @@ test('V2 : contraste proposé immédiat sans modifier les composants enregistré
   page,
 }) => {
   await page.goto('/');
-  await page
-    .getByRole('combobox', { name: 'Token', exact: true })
-    .selectOption('color.brand');
+  await page.getByRole('button', { name: 'color.brand', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('#FFFFFF');
   await expect(
     page.getByText('Contraste proposé :', { exact: false }),
@@ -250,21 +246,19 @@ test('V2 : recherche, brouillon récupéré après recharge et abandon sans écr
 }) => {
   await page.goto('/');
   const before = await (await page.request.get('/api/state')).json();
-  await page.getByLabel('Rechercher un token').fill('space');
+  await page.getByLabel('Rechercher une variable').fill('space');
   await expect(
     page.getByText('3 résultat(s).', { exact: false }),
   ).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Token', exact: true })
-    .selectOption('space.lg');
+  await page.getByRole('button', { name: 'space.lg', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('31');
   await expect(
     page.getByText('Brouillon non enregistré.', { exact: false }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole('combobox', { name: 'Token', exact: true }),
-  ).toHaveValue('space.lg');
+    page.getByRole('button', { name: 'space.lg', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Valeur du token')).toHaveValue('31');
   await expect(
     page.getByText('Brouillon récupéré', { exact: false }),
@@ -283,16 +277,12 @@ test('V2 : conflit multi-onglets visible dans le diff, aucune perte de données'
   context,
 }) => {
   await page.goto('/');
-  await page
-    .getByRole('combobox', { name: 'Token', exact: true })
-    .selectOption('color.brand');
+  await page.getByRole('button', { name: 'color.brand', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('#223355');
   await page.getByRole('button', { name: 'Proposer', exact: true }).click();
   const other = await context.newPage();
   await other.goto('/');
-  await other
-    .getByRole('combobox', { name: 'Token', exact: true })
-    .selectOption('color.brand');
+  await other.getByRole('button', { name: 'color.brand', exact: true }).click();
   await other.getByLabel('Valeur du token').fill('#664422');
   await other.getByRole('button', { name: 'Proposer', exact: true }).click();
   await other.getByRole('button', { name: 'Valider et enregistrer' }).click();
@@ -314,7 +304,7 @@ test('V2 : capacité de session périmée simulée sans rejeu ambigu', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('heading', { name: 'Tokens sémantiques' }).waitFor();
+  await page.getByRole('heading', { name: 'Variables', exact: true }).waitFor();
   const boot = await (await page.request.get('/api/bootstrap')).json();
   // Un seul refus certain avant mutation, comme une capacité périmée après restart.
   let requests = 0;
@@ -331,9 +321,7 @@ test('V2 : capacité de session périmée simulée sans rejeu ambigu', async ({
     expect(route.request().headers()['x-ds-studio']).toBe(boot.csrf);
     return route.continue();
   });
-  await page
-    .getByRole('combobox', { name: 'Token', exact: true })
-    .selectOption('color.focus');
+  await page.getByRole('button', { name: 'color.focus', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('#776622');
   await page.getByRole('button', { name: 'Proposer', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -354,14 +342,14 @@ test('V2 : clavier, mobile 375 px et absence de stockage navigateur', async ({
   });
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
-  await page.getByRole('heading', { name: 'Tokens sémantiques' }).waitFor();
+  await page.getByRole('heading', { name: 'Variables', exact: true }).waitFor();
   await page.keyboard.press('Tab');
   await expect(
-    page.getByRole('link', { name: 'Aller aux tokens' }),
+    page.getByRole('link', { name: 'Aller aux variables' }),
   ).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(
-    page.getByRole('heading', { name: 'Design System', exact: true }),
+    page.getByRole('heading', { name: 'Variables', exact: true }),
   ).toBeFocused();
   await page.getByLabel('Valeur du token').fill('#114477');
   await page.getByRole('button', { name: 'Proposer', exact: true }).click();
@@ -429,15 +417,17 @@ test('panneau Variables : groupes, recherche, édition sur place et diff sans é
   await panel.getByRole('button', { name: /^Toutes/ }).click();
   await panel.getByLabel('Rechercher une variable').fill('heading');
   await expect(panel.getByRole('rowheader')).toHaveCount(1);
-  await panel.getByRole('button', { name: 'heading', exact: true }).click();
+  await panel
+    .getByRole('button', { name: 'font.heading', exact: true })
+    .click();
   const current = String(before.tokens['font.heading'].$value);
-  await expect(panel.getByLabel('Valeur de font.heading')).toHaveValue(current);
+  await expect(panel.getByLabel('Valeur du token')).toHaveValue(current);
   await expect(
-    page.getByRole('combobox', { name: 'Token', exact: true }),
-  ).toHaveValue('font.heading');
-  await panel.getByLabel('Valeur de font.heading').fill('31');
+    page.getByRole('button', { name: 'font.heading', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await panel.getByLabel('Valeur du token').fill('31');
   await expect(page.getByLabel('Valeur du token')).toHaveValue('31');
-  await panel.getByRole('button', { name: 'Proposer font.heading' }).click();
+  await panel.getByRole('button', { name: 'Proposer', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('font.heading');
   await dialog.getByRole('button', { name: 'Ne pas appliquer' }).click();
