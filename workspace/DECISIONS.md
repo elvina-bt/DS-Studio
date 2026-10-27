@@ -25,6 +25,18 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limite** : la synchronisation reste manuelle ; le préremplissage repose sur les
   titres de section de `PFE.md` (« public », « objectif / prouver / apprendre »).
 
+## 2026-10-27 — Chat Claude Code dans DS-Studio
+
+- **Problème** : le chat embarqué ne proposait que Codex ; je travaille avec Claude.
+- **Décision** : adaptateur Claude Code sur le modèle de Codex, propositions seules,
+  aucun outil, MCP ni réglage chargé, refus de toute réponse qui annonce ou appelle
+  un outil. Détails et limites : `docs/AGENT_ADAPTERS.md`.
+- **Preuves** : 35 tests (faux CLI, outils refusés, non-connexion), essais réels sous
+  macOS avec Claude Code 2.1.311 : réponse simple puis proposition en diff, révision
+  inchangée sans validation.
+- **Limite** : consomme mon quota Claude ; Windows et Linux non testés ; le chat ne
+  modifie que des tokens, pas le code ni Figma.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

@@ -37,6 +37,18 @@ async function fixture(
         throw new Error('Codex indisponible : authentification nécessaire.');
       },
     },
+    // Jamais le vrai CLI dans les tests : aucun quota consommé.
+    claude: {
+      id: 'claude',
+      async status() {
+        return { available: false, detail: 'Non connecté (simulation)' };
+      },
+      async reply() {
+        throw new Error(
+          'Claude Code non connecté : lancez « claude » puis /login.',
+        );
+      },
+    },
   });
   await new Promise<void>((r) => app.server.listen(0, '127.0.0.1', r));
   t.after(async () => {
@@ -164,7 +176,9 @@ test('IA sans compte et adaptateurs non implémentés échouent sans mutation', 
   const response = await post('agent', body);
   assert.equal(response.status, 500);
   assert.match((await response.json()).error, /authentification/);
-  assert.equal((await post('agent', { ...body, agent: 'claude' })).status, 500);
+  const claude = await post('agent', { ...body, agent: 'claude' });
+  assert.equal(claude.status, 500);
+  assert.match((await claude.json()).error, /Claude Code non connecté/);
   assert.equal((await post('agent', { ...body, agent: 'gemini' })).status, 500);
   assert.equal(store.snapshot().revision, 0);
 });

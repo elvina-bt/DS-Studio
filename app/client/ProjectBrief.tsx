@@ -70,9 +70,8 @@ export default function ProjectBrief() {
               setError('');
               setNotice('');
               try {
-                const found = await request<Partial<Project>>(
-                  'project/prefill',
-                );
+                const found =
+                  await request<Partial<Project>>('project/prefill');
                 const fields = Object.keys(found).length;
                 if (!fields) {
                   setNotice('Rien à reprendre dans workspace/PFE.md.');

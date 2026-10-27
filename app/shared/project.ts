@@ -86,7 +86,9 @@ export function briefFromMarkdown(markdown: string): Partial<Project> {
   if (goal) result.goal = goal;
   const links: FigmaLink[] = [];
   for (const line of markdown.split('\n')) {
-    for (const match of line.matchAll(/https:\/\/www\.figma\.com\/[^\s|)>\]]+/g)) {
+    for (const match of line.matchAll(
+      /https:\/\/www\.figma\.com\/[^\s|)>\]]+/g,
+    )) {
       const parsed = figmaLinkSchema.safeParse({
         label: line.trim().startsWith('|')
           ? plain(line.split('|')[1] ?? '').slice(0, 60)

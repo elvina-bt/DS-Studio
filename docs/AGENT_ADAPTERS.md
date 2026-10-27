@@ -36,16 +36,30 @@ Le protocole et la version ont été exécutés, pas seulement décrits. Pour ch
 la version acceptée, refaire le smoke test, le test hostile, le refus sans auth,
 la proposition/validation via API et les essais sur chaque OS cible.
 
-## Claude Code — NOT IMPLEMENTED
+## Claude Code — TESTED sous macOS avec 2.1.311 (expérimental)
 
-Point d’extension : `unvalidatedAdapter('claude')`. L’interface affiche son indisponibilité.
-La [documentation officielle headless](https://code.claude.com/docs/en/headless)
-décrit `claude -p` et des sorties structurées. Elle ne valide pas un contrôle des
-permissions par notre interface. Avant activation : vérifier authentification
-sans exporter le cache, désactiver les outils ou construire un protocole de demandes
-d’approbation réellement bloquant, normaliser les erreurs et le JSON, puis tester
-le refus, l’arrêt, le quota, les écritures hors scope et la non-connexion Figma.
-Ne pas remplacer cette qualification par `--dangerously-skip-permissions`.
+`connectors/agents/claude.ts`. Même contrat que Codex : propositions seules,
+diff puis validation humaine. Profil `claude -p` en `stream-json` :
+`--tools ""` (aucun outil), `--strict-mcp-config` avec une liste MCP vide,
+`--setting-sources ""` (ni réglages utilisateur ni projet), `--disable-slash-commands`,
+`--no-session-persistence`, `--permission-mode dontAsk` et `--json-schema` pour la
+réponse. Le seul outil exposé par le CLI est `StructuredOutput`, interne, qui rend le
+JSON. Tout autre outil annoncé à l’initialisation ou appelé fait refuser la réponse.
+Pas de `--bare` : il désactive la lecture du trousseau et donc la connexion par
+abonnement. Jamais `--dangerously-skip-permissions` ni `bypassPermissions`.
+
+Processus lancé dans un dossier temporaire vide, environnement réduit, prompt via
+stdin. Authentification par `claude` puis `/login`, effectuée par l’utilisateur.
+Le binaire est cherché dans le PATH puis dans `~/.local/bin/claude` (installateur
+officiel), sans lire les profils shell. Majeure 2 acceptée, le CLI se mettant à jour
+seul ; une autre majeure est refusée jusqu’à qualification.
+
+Preuves (macOS, 2.1.311) : tests unitaires avec un faux CLI (dossier vide, contexte
+par stdin, variable d’environnement non transmise, version non qualifiée refusée),
+outils annoncés ou appelés refusés, non-connexion normalisée, réponse incomplète
+refusée ; essai réel non connecté (« Not logged in » normalisé), puis connecté :
+réponse simple et proposition `color.border` renvoyée en diff sans changer la
+révision. Non testé : Windows, Linux, épuisement du quota.
 
 ## Gemini CLI — NOT IMPLEMENTED
 
