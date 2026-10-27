@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { ProjectSnapshot } from '../shared/project.js';
+import {
+  maxFigmaLinks,
+  type FigmaLink,
+  type Project,
+  type ProjectSnapshot,
+} from '../shared/project.js';
 import { downloadText, request } from './api.js';
 
 export default function ProjectBrief() {
@@ -18,12 +23,22 @@ export default function ProjectBrief() {
   useEffect(() => {
     void load();
   }, []);
+  const edit = (patch: Partial<Project>) =>
+    snapshot &&
+    setSnapshot({ ...snapshot, project: { ...snapshot.project, ...patch } });
+  const editLink = (index: number, patch: Partial<FigmaLink>) =>
+    snapshot &&
+    edit({
+      figmaLinks: snapshot.project.figmaLinks.map((link, i) =>
+        i === index ? { ...link, ...patch } : link,
+      ),
+    });
   return (
     <details className="project-brief">
       <summary>Mon PFE · brief privé</summary>
       <p>
-        Définissez votre contexte. Stocké sur ce poste, hors Git. Le lien Figma
-        est un repère, pas une synchronisation.
+        Définissez votre contexte. Stocké sur ce poste, hors Git. Les liens
+        Figma sont des repères, pas une synchronisation.
       </p>
       {error && (
         <p role="alert" className="error">
@@ -48,44 +63,118 @@ export default function ProjectBrief() {
             }
           }}
         >
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setError('');
+              setNotice('');
+              try {
+                const found = await request<Partial<Project>>(
+                  'project/prefill',
+                );
+                const fields = Object.keys(found).length;
+                if (!fields) {
+                  setNotice('Rien à reprendre dans workspace/PFE.md.');
+                  return;
+                }
+                edit(found);
+                setNotice(
+                  `${fields} champ(s) repris de workspace/PFE.md. Relisez puis enregistrez : rien n’est écrit avant.`,
+                );
+              } catch (e) {
+                setError((e as Error).message);
+              }
+            }}
+          >
+            Préremplir depuis workspace/PFE.md
+          </button>
           {(
             [
               ['name', 'Nom du PFE', 100],
               ['audience', 'Public concerné', 1000],
               ['goal', 'Objectif et critères de réussite', 2000],
-              ['figmaUrl', 'Lien Figma (facultatif)', 500],
             ] as const
           ).map(([key, label, max]) => (
             <label className="field" key={key}>
               {label}
-              {key === 'goal' || key === 'audience' ? (
+              {key === 'name' ? (
+                <input
+                  type="text"
+                  maxLength={max}
+                  value={snapshot.project[key]}
+                  disabled={busy}
+                  onChange={(e) => edit({ [key]: e.target.value })}
+                />
+              ) : (
                 <textarea
                   maxLength={max}
                   value={snapshot.project[key]}
                   disabled={busy}
-                  onChange={(e) =>
-                    setSnapshot({
-                      ...snapshot,
-                      project: { ...snapshot.project, [key]: e.target.value },
-                    })
-                  }
-                />
-              ) : (
-                <input
-                  type={key === 'figmaUrl' ? 'url' : 'text'}
-                  maxLength={max}
-                  value={snapshot.project[key]}
-                  disabled={busy}
-                  onChange={(e) =>
-                    setSnapshot({
-                      ...snapshot,
-                      project: { ...snapshot.project, [key]: e.target.value },
-                    })
-                  }
+                  onChange={(e) => edit({ [key]: e.target.value })}
                 />
               )}
             </label>
           ))}
+          <fieldset className="figma-links">
+            <legend>Liens Figma (facultatif)</legend>
+            {snapshot.project.figmaLinks.map((link, index) => (
+              <div className="figma-link" key={index}>
+                <label className="field">
+                  Nom du lien {index + 1}
+                  <input
+                    type="text"
+                    maxLength={60}
+                    placeholder="Tokens, Assets, Components…"
+                    value={link.label}
+                    disabled={busy}
+                    onChange={(e) => editLink(index, { label: e.target.value })}
+                  />
+                </label>
+                <label className="field">
+                  Lien Figma {index + 1}
+                  <input
+                    type="url"
+                    maxLength={500}
+                    placeholder="https://www.figma.com/design/…"
+                    value={link.url}
+                    disabled={busy}
+                    onChange={(e) => editLink(index, { url: e.target.value })}
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-label={`Retirer le lien ${index + 1}`}
+                  onClick={() =>
+                    edit({
+                      figmaLinks: snapshot.project.figmaLinks.filter(
+                        (_, i) => i !== index,
+                      ),
+                    })
+                  }
+                >
+                  Retirer
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              disabled={
+                busy || snapshot.project.figmaLinks.length >= maxFigmaLinks
+              }
+              onClick={() =>
+                edit({
+                  figmaLinks: [
+                    ...snapshot.project.figmaLinks,
+                    { label: '', url: '' },
+                  ],
+                })
+              }
+            >
+              Ajouter un lien Figma
+            </button>
+          </fieldset>
           <button className="studio-primary" disabled={busy}>
             {busy ? 'Enregistrement…' : 'Enregistrer le brief'}
           </button>
@@ -100,9 +189,12 @@ export default function ProjectBrief() {
         onClick={() => {
           void request<ProjectSnapshot>('project')
             .then(({ project: p }) => {
+              const links = p.figmaLinks
+                .map((l) => `- ${l.label || 'Figma'} : ${l.url}`)
+                .join('\n');
               downloadText(
                 'PFE-brief.md',
-                `# ${p.name || 'Mon PFE'}\n\n## Public\n\n${p.audience}\n\n## Objectif\n\n${p.goal}\n\n## Repère Figma (sans connexion)\n\n${p.figmaUrl}\n`,
+                `# ${p.name || 'Mon PFE'}\n\n## Public\n\n${p.audience}\n\n## Objectif\n\n${p.goal}\n\n## Repères Figma (sans connexion)\n\n${links}\n`,
               );
             })
             .catch((e) => setError(e.message));

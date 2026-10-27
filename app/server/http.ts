@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { proposeSchema } from '../shared/model.js';
 import { Store, StudioError } from './store.js';
 import { ProjectStore } from './project.js';
-import { projectSchema } from '../shared/project.js';
+import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
 import { unvalidatedAdapter } from '../../connectors/agents/unvalidated.js';
 import type { AgentAdapter } from '../../connectors/agents/types.js';
@@ -27,6 +27,13 @@ export async function createStudioServer(options: {
     gemini: unvalidatedAdapter('gemini'),
   };
   const project = new ProjectStore(store.directory);
+  const context = async (name: string) => {
+    const file = path.join(root, 'workspace', name);
+    const stat = await fs.lstat(file);
+    if (stat.isSymbolicLink() || stat.size > 32_000)
+      throw new StudioError(`Contexte ${name} refusé (lien ou taille).`);
+    return fs.readFile(file, 'utf8');
+  };
   const csrf = randomBytes(32).toString('hex');
   let busy = false;
   const active = new Set<AbortController>();
@@ -107,6 +114,8 @@ export async function createStudioServer(options: {
             );
           if (url.pathname === '/api/project')
             return send(200, await project.read());
+          if (url.pathname === '/api/project/prefill')
+            return send(200, briefFromMarkdown(await context('PFE.md')));
           if (url.pathname === '/api/state') return send(200, store.snapshot());
           if (url.pathname === '/api/export')
             return send(200, store.snapshot().tokens);
@@ -203,15 +212,6 @@ export async function createStudioServer(options: {
           const cancel = () => controller.abort();
           res.once('close', cancel);
           try {
-            const context = async (name: string) => {
-              const file = path.join(root, 'workspace', name);
-              const stat = await fs.lstat(file);
-              if (stat.isSymbolicLink() || stat.size > 32_000)
-                throw new StudioError(
-                  `Contexte ${name} refusé (lien ou taille).`,
-                );
-              return fs.readFile(file, 'utf8');
-            };
             const reply = await adapters[b.agent].reply(
               b.message,
               {

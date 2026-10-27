@@ -83,7 +83,8 @@ un état existant. Import/export servent aux palettes et au versioning volontair
 
 ## Routes utiles
 
-GET : `/api/bootstrap`, `/api/state`, `/api/export`, `/api/project`, `/api/agents`.
+GET : `/api/bootstrap`, `/api/state`, `/api/export`, `/api/project`, `/api/project/prefill`, `/api/agents`.
+Le préremplissage lit `workspace/PFE.md` et renvoie des champs proposés, sans écrire le brief.
 Le bootstrap ne lance aucun CLI : la détection IA est demandée séparément,
 uniquement après sélection d’un mode IA.
 POST : `/api/project`, `/api/proposals`, `/api/commit`, `/api/undo`, `/api/import`, `/api/agent`.

@@ -206,6 +206,14 @@ test('brief : API fermée, révision conflictuelle et aucun fichier privé servi
     400,
   );
   assert.equal((await fetch(origin + '/.ds-studio/project.json')).status, 404);
+  // Le préremplissage lit PFE.md sans rien écrire dans le brief.
+  const prefill = await fetch(origin + '/api/project/prefill');
+  assert.equal(prefill.status, 200);
+  assert.equal(typeof (await prefill.json()), 'object');
+  assert.equal(
+    (await (await fetch(origin + '/api/project')).json()).project.name,
+    'PFE test',
+  );
   assert.equal(store.snapshot().revision, 0);
 });
 
