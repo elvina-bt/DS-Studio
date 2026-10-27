@@ -50,6 +50,19 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Preuves** : 38 tests, rendu vérifié à 375 px. Tests e2e adaptés mais non
   lancés (Chromium de test non installé).
 
+## 2026-10-27 — Conformité aux consignes du starter
+
+- **Problème** : écarts relevés face au README : règles de conception génériques,
+  CLAUDE.md et AGENTS.md périmés sur Claude, variables Figma non relues, e2e non lancés.
+- **Décision** : `DESIGN_RULES.md` adapté au terrain (soleil, plages, écart neutre,
+  pas de verdict) ; instructions d’agents alignées sur l’adaptateur Claude réel.
+- **Preuves** : 38 variables Figma relues, conformes à `FIGMA_MAPPING.md` ; deux
+  écarts DS-Studio → Figma relevés (`color.canvas`, `font.heading`), non corrigés.
+  `npm run scan` : 0 alerte (avec le git de GitHub Desktop). `npm run test:e2e` :
+  11/11 sous macOS (Chromium Playwright), après correction de deux tests e2e
+  (choix d’app non conservé au rechargement ; couleur de marque laissée par un
+  test précédent). `npm run check` et `npm test` (38) passent.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

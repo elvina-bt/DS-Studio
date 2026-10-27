@@ -76,6 +76,22 @@ volontaire de valeur.
 Ce sont les largeurs déjà testées par le viewport de DS-Studio. Les ajouter comme
 tokens DS-Studio demanderait une migration du schéma (`app/shared/model.ts`).
 
+## Relecture du 2026-10-27
+
+Les 38 variables de PFE – Tokens ont été relues une à une (lecture seule, API
+Plugin) : 16 Primitives, 18 Semantics, 4 Breakpoints, un mode chacune. Valeurs,
+alias et syntaxe de code `var(--…)` conformes aux tableaux ci-dessus.
+
+L’état courant de DS-Studio s’en écarte sur deux tokens, modifiés et validés dans
+l’atelier sans report dans Figma :
+
+| Token | Figma | DS-Studio |
+| ----- | ----- | --------- |
+| `color.canvas` | `#F3F5FA` | `#F2F2F7` |
+| `font.heading` | `28` | `34` |
+
+À trancher : reporter ces valeurs dans Figma ou les annuler dans DS-Studio.
+
 ## Limites connues
 
 - Le contraste de `color/border` sur blanc (~1,7:1, calcul manuel) est sous le

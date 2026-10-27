@@ -46,6 +46,9 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
   await page.reload();
   await expect(mainButton).toHaveCSS('background-color', 'rgb(138, 59, 32)');
   await page
+    .getByRole('combobox', { name: 'Application', exact: true })
+    .selectOption('lisiere');
+  await page
     .getByRole('combobox', { name: 'Token', exact: true })
     .selectOption('space.md');
   await page.getByLabel('Valeur du token').fill('22');
@@ -370,9 +373,14 @@ test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordemen
   await expect(
     app.getByRole('heading', { name: 'Préparer', level: 1 }),
   ).toBeVisible();
+  // Les tests partagent l’état : on compare au bouton du catalogue, pas à une valeur fixe.
+  const brand = await page
+    .locator('.ds-panel')
+    .getByRole('button', { name: 'Action principale', exact: true })
+    .evaluate((el) => getComputedStyle(el).backgroundColor);
   await expect(
     app.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
-  ).toHaveCSS('background-color', 'rgb(49, 84, 196)');
+  ).toHaveCSS('background-color', brand);
   for (const tab of ['Débriefer', 'Progresser', 'Profil', 'Préparer']) {
     await app.getByRole('button', { name: tab, exact: true }).click();
     await expect(
