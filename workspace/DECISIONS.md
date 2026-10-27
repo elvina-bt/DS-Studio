@@ -40,6 +40,16 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   pour montrer un écran Figma ou un rendu. Envoyées au fournisseur, jamais stockées.
   38 tests ; essai réel réussi.
 
+## 2026-10-27 — Aperçu : mon app parapente
+
+- **Décision** : l’aperçu responsive affiche par défaut mon app (4 onglets :
+  Préparer, Débriefer, Progresser, Profil), structure iOS inspirée des apps de vol
+  libre existantes, sans reprendre leur marque. Lisière reste sélectionnable.
+  Le diff montre un aperçu visuel avant/après de chaque token.
+- **Garde-fou** : l’écart prévu / vécu est neutre (badge), jamais `color.danger`.
+- **Preuves** : 38 tests, rendu vérifié à 375 px. Tests e2e adaptés mais non
+  lancés (Chromium de test non installé).
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

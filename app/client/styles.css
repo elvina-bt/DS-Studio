@@ -759,6 +759,179 @@ del {
   font-size: 10px;
   color: var(--color-muted);
 }
+/* App parapente du PFE : structure iOS (grand titre, cartes groupées, onglets),
+   valeurs issues des tokens uniquement. */
+.pp-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-canvas);
+}
+.pp-screen {
+  flex: 1;
+  padding: var(--space-lg) var(--space-md) var(--space-lg);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.ds .pp-screen h1 {
+  font-size: calc(var(--font-heading) * 1.2);
+  margin: var(--space-md) 0 var(--space-md);
+}
+.ds .pp-section {
+  font-size: calc(var(--font-body) * 0.8125);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  margin: var(--space-lg) var(--space-md) var(--space-sm);
+}
+.pp-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-control) * 1.4);
+  padding: var(--space-md);
+}
+.ds .pp-card h3 {
+  font-size: calc(var(--font-body) * 1.25);
+  margin: var(--space-sm) 0 0;
+}
+.ds .pp-card p {
+  margin: var(--space-sm) 0;
+}
+.pp-kicker {
+  font-size: calc(var(--font-body) * 0.75);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-brand);
+}
+.pp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 44px;
+  border-top: 1px solid var(--color-border);
+}
+.pp-list .pp-row:first-child {
+  border-top: 0;
+}
+.pp-list {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.pp-row-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-muted);
+  text-align: right;
+}
+.pp-row input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-brand);
+}
+.ds .pp-note {
+  font-size: calc(var(--font-body) * 0.8125);
+  color: var(--color-muted);
+}
+.pp-pad {
+  padding: 0 var(--space-md);
+}
+.pp-search input {
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.pp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.pp-action {
+  display: grid;
+  margin-top: var(--space-lg);
+}
+.pp-compare > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-border);
+}
+.pp-compare > .pp-compare-head {
+  border-top: 0;
+  font-size: calc(var(--font-body) * 0.8125);
+  color: var(--color-muted);
+}
+.pp-compare [role='rowheader'] {
+  color: var(--color-muted);
+}
+.pp-compare [role='cell']:last-child {
+  font-weight: 600;
+}
+.ds .pp-gap {
+  color: var(--color-text);
+}
+.ds-form select {
+  font: inherit;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.pp-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+.pp-stats div {
+  display: grid;
+  gap: 2px;
+}
+.pp-stats strong {
+  font-size: calc(var(--font-body) * 1.4);
+}
+.pp-stats span {
+  font-size: calc(var(--font-body) * 0.8125);
+  color: var(--color-muted);
+}
+.pp-tabbar {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-sm) 0 var(--space-md);
+}
+.pp-tabbar button {
+  font: inherit;
+  font-size: calc(var(--font-body) * 0.6875);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.pp-tabbar button[aria-current='page'] {
+  color: var(--color-brand);
+}
 @media (min-width: 700px) {
   .scenario-grid {
     grid-template-columns: 1fr 1fr;

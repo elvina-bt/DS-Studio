@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Catalogue, Scenario } from './DesignSystem.js';
 import ProjectBrief from './ProjectBrief.js';
+import { ParapenteApp } from './ParapenteApp.js';
 import TokenPreview from './TokenPreview.js';
 import { useTokenDraft } from './useTokenDraft.js';
 import {
@@ -71,10 +72,14 @@ function announceChange() {
 }
 export function Preview() {
   const { state, error } = useDesignState();
-  const scenario =
-    new URLSearchParams(location.search).get('scenario') ?? 'cards';
+  const params = new URLSearchParams(location.search);
+  const scenario = params.get('scenario') ?? 'cards';
   return state ? (
-    <Scenario tokens={state.tokens} scenario={scenario} />
+    params.get('app') === 'lisiere' ? (
+      <Scenario tokens={state.tokens} scenario={scenario} />
+    ) : (
+      <ParapenteApp tokens={state.tokens} />
+    )
   ) : (
     <p role="alert">{error || 'Chargement du scénario…'}</p>
   );
@@ -104,6 +109,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [device, setDevice] = useState(1);
   const [scenario, setScenario] = useState('cards');
+  const [previewApp, setPreviewApp] = useState('parapente');
   const [agent, setAgent] = useState('manual');
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<
@@ -744,20 +750,32 @@ export default function App() {
               </select>
             </label>
             <label className="field">
-              Scénario
+              Application
               <select
-                value={scenario}
-                onChange={(e) => setScenario(e.target.value)}
+                value={previewApp}
+                onChange={(e) => setPreviewApp(e.target.value)}
               >
-                <option value="cards">Découvrir</option>
-                <option value="form">Inscription</option>
+                <option value="parapente">Mon app parapente</option>
+                <option value="lisiere">Lisière · exemple du starter</option>
               </select>
             </label>
+            {previewApp === 'lisiere' && (
+              <label className="field">
+                Scénario
+                <select
+                  value={scenario}
+                  onChange={(e) => setScenario(e.target.value)}
+                >
+                  <option value="cards">Découvrir</option>
+                  <option value="form">Inscription</option>
+                </select>
+              </label>
+            )}
           </div>
           <div className="viewport-scroll">
             <iframe
               title="Aperçu responsive"
-              src={`/?preview=1&scenario=${scenario}`}
+              src={`/?preview=1&app=${previewApp}&scenario=${scenario}`}
               width={devices[device].width}
               height={760}
             />

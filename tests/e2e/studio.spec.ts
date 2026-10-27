@@ -11,6 +11,9 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
     page.getByText('Figma non connecté', { exact: true }),
   ).toBeVisible();
   const catalogue = page.locator('.ds-panel');
+  await page
+    .getByRole('combobox', { name: 'Application', exact: true })
+    .selectOption('lisiere');
   const mobile = page.frameLocator('iframe');
   const mainButton = catalogue.getByRole('button', {
     name: 'Action principale',
@@ -63,6 +66,9 @@ test('largeurs réelles, interactions, formulaire et desktop responsive', async 
   page,
 }) => {
   await page.goto('/');
+  await page
+    .getByRole('combobox', { name: 'Application', exact: true })
+    .selectOption('lisiere');
   const frame = page.frameLocator('iframe');
   for (const [value, width] of [
     ['0', 320],
@@ -351,5 +357,32 @@ test('V2 : clavier, mobile 375 px et absence de stockage navigateur', async ({
   await page.keyboard.press('Escape');
   expect(
     await page.locator('body').evaluate((el) => el.scrollWidth <= innerWidth),
+  ).toBe(true);
+});
+
+test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordement', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const app = page.frameLocator('iframe');
+  await expect(
+    app.getByRole('heading', { name: 'Préparer', level: 1 }),
+  ).toBeVisible();
+  await expect(
+    app.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
+  ).toHaveCSS('background-color', 'rgb(49, 84, 196)');
+  for (const tab of ['Débriefer', 'Progresser', 'Profil', 'Préparer']) {
+    await app.getByRole('button', { name: tab, exact: true }).click();
+    await expect(
+      app.getByRole('heading', { name: tab, level: 1 }),
+    ).toBeVisible();
+  }
+  await page
+    .getByRole('combobox', { name: 'Viewport', exact: true })
+    .selectOption('0');
+  expect(
+    await app
+      .locator('body')
+      .evaluate((el) => el.scrollWidth <= window.innerWidth),
   ).toBe(true);
 });
