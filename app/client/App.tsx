@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Catalogue, Scenario } from './DesignSystem.js';
 import ProjectBrief from './ProjectBrief.js';
+import TokenPreview from './TokenPreview.js';
 import { useTokenDraft } from './useTokenDraft.js';
 import {
   bootstrap,
@@ -801,17 +802,35 @@ export default function App() {
               </tr>
             </thead>
             <tbody>
-              {proposal?.patches.map((p) => (
-                <tr key={p.key}>
-                  <th>{p.key}</th>
-                  <td>
-                    <del>{p.before}</del>
-                  </td>
-                  <td>
-                    <ins>{p.after}</ins>
-                  </td>
-                </tr>
-              ))}
+              {proposal?.patches.map((p) => {
+                const surface = (after: boolean) =>
+                  String(
+                    proposal.patches.find((q) => q.key === 'color.surface')?.[
+                      after ? 'after' : 'before'
+                    ] ?? state.tokens['color.surface'].$value,
+                  );
+                return (
+                  <tr key={p.key}>
+                    <th>{p.key}</th>
+                    <td>
+                      <TokenPreview
+                        tokenKey={p.key}
+                        value={p.before}
+                        surface={surface(false)}
+                      />
+                      <del>{p.before}</del>
+                    </td>
+                    <td>
+                      <TokenPreview
+                        tokenKey={p.key}
+                        value={p.after}
+                        surface={surface(true)}
+                      />
+                      <ins>{p.after}</ins>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -158,10 +158,11 @@ test('requêtes malformées et trop grandes refusées', async (t) => {
     413,
   );
   // Le chat accepte des captures, mais reste borné.
-  assert.equal(
-    (await post('agent', { data: 'x'.repeat(8_600_000) })).status,
-    413,
+  // Le serveur coupe pendant l'envoi : 413 ou connexion fermée, jamais accepté.
+  const oversized = await post('agent', { data: 'x'.repeat(8_600_000) }).catch(
+    () => null,
   );
+  assert(oversized === null || oversized.status === 413);
   const png =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
   const ask = { agent: 'claude', revision: 0, message: 'Vu ?', history: [] };

@@ -486,6 +486,30 @@ ins {
 del {
   color: #a3203c;
 }
+.token-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  margin-bottom: 6px;
+}
+.token-preview-shape {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  color: #19243d;
+  border: 1px solid #dbe0e8;
+}
+.token-preview-shape:empty {
+  border-color: #c3cad6;
+}
+.token-preview-shape:not(:empty) {
+  border: 0;
+}
+.token-preview small {
+  font-size: 11px;
+  color: #526079;
+}
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
