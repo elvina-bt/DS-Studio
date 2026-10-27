@@ -10,7 +10,7 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
     }),
   ).toBeVisible();
   await expect(
-    page.getByText('Figma non connecté', { exact: true }),
+    page.getByText('Figma : synchro manuelle via Claude Code', { exact: true }),
   ).toBeVisible();
   const catalogue = page.locator('.ds-panel');
   await page.getByRole('tab', { name: 'Aperçu' }).click();

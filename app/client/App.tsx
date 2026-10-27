@@ -288,7 +288,7 @@ export default function App() {
         <div className="header-status">
           <span className="local-badge">● Local · V2</span>
           <span className="muted">
-            {boot?.figma.label ?? 'Figma non connecté'}
+            {boot?.figma.label ?? 'Figma : synchro manuelle via Claude Code'}
           </span>
           <button
             onClick={() => setHistoryOpen(!historyOpen)}

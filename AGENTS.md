@@ -22,7 +22,8 @@ dialogue de permissions. Le chat ne propose que des tokens connus. Le brief priv
 ## Skills
 
 Codex peut découvrir `.agents/skills/`. Utilisez `$token-change` pour une évolution
-de token et `$component-audit` pour vérifier sa propagation. Les autres agents
+de token, `$component-audit` pour vérifier sa propagation et `figma-sync` pour
+synchroniser la collection Semantics de Figma (agent du terminal uniquement). Les autres agents
 peuvent lire ces fichiers explicitement ; leur découverte native n’est pas affirmée.
 
 ## Vérifications

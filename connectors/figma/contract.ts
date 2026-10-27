@@ -16,8 +16,10 @@ export interface FigmaConnector {
     approvalId: string,
   ): Promise<{ revision: string; readback: Tokens }>;
 }
+// L'atelier n'a aucune connexion Figma. La synchro passe par l'agent du terminal
+// (skill .agents/skills/figma-sync), avec diff et validation humaine.
 export const figmaStatus = {
   connected: false,
-  label: 'Figma non connecté',
+  label: 'Figma : synchro manuelle via Claude Code',
   writeEnabled: false,
 } as const;

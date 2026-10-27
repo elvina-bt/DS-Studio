@@ -155,7 +155,7 @@ Inspirez-vous des deux skills fournis, sans copier vos identifiants ou vos conve
 | Chat Codex, JSON proposé avant acceptation                          | **TESTED**, CLI 0.164.0, compte enseignant disponible pendant la qualification ; quota non garanti |
 | Chat Claude Code, JSON proposé avant acceptation                    | **TESTED**, macOS, CLI 2.1.311, compte personnel ; quota non garanti, expérimental                 |
 | Gemini dans l’application                                           | **NOT IMPLEMENTED**, adaptateur indisponible et contrat documenté                                  |
-| Figma MCP et synchronisation                                        | **NOT IMPLEMENTED**, statut non connecté, contrat et procédure future documentés                   |
+| Figma MCP et synchronisation                                        | **PARTIAL**, application non connectée ; synchro manuelle via Claude Code (skill `figma-sync`)    |
 | Skills et harness personnalisable                                   | **IMPLEMENTED**, structure et liens vérifiés ; pas une validation des choix d’un étudiant          |
 | Qualification automatisée Windows / macOS                           | **TESTED en CI** pour API, navigateur et contrôleur ; **PARTIAL** pour Finder/WSH natifs           |
 | Application desktop installable                                     | **NOT IMPLEMENTED**, application web locale uniquement                                             |

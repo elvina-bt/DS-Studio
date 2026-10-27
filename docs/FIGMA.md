@@ -11,6 +11,18 @@ nouveau client doit passer par la procédure d’admission. DS-Studio n’est pa
 client autorisé. Ne jamais usurper un client, extraire un jeton, réutiliser une session
 Codex ou recopier des cookies pour contourner cette restriction.
 
+## Synchro manuelle via Claude Code (projet PFE parapente)
+
+L’en-tête affiche « Figma : synchro manuelle via Claude Code » : l’application reste
+**non connectée** (`figmaStatus.connected = false`). La synchro est faite par l’agent du
+terminal, client MCP autorisé par Figma, en suivant `.agents/skills/figma-sync` :
+relevé en lecture seule de la collection Semantics, conversion testée
+(`app/shared/figma.ts`, `npm run figma:import` / `figma:plan`), import par diff validé
+dans l’atelier, et report vers Figma après accord explicite, simulation puis relecture.
+Le chat embarqué n’a toujours aucun accès Figma. Testé sous macOS le 2026-10-27 :
+relevé, conversion, plan et simulation sur PFE – Tokens ; écriture réelle non encore
+exécutée.
+
 ## Parcours réaliste aujourd’hui
 
 1. Garder votre DS réel dans Figma et identifier son périmètre de travail.

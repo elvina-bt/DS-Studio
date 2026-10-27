@@ -119,6 +119,25 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Preuves** : 12 tests e2e adaptés (sélection par variable plutôt que par liste
   déroulante) et 38 tests unitaires, macOS ; parcours vérifié à 1440 px.
 
+## 2026-10-27 — Synchro Figma via Claude Code
+
+- **Problème** : « Figma non connecté » et aucune façon reproductible d’aligner
+  PFE – Tokens et l’atelier. L’API REST des variables est réservée au plan
+  Enterprise ; DS-Studio n’est pas un client MCP autorisé par Figma.
+- **Décision** : synchro **manuelle** portée par l’agent du terminal, skill
+  `.agents/skills/figma-sync` : relevé en lecture seule (`read.js`), conversion
+  testée (`app/shared/figma.ts`, `npm run figma:import` / `figma:plan`), import par
+  le diff de l’atelier, report vers Figma (`apply.js`) après accord, simulation
+  (`dryRun`) puis relecture. Règle d’alias : jamais de primitive partagée ni de
+  `size/<n>` modifiée. En-tête : « Figma : synchro manuelle via Claude Code » ;
+  l’application reste non connectée.
+- **Preuves** : 3 tests de conversion (41 tests au total), 12 tests e2e, macOS.
+  Essai réel sur PFE – Tokens : relevé des 18 variables, import et plan cohérents
+  (2 écarts : `color.canvas` #F2F2F7 / #F3F5FA, `font.heading` 34 / 28), simulation
+  sans écriture. La simulation a révélé un nom trompeur (`size/28` = 34), corrigé.
+- **Limite** : écriture réelle dans Figma pas encore exécutée ; publication des
+  bibliothèques par l’étudiante dans Figma ; consomme le quota Figma MCP et Claude.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.
