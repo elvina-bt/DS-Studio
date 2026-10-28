@@ -324,26 +324,38 @@ small,
   box-shadow: 0 8px 20px #1b2e4a12;
   flex: none;
 }
-/* Panneau flottant sous le bouton Historique, au-dessus des deux vues. */
+/* Historique : fenêtre modale centrée sur un fond assombri. */
 .history {
-  position: fixed;
-  top: calc(var(--studio-header-h, 80px) + 8px);
-  right: 16px;
-  z-index: 20;
-  width: min(560px, calc(100vw - 32px));
-  max-height: calc(100svh - var(--studio-header-h, 80px) - 24px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 18px 20px;
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(86svh, 900px);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
   background: #fff;
-  border: 1px solid #e0e4ec;
-  border-radius: 12px;
-  box-shadow: 0 12px 36px rgba(20, 30, 50, 0.14);
+  box-shadow: 0 24px 64px rgba(20, 30, 50, 0.24);
+  overscroll-behavior: contain;
+}
+.history::backdrop {
+  background: rgba(20, 25, 35, 0.36);
+}
+.history-body {
+  padding: 22px 24px 18px;
+}
+.history-body > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.history-body > header button {
+  border: 0;
+  background: transparent;
+  color: #657187;
+  padding: 4px 8px;
 }
 .history h2 {
-  margin-bottom: 8px;
+  margin: 0;
 }
-.history > p {
+.history-body > p {
   font-size: 12px;
 }
 .history ol {

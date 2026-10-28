@@ -440,9 +440,9 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
   await expect(
     page.getByRole('heading', { name: 'Bienvenue', level: 2 }),
   ).toBeVisible();
-  // L'historique flotte au-dessus de la doc et se ferme avec Échap.
+  // L'historique s'ouvre en fenêtre centrée et se ferme avec Échap.
   await page.getByRole('button', { name: /Historique/ }).click();
-  const history = page.getByRole('region', {
+  const history = page.getByRole('dialog', {
     name: 'Historique des changements',
   });
   await expect(history).toBeVisible();
@@ -452,7 +452,7 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
     ),
   ).toBe(true);
   await page.keyboard.press('Escape');
-  await expect(history).toHaveCount(0);
+  await expect(history).not.toBeVisible();
   await expect(page.getByRole('button', { name: /Historique/ })).toBeFocused();
   await page.getByRole('link', { name: 'Atelier', exact: true }).click();
   await page.getByRole('link', { name: 'Documentation', exact: true }).click();

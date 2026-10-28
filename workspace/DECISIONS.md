@@ -216,7 +216,9 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   il déplace désormais le focus sans toucher à l’adresse. 52 tests, 14 e2e.
 - **Ajout** : l’historique s’insérait dans la page (colonnes poussées vers le bas,
   sommaire superposé). Il devient un panneau flottant sous son bouton, fermé par
-  Échap ou un clic à côté, identique dans les deux vues. 52 tests, 14 e2e.
+  Échap ou un clic à côté, identique dans les deux vues. Puis fenêtre modale centrée
+  (`<dialog>` natif, fond assombri, focus rendu au bouton) ; « Annuler la révision »
+  ferme l’historique pour laisser le diff seul. 52 tests, 14 e2e.
 
 ## À compléter par l’étudiant
 

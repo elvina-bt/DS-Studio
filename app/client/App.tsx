@@ -152,31 +152,13 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  // Historique en panneau flottant : Échap ou un clic à côté le ferme.
-  const historyPanel = useRef<HTMLElement>(null);
-  const historyButton = useRef<HTMLButtonElement>(null);
+  // Historique en fenêtre modale centrée : Échap, le fond ou le bouton le ferme ;
+  // le navigateur rend le focus au bouton Historique.
+  const historyDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (!historyOpen) return;
-    const outside = (e: PointerEvent) => {
-      const target = e.target as Node;
-      if (
-        !historyPanel.current?.contains(target) &&
-        !historyButton.current?.contains(target) &&
-        !(target instanceof Element && target.closest('dialog'))
-      )
-        setHistoryOpen(false);
-    };
-    const escape = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
-      setHistoryOpen(false);
-      historyButton.current?.focus();
-    };
-    document.addEventListener('pointerdown', outside);
-    document.addEventListener('keydown', escape);
-    return () => {
-      document.removeEventListener('pointerdown', outside);
-      document.removeEventListener('keydown', escape);
-    };
+    const el = historyDialog.current;
+    if (historyOpen && !el?.open) el?.showModal();
+    if (!historyOpen && el?.open) el.close();
   }, [historyOpen]);
   // La doc cale sa navigation et le panneau Claude sous l'en-tête fixe.
   const headerObserver = useRef<ResizeObserver | null>(null);
@@ -388,7 +370,6 @@ export default function App() {
         <div className="header-status">
           <span className="local-badge">● Local · V2</span>
           <button
-            ref={historyButton}
             onClick={() => setHistoryOpen(!historyOpen)}
             aria-expanded={historyOpen}
           >
@@ -441,13 +422,27 @@ export default function App() {
           </p>
         )}
       </div>
-      {historyOpen && (
-        <section
-          ref={historyPanel}
-          className="history"
-          aria-label="Historique des changements"
-        >
-          <h2>Historique</h2>
+      <dialog
+        ref={historyDialog}
+        className="history"
+        aria-label="Historique des changements"
+        onClose={() => setHistoryOpen(false)}
+        onClick={(e) => {
+          // Clic sur le fond assombri, hors du contenu : on ferme.
+          if (e.target === e.currentTarget) setHistoryOpen(false);
+        }}
+      >
+        <div className="history-body">
+          <header>
+            <h2>Historique</h2>
+            <button
+              type="button"
+              aria-label="Fermer l’historique"
+              onClick={() => setHistoryOpen(false)}
+            >
+              ✕
+            </button>
+          </header>
           <p>
             Annuler une révision ne touche qu’à ses tokens, et s’enregistre
             aussi.
@@ -471,7 +466,9 @@ export default function App() {
                     Revoir la révision {event.revision}
                   </button>
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      // Une seule fenêtre à la fois : le diff remplace l'historique.
+                      setHistoryOpen(false);
                       void perform(async () =>
                         setProposal(
                           await request('undo', {
@@ -479,8 +476,8 @@ export default function App() {
                             id: event.id,
                           }),
                         ),
-                      )
-                    }
+                      );
+                    }}
                   >
                     Annuler la révision {event.revision}
                   </button>
@@ -501,8 +498,8 @@ export default function App() {
               </li>
             ))}
           </ol>
-        </section>
-      )}
+        </div>
+      </dialog>
       {route.view === 'docs' ? (
         <main
           className="docs-shell"
