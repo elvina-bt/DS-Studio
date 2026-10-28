@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Scenario } from './DesignSystem.js';
 import { ParapenteCatalogue } from './ParapenteDS.js';
 import ProjectBrief from './ProjectBrief.js';
@@ -143,6 +143,19 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // La doc cale sa navigation et le panneau Claude sous l'en-tête fixe.
+  const headerObserver = useRef<ResizeObserver | null>(null);
+  const header = useCallback((el: HTMLElement | null) => {
+    headerObserver.current?.disconnect();
+    if (!el) return;
+    headerObserver.current = new ResizeObserver(() =>
+      document.documentElement.style.setProperty(
+        '--studio-header-h',
+        `${el.offsetHeight}px`,
+      ),
+    );
+    headerObserver.current.observe(el);
+  }, []);
   const [reviewing, setReviewing] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const cancelButton = useRef<HTMLButtonElement>(null);
@@ -300,7 +313,7 @@ export default function App() {
           Aller aux variables
         </a>
       )}
-      <header className="studio-header">
+      <header ref={header} className="studio-header">
         <div className="wordmark">
           <span className="brand-symbol">ds.</span>
           <div>
@@ -329,7 +342,7 @@ export default function App() {
             Documentation
           </a>
         </nav>
-        <div className="header-status" hidden={route.view === 'docs'}>
+        <div className="header-status">
           <span className="local-badge">● Local · V2</span>
           <span className="muted">
             {boot?.figma.label ?? 'Figma : synchro manuelle via Claude Code'}
@@ -745,10 +758,6 @@ export default function App() {
           </section>
         </main>
       )}
-      <footer className="studio-footer">
-        <span>DS-Studio V2 · Fait pour être transformé.</span>
-        <span>JSON local → validation → composants partagés</span>
-      </footer>
       <dialog
         ref={dialog}
         onCancel={(e) => {

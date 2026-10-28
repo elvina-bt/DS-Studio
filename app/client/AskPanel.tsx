@@ -6,7 +6,8 @@ import { DocContent } from './DocContent.js';
 
 // Questions sur le DS, posées à Claude Code en lecture seule : il reçoit la doc,
 // les tokens validés et les règles, répond et cite ses pages. Rien n'est écrit ;
-// la conversation vit en mémoire, jamais dans le navigateur.
+// la conversation vit en mémoire, jamais dans le navigateur. Colonne toujours
+// ouverte, dans le style de claude.ai.
 type Message = {
   role: 'user' | 'assistant';
   text: string;
@@ -25,30 +26,27 @@ export default function AskPanel({
   tokens: Tokens;
   onNavigate: (slug: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState('');
   const controller = useRef<AbortController | null>(null);
-  const input = useRef<HTMLTextAreaElement>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const log = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    input.current?.focus();
     request<{ id: string; available: boolean; detail: string }[]>('agents')
       .then((agents) => {
         const claude = agents.find((a) => a.id === 'claude');
         setUnavailable(claude?.available ? '' : (claude?.detail ?? ''));
       })
       .catch(() => {});
-  }, [open]);
+    return () => controller.current?.abort();
+  }, []);
+  // Défilement du fil seul : la page de doc ne bouge pas.
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
+    if (log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [messages, pending]);
-  useEffect(() => () => controller.current?.abort(), []);
 
   async function ask(text: string) {
     const q = text.trim();
@@ -77,56 +75,28 @@ export default function AskPanel({
     setPending(false);
   }
 
-  if (!open)
-    return (
-      <button
-        type="button"
-        className="ask-toggle"
-        aria-expanded={false}
-        onClick={() => setOpen(true)}
-      >
-        Demander
-      </button>
-    );
-
   return (
-    <aside
-      className="ask-panel"
-      aria-label="Demander au Design System"
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') setOpen(false);
-      }}
-    >
+    <aside className="ask-panel" aria-label="Demander au Design System">
       <header>
-        <h2>Demander</h2>
-        <div>
-          {messages.length > 0 && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                setMessages([]);
-                setError('');
-              }}
-            >
-              Effacer
-            </button>
-          )}
+        <h2>Demander à Claude</h2>
+        {messages.length > 0 && (
           <button
             type="button"
-            aria-label="Fermer"
-            aria-expanded={true}
-            onClick={() => setOpen(false)}
+            disabled={pending}
+            onClick={() => {
+              setMessages([]);
+              setError('');
+            }}
           >
-            ✕
+            Effacer
           </button>
-        </div>
+        )}
       </header>
-      <div className="ask-messages" role="log" aria-live="polite">
+      <div className="ask-messages" ref={log} role="log" aria-live="polite">
         {messages.length === 0 && (
           <div className="ask-empty">
             <p>
-              Claude lit ta doc, tes tokens et tes règles pour répondre. Il ne
+              Je lis ta doc, tes tokens et tes règles pour répondre. Je ne
               modifie rien.
             </p>
             {suggestions.map((s) => (
@@ -174,7 +144,6 @@ export default function AskPanel({
             {error}
           </p>
         )}
-        <div ref={end} />
       </div>
       {unavailable && <p className="ask-unavailable">{unavailable}</p>}
       <form
@@ -185,7 +154,6 @@ export default function AskPanel({
         }}
       >
         <textarea
-          ref={input}
           aria-label="Ta question"
           placeholder="Pose une question sur le DS…"
           rows={2}
@@ -204,12 +172,21 @@ export default function AskPanel({
           }}
         />
         {pending ? (
-          <button type="button" onClick={() => controller.current?.abort()}>
-            Arrêter
+          <button
+            type="button"
+            className="ask-send"
+            aria-label="Arrêter"
+            onClick={() => controller.current?.abort()}
+          >
+            <span aria-hidden="true">■</span>
           </button>
         ) : (
-          <button className="studio-primary" disabled={!question.trim()}>
-            Envoyer
+          <button
+            className="ask-send"
+            aria-label="Envoyer"
+            disabled={!question.trim()}
+          >
+            <span aria-hidden="true">↑</span>
           </button>
         )}
       </form>

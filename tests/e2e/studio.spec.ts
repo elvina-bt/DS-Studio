@@ -460,6 +460,8 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
   await expect(
     outline.getByRole('button', { name: 'Aperçu', exact: true }),
   ).toHaveAttribute('aria-current', 'location');
+  // La carte du sommaire s'ouvre au survol : on éloigne la souris.
+  await page.mouse.move(0, 0);
 
   await page.getByRole('button', { name: 'Modifier la page' }).click();
   const editor = page.getByRole('form', { name: 'Modifier la page' });
@@ -504,7 +506,6 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
     });
   });
   await page.goto('/#/docs');
-  await page.getByRole('button', { name: 'Demander' }).click();
   const panel = page.getByRole('complementary', {
     name: 'Demander au Design System',
   });
@@ -518,6 +519,6 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
     .click();
   await expect(page).toHaveURL(/#\/docs\/couleurs$/);
   await expect(panel).toBeVisible();
-  await panel.getByRole('button', { name: 'Fermer' }).click();
-  await expect(panel).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Effacer' }).click();
+  await expect(panel.locator('.ask-answer')).toHaveCount(0);
 });

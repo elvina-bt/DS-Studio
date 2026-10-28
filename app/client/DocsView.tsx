@@ -85,6 +85,7 @@ export default function DocsView({
   const [notice, setNotice] = useState('');
   const dialog = useRef<HTMLDialogElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
+  const main = useRef<HTMLDivElement>(null);
 
   async function load() {
     const result = await request<{ docs: Stored[]; invalid: string[] }>('docs');
@@ -243,7 +244,7 @@ export default function DocsView({
         )}
       </nav>
 
-      <div className="docs-main">
+      <div className="docs-main" ref={main}>
         <div className="feedback" aria-live="polite">
           {error && (
             <p className="error" role="alert">
@@ -451,7 +452,11 @@ export default function DocsView({
               onNavigate={(s) => go(s)}
               anchored
             />
-            <PageOutline title={shown.title} anchors={anchors} />
+            <PageOutline
+              title={shown.title}
+              anchors={anchors}
+              scroller={main}
+            />
           </article>
         )}
       </div>

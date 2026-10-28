@@ -181,6 +181,12 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   pages citées.
 - **Limite** : consomme mon quota Claude ; toute la doc part à chaque question
   (assez petite aujourd’hui) ; conversation perdue au rechargement.
+- **Ajout** : panneau toujours ouvert, style claude.ai (Arial, titres non gras, bulles
+  crème, envoi rond). Doc en plein écran (`100svh`) : navigation, page et chat
+  défilent chacun de leur côté ; sous 1100 px, la page défile en entier. En-tête
+  identique dans les deux vues (sélecteur centré) ; pied de page retiré. Bug vu en
+  e2e : la carte du sommaire restait ouverte après un clic (focus), ouverte
+  désormais au survol ou au focus clavier seulement. 49 tests, 14 e2e.
 
 ## À compléter par l’étudiant
 
