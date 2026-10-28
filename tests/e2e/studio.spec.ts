@@ -470,6 +470,10 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
     specimen.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
   ).toBeVisible();
   await expect(page.locator('.doc-callout.dont')).toHaveCount(1);
+  // Les outils du canvas ne doivent pas restyler les composants de l'aperçu.
+  await expect(
+    specimen.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
+  ).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   // Stories : variante, code généré et lien direct vers une variante.
   await specimen.getByRole('button', { name: 'Secondaire' }).click();
   await expect(

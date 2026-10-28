@@ -2147,8 +2147,11 @@ h2[id] {
   border-radius: 10px;
   overflow: hidden;
 }
-.story button,
-.story select {
+/* Outils du canvas seulement : jamais les composants de l'aperçu. */
+.story-variants button,
+.story-toolbar button,
+.story-toolbar select,
+.story-meta button {
   border: 0;
   background: transparent;
   color: var(--doc-muted, #787774);
@@ -2157,8 +2160,10 @@ h2[id] {
   padding: 4px 8px;
   border-radius: 6px;
 }
-.story button:hover:not(:disabled),
-.story select:hover {
+.story-variants button:hover:not(:disabled),
+.story-toolbar button:hover:not(:disabled),
+.story-toolbar select:hover,
+.story-meta button:hover {
   background: var(--doc-soft, #f7f7f5);
   color: var(--doc-text, #2f3437);
 }
@@ -2251,8 +2256,16 @@ h2[id] {
   color: var(--doc-muted, #787774);
   padding: 0;
 }
-.story-copied {
+.story-meta button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.story .story-meta button.is-copied {
+  background: #eef8f2;
   color: #1d6b47;
-  font-size: 12px;
-  min-width: 0;
+}
+.story .story-meta button.is-failed {
+  background: #fdf1f0;
+  color: #a5302b;
 }

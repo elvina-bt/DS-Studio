@@ -219,6 +219,10 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   Échap ou un clic à côté, identique dans les deux vues. Puis fenêtre modale centrée
   (`<dialog>` natif, fond assombri, focus rendu au bouton) ; « Annuler la révision »
   ferme l’historique pour laisser le diff seul. 52 tests, 14 e2e.
+- **Ajout** : historique épuré (tokens d’abord, révision en gris, « Revoir » /
+  « Annuler »). Canvas : le bouton de copie devient « ✓ Code copié » sur fond vert.
+  Bug corrigé : les styles des outils du canvas restylaient aussi les boutons du DS
+  dans l’aperçu (texte brut) ; contrôle e2e ajouté. 52 tests, 14 e2e.
 
 ## À compléter par l’étudiant
 

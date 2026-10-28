@@ -89,7 +89,10 @@ export default function StoryCanvas({
     useState<(typeof backgrounds)[number]['id']>('canvas');
   const [width, setWidth] = useState<(typeof widths)[number]>(null);
   const [zoom, setZoom] = useState(1);
-  const [copied, setCopied] = useState('');
+  // Le bouton cliqué affiche lui-même le résultat de la copie, puis revient.
+  const [copied, setCopied] = useState<{ what: string; ok: boolean } | null>(
+    null,
+  );
   const figure = useRef<HTMLElement>(null);
 
   // Lien direct vers une variante : on la montre et on la fait venir à l'écran.
@@ -103,7 +106,7 @@ export default function StoryCanvas({
   }, [selected, group]);
   useEffect(() => {
     if (!copied) return;
-    const t = setTimeout(() => setCopied(''), 1800);
+    const t = setTimeout(() => setCopied(null), 1800);
     return () => clearTimeout(t);
   }, [copied]);
 
@@ -124,10 +127,45 @@ export default function StoryCanvas({
       area.select();
       const ok = document.execCommand('copy');
       area.remove();
-      if (!ok)
-        return setCopied('Copie impossible : sélectionne le texte à la main');
+      if (!ok) return setCopied({ what, ok: false });
     }
-    setCopied(`${what} copié`);
+    setCopied({ what, ok: true });
+  }
+
+  function copyButton(what: string, label: string, text: string) {
+    const done = copied?.what === what ? copied : null;
+    return (
+      <button
+        type="button"
+        className={done ? (done.ok ? 'is-copied' : 'is-failed') : undefined}
+        onClick={() => void copy(text, what)}
+      >
+        {done ? (
+          done.ok ? (
+            <>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 8.5l3.2 3L13 4.5" />
+              </svg>
+              {what} copié
+            </>
+          ) : (
+            'Copie impossible'
+          )
+        ) : (
+          label
+        )}
+      </button>
+    );
   }
 
   return (
@@ -232,24 +270,19 @@ export default function StoryCanvas({
       )}
       <figcaption className="story-meta">
         <code>{id}</code>
-        <button type="button" onClick={() => void copy(id, 'ID')}>
-          Copier l’ID
-        </button>
-        {page && (
-          <button
-            type="button"
-            onClick={() =>
-              void copy(`${location.origin}/#/docs/${page}?story=${id}`, 'Lien')
-            }
-          >
-            Copier le lien
-          </button>
-        )}
-        <button type="button" onClick={() => void copy(code, 'Code')}>
-          Copier le code
-        </button>
-        <span className="story-copied" aria-live="polite">
-          {copied}
+        {copyButton('ID', 'Copier l’ID', id)}
+        {page &&
+          copyButton(
+            'Lien',
+            'Copier le lien',
+            `${location.origin}/#/docs/${page}?story=${id}`,
+          )}
+        {copyButton('Code', 'Copier le code', code)}
+        <span className="sr-only" aria-live="polite">
+          {copied &&
+            (copied.ok
+              ? `${copied.what} copié`
+              : 'Copie impossible : sélectionne le texte à la main')}
         </span>
       </figcaption>
     </figure>
