@@ -113,10 +113,12 @@ export type Block =
   | { t: 'component'; id: string }
   | { t: 'tokens'; group: string };
 
-// Liens : web (https), ancre, ou page de doc (`doc:slug`). Le reste reste du texte.
+// Liens : web (https), ancre, ou page de doc (`doc:slug`, `doc:slug#section-…`).
+// Le reste reste du texte.
 export function safeHref(href: string): string | null {
   if (/^https:\/\/[^\s"'<>]+$/.test(href)) return href;
-  if (/^doc:[a-z0-9-]{1,60}$/.test(href)) return href;
+  if (/^doc:[a-z0-9-]{1,60}(#section-[a-z0-9-]{1,70})?$/.test(href))
+    return href;
   if (/^#[\w-]{1,60}$/.test(href)) return href;
   return null;
 }

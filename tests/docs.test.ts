@@ -101,6 +101,16 @@ test('sommaire : ancres uniques des h2 et h3, sans accents ni h4', () => {
   );
 });
 
+test('liens de doc : page ou section, rien d’autre', () => {
+  assert.equal(safeHref('doc:couleurs'), 'doc:couleurs');
+  assert.equal(
+    safeHref('doc:couleurs#section-regles'),
+    'doc:couleurs#section-regles',
+  );
+  assert.equal(safeHref('doc:couleurs#autre'), null);
+  assert.equal(safeHref('doc:../x'), null);
+});
+
 test('diff ligne à ligne : ajouts, suppressions et lignes inchangées', () => {
   assert.deepEqual(lineDiff('a\nb\nc', 'a\nc\nd'), [
     { kind: 'same', text: 'a' },

@@ -106,7 +106,7 @@ function InlineContent({
           return (
             <a
               key={i}
-              href={`#/docs/${n.href.slice(4)}`}
+              href={`#/docs/${n.href.slice(4).split('#')[0]}`}
               onClick={(e) => {
                 e.preventDefault();
                 onNavigate(n.href.slice(4));

@@ -13,7 +13,14 @@ export interface AgentContext {
 }
 // Questions sur le DS : lecture seule, aucune proposition de token.
 export interface AskContext {
-  docs: { slug: string; title: string; section: string; body: string }[];
+  docs: {
+    slug: string;
+    title: string;
+    section: string;
+    body: string;
+    // Intertitres de la page, pour des liens précis `doc:slug#id`.
+    anchors: { id: string; text: string }[];
+  }[];
   tokens: Tokens;
   rules: string;
   history: { role: 'user' | 'assistant'; text: string }[];

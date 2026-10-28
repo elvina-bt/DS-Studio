@@ -121,12 +121,16 @@ export default function DocsView({
 
   const leave = () =>
     !dirty || window.confirm('Abandonner les modifications non enregistrées ?');
-  function go(next: string | null) {
+  // Une cible `slug#section-…` ouvre la page puis fait défiler jusqu'à la section.
+  const [section, setSection] = useState<string | null>(null);
+  function go(target: string | null) {
     if (!leave()) return;
+    const [next, anchor] = target ? target.split('#') : [null];
     setDraft(null);
     setError('');
     setNotice('');
-    onNavigate(next);
+    setSection(anchor ?? null);
+    if (next !== slug) onNavigate(next);
   }
   function insert(text: string) {
     if (!draft) return;
@@ -171,6 +175,17 @@ export default function DocsView({
   const body = !editing && current ? current.body : '';
   const blocks = useMemo(() => parseMarkdown(body), [body]);
   const anchors = useMemo(() => [...headingAnchors(blocks).values()], [blocks]);
+  useEffect(() => {
+    if (!section || editing) return;
+    const el = document.getElementById(section);
+    if (!el) return;
+    el.scrollIntoView({
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+    setSection(null);
+  }, [section, blocks, editing]);
 
   return (
     <div className="docs">

@@ -7,7 +7,12 @@ import { imageSchema, maxImages, proposeSchema } from '../shared/model.js';
 import { Store, StudioError } from './store.js';
 import { ProjectStore } from './project.js';
 import { DocsStore } from './docs.js';
-import { docSchema, parseMarkdown, renderHtml } from '../shared/docs.js';
+import {
+  docSchema,
+  headingAnchors,
+  parseMarkdown,
+  renderHtml,
+} from '../shared/docs.js';
 import { tokenKeys } from '../shared/model.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
@@ -396,6 +401,9 @@ export async function createStudioServer(options: {
                   title: d.title,
                   section: d.section,
                   body: d.body,
+                  anchors: [
+                    ...headingAnchors(parseMarkdown(d.body)).values(),
+                  ].map(({ id, text }) => ({ id, text })),
                 })),
                 tokens: store.snapshot().tokens,
                 rules: await context('DESIGN_RULES.md'),
@@ -404,7 +412,9 @@ export async function createStudioServer(options: {
               controller.signal,
             );
             // Seules les pages qui existent sont citées.
-            const sources = [...new Set(reply.sources)]
+            const sources = [
+              ...new Set(reply.sources.map((s) => s.split('#')[0])),
+            ]
               .map((slug) => pages.find((d) => d.slug === slug))
               .filter((d) => d !== undefined)
               .map((d) => ({ slug: d.slug, title: d.title }));

@@ -500,7 +500,8 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
     sent = route.request().postDataJSON();
     await route.fulfill({
       json: {
-        message: 'Utilise **`color.text`**, voir [Couleurs](doc:couleurs).',
+        message:
+          'Utilise **`color.text`**, voir [les règles](doc:couleurs#section-regles).',
         sources: [{ slug: 'couleurs', title: 'Couleurs' }],
       },
     });
@@ -513,11 +514,15 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
   await panel.getByLabel('Ta question').press('Enter');
   await expect(panel.locator('.ask-answer')).toContainText('color.text');
   expect(sent?.question).toBe('Quelle couleur pour un écart ?');
-  await panel
-    .getByRole('list', { name: 'Pages citées' })
-    .getByRole('link', { name: 'Couleurs' })
-    .click();
+  // Lien vers une section : la page s'ouvre et défile jusqu'à l'intertitre.
+  await panel.getByRole('link', { name: 'les règles' }).click();
   await expect(page).toHaveURL(/#\/docs\/couleurs$/);
+  await expect(page.locator('#section-regles')).toBeInViewport();
+  await expect(
+    panel
+      .getByRole('list', { name: 'Pages citées' })
+      .getByRole('link', { name: 'Couleurs' }),
+  ).toBeVisible();
   await expect(panel).toBeVisible();
   await panel.getByRole('button', { name: 'Effacer' }).click();
   await expect(panel.locator('.ask-answer')).toHaveCount(0);

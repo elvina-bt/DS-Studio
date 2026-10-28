@@ -187,6 +187,10 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   identique dans les deux vues (sélecteur centré) ; pied de page retiré. Bug vu en
   e2e : la carte du sommaire restait ouverte après un clic (focus), ouverte
   désormais au survol ou au focus clavier seulement. 49 tests, 14 e2e.
+- **Ajout** : liens des réponses bien visibles, et liens vers une section précise
+  (`doc:slug#section-…`) : Claude reçoit les intertitres de chaque page ; un clic
+  ouvre la page puis défile jusqu’à la section. Police Arial dans toute l’interface
+  (les composants du DS gardent le token `font.family`). 50 tests, 14 e2e.
 
 ## À compléter par l’étudiant
 

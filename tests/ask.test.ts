@@ -43,6 +43,7 @@ process.stdin.on('data', (d) => (input += d)).on('end', () => {
         title: 'Bouton',
         section: 'composants',
         body: 'Un seul bouton principal par écran.',
+        anchors: [],
       },
     ],
     tokens: {} as never,
@@ -89,7 +90,7 @@ test('HTTP : question protégée, sources limitées aux pages existantes', async
     summary: '',
     status: 'stable',
     figma: [],
-    body: 'Un seul bouton principal.',
+    body: '## Usage\n\nUn seul bouton principal.',
   });
   let received: AskContext | undefined;
   const claude = {
@@ -102,7 +103,10 @@ test('HTTP : question protégée, sources limitées aux pages existantes', async
     },
     async ask(_q: string, context: AskContext) {
       received = context;
-      return { message: 'Réponse', sources: ['bouton', 'inventee', 'bouton'] };
+      return {
+        message: 'Réponse',
+        sources: ['bouton', 'inventee', 'bouton#section-usage'],
+      };
     },
   };
   const app = await createStudioServer({
@@ -137,7 +141,10 @@ test('HTTP : question protégée, sources limitées aux pages existantes', async
     message: 'Réponse',
     sources: [{ slug: 'bouton', title: 'Bouton' }],
   });
-  assert.equal(received?.docs[0].body, 'Un seul bouton principal.');
+  assert.match(received?.docs[0].body ?? '', /Un seul bouton principal/);
+  assert.deepEqual(received?.docs[0].anchors, [
+    { id: 'section-usage', text: 'Usage' },
+  ]);
   assert.equal(
     received?.tokens['color.brand'].$value,
     seed['color.brand'].$value,
