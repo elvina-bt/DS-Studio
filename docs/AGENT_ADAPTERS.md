@@ -69,6 +69,16 @@ jamais recopiées dans le contexte texte, et ne sont ni stockées ni gardées da
 l’historique. Codex les refuse explicitement. Testé réellement sous macOS : image
 décrite correctement, aucun token modifié.
 
+Questions sur le DS (`/api/ask`, panneau **Demander** de la vue Documentation) :
+même profil sans outils, autre schéma de réponse `{message, sources}` qui ne peut
+porter aucun changement (une réponse avec `changes` est refusée). Contexte : pages de
+`workspace/docs/`, tokens validés et `DESIGN_RULES.md` (pas de brief privé ni de
+capture). Le serveur ne garde comme sources que les pages existantes ; la révision
+ne change jamais. Conversation en mémoire du navigateur, jamais stockée. Testé :
+faux CLI (contexte par stdin, `changes` refusé), route HTTP (CSRF, sources
+filtrées), e2e avec réponse simulée, et un essai réel sous macOS : réponse fondée sur
+la doc, trois pages citées.
+
 ## Gemini CLI — NOT IMPLEMENTED
 
 Point d’extension : `unvalidatedAdapter('gemini')`. La [référence headless officielle](https://geminicli.com/docs/cli/headless/)

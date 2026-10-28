@@ -356,6 +356,65 @@ export async function createStudioServer(options: {
             res.off('close', cancel);
           }
         }
+        if (url.pathname === '/api/ask') {
+          const b = z
+            .object({
+              question: z.string().trim().min(1).max(4000),
+              history: z
+                .array(
+                  z
+                    .object({
+                      role: z.enum(['user', 'assistant']),
+                      text: z.string().max(6000),
+                    })
+                    .strict(),
+                )
+                .max(8),
+            })
+            .strict()
+            .parse(body);
+          const adapter = adapters.claude;
+          if (!adapter.ask)
+            throw new StudioError(
+              'Questions indisponibles pour cet agent.',
+              501,
+            );
+          if (busy)
+            throw new StudioError('Une demande IA est déjà en cours.', 429);
+          busy = true;
+          const controller = new AbortController();
+          active.add(controller);
+          const cancel = () => controller.abort();
+          res.once('close', cancel);
+          try {
+            const pages = (await docs.list()).docs;
+            const reply = await adapter.ask(
+              b.question,
+              {
+                docs: pages.map((d) => ({
+                  slug: d.slug,
+                  title: d.title,
+                  section: d.section,
+                  body: d.body,
+                })),
+                tokens: store.snapshot().tokens,
+                rules: await context('DESIGN_RULES.md'),
+                history: b.history,
+              },
+              controller.signal,
+            );
+            // Seules les pages qui existent sont citées.
+            const sources = [...new Set(reply.sources)]
+              .map((slug) => pages.find((d) => d.slug === slug))
+              .filter((d) => d !== undefined)
+              .map((d) => ({ slug: d.slug, title: d.title }));
+            return send(200, { message: reply.message, sources });
+          } finally {
+            busy = false;
+            active.delete(controller);
+            res.off('close', cancel);
+          }
+        }
         throw new StudioError('Route inconnue.', 404);
       }
       if (req.method !== 'GET' && req.method !== 'HEAD')

@@ -14,6 +14,7 @@ import type { Tokens } from '../shared/model.js';
 import { request } from './api.js';
 import { DocContent } from './DocContent.js';
 import PageOutline from './PageOutline.js';
+import AskPanel from './AskPanel.js';
 
 type Stored = Doc & { base: string };
 
@@ -454,6 +455,8 @@ export default function DocsView({
           </article>
         )}
       </div>
+
+      <AskPanel tokens={tokens} onNavigate={(s) => go(s)} />
 
       <dialog
         ref={dialog}

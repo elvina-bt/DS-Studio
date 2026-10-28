@@ -113,6 +113,13 @@ export const agentReplySchema = z
   })
   .strict();
 export type AgentReply = z.infer<typeof agentReplySchema>;
+export const askReplySchema = z
+  .object({
+    message: z.string().min(1).max(12000),
+    sources: z.array(z.string().max(60)).max(10),
+  })
+  .strict();
+export type AskReply = z.infer<typeof askReplySchema>;
 // Captures jointes au chat : types d'image courants, signature vérifiée, 2 Mo maximum.
 export const maxImages = 3;
 export const maxImageBytes = 2_000_000;

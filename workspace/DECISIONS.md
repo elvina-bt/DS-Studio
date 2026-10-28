@@ -170,6 +170,18 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   cliquée gardée active même si la page est trop courte pour la remonter (bug vu
   en e2e). 47 tests unitaires, 13 e2e.
 
+## 2026-10-28 — Demander au DS
+
+- **Problème** : pour retrouver une règle, il fallait parcourir les pages.
+- **Décision** : panneau **Demander** dans la doc : Claude Code répond à partir des
+  pages, des tokens validés et de `DESIGN_RULES.md`, et cite ses pages (cliquables).
+  Lecture seule : schéma de réponse sans changement, aucun outil, révision inchangée.
+- **Preuves** : 49 tests unitaires (faux CLI, route HTTP), 14 e2e (réponse simulée,
+  aucun quota), un essai réel sous macOS : réponse juste sur l’écart neutre, trois
+  pages citées.
+- **Limite** : consomme mon quota Claude ; toute la doc part à chaque question
+  (assez petite aujourd’hui) ; conversation perdue au rechargement.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

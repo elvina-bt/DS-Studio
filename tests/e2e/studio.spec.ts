@@ -488,3 +488,36 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
     page.getByRole('heading', { name: 'Variables', exact: true }),
   ).toBeVisible();
 });
+
+test('documentation : demander au DS, réponse et page citée (Claude simulé)', async ({
+  page,
+}) => {
+  // Aucune requête réelle au service IA : la réponse de /api/ask est simulée.
+  let sent: { question: string; history: unknown[] } | undefined;
+  await page.route('**/api/ask', async (route) => {
+    sent = route.request().postDataJSON();
+    await route.fulfill({
+      json: {
+        message: 'Utilise **`color.text`**, voir [Couleurs](doc:couleurs).',
+        sources: [{ slug: 'couleurs', title: 'Couleurs' }],
+      },
+    });
+  });
+  await page.goto('/#/docs');
+  await page.getByRole('button', { name: 'Demander' }).click();
+  const panel = page.getByRole('complementary', {
+    name: 'Demander au Design System',
+  });
+  await panel.getByLabel('Ta question').fill('Quelle couleur pour un écart ?');
+  await panel.getByLabel('Ta question').press('Enter');
+  await expect(panel.locator('.ask-answer')).toContainText('color.text');
+  expect(sent?.question).toBe('Quelle couleur pour un écart ?');
+  await panel
+    .getByRole('list', { name: 'Pages citées' })
+    .getByRole('link', { name: 'Couleurs' })
+    .click();
+  await expect(page).toHaveURL(/#\/docs\/couleurs$/);
+  await expect(panel).toBeVisible();
+  await panel.getByRole('button', { name: 'Fermer' }).click();
+  await expect(panel).toHaveCount(0);
+});
