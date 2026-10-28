@@ -324,12 +324,21 @@ small,
   box-shadow: 0 8px 20px #1b2e4a12;
   flex: none;
 }
+/* Panneau flottant sous le bouton Historique, au-dessus des deux vues. */
 .history {
-  margin: 0 28px 20px;
-  padding: 20px;
+  position: fixed;
+  top: calc(var(--studio-header-h, 80px) + 8px);
+  right: 16px;
+  z-index: 20;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100svh - var(--studio-header-h, 80px) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px;
   background: #fff;
-  border: 1px solid #d5dce8;
-  border-radius: 10px;
+  border: 1px solid #e0e4ec;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(20, 30, 50, 0.14);
 }
 .history h2 {
   margin-bottom: 8px;
@@ -1061,8 +1070,7 @@ del {
   .agent-empty {
     padding: 14px 0;
   }
-  .feedback,
-  .history {
+  .feedback {
     margin-left: 14px;
     margin-right: 14px;
   }

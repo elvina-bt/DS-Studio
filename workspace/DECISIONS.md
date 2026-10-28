@@ -214,6 +214,9 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   passe sur `#/` ; mention Figma retirée de l’en-tête. Bug vu en e2e : le lien
   d’évitement « Aller aux variables » changeait l’adresse et renvoyait vers la doc ;
   il déplace désormais le focus sans toucher à l’adresse. 52 tests, 14 e2e.
+- **Ajout** : l’historique s’insérait dans la page (colonnes poussées vers le bas,
+  sommaire superposé). Il devient un panneau flottant sous son bouton, fermé par
+  Échap ou un clic à côté, identique dans les deux vues. 52 tests, 14 e2e.
 
 ## À compléter par l’étudiant
 
