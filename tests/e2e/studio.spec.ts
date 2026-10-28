@@ -3,14 +3,11 @@ import { test, expect } from '@playwright/test';
 test('boucle centrale réelle : diff, validation, propagation, recharge, annulation sélective', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await expect(
     page.getByRole('heading', {
       name: 'DS-Studio · atelier du Design System',
     }),
-  ).toBeVisible();
-  await expect(
-    page.getByText('Figma : synchro manuelle via Claude Code', { exact: true }),
   ).toBeVisible();
   const catalogue = page.locator('.ds-panel');
   await page.getByRole('tab', { name: 'Aperçu' }).click();
@@ -74,7 +71,7 @@ test('boucle centrale réelle : diff, validation, propagation, recharge, annulat
 test('largeurs réelles, interactions, formulaire et desktop responsive', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByRole('tab', { name: 'Aperçu' }).click();
   await page
     .getByRole('combobox', { name: 'Application', exact: true })
@@ -144,7 +141,7 @@ test('largeurs réelles, interactions, formulaire et desktop responsive', async 
 test('entrée couleur invalide sans mutation et clavier du diff', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByLabel('Valeur du token').fill('red');
   await page.getByRole('button', { name: 'Proposer', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Données invalides');
@@ -161,7 +158,7 @@ test('entrée couleur invalide sans mutation et clavier du diff', async ({
 test('export navigateur, import valide avec diff, fichier invalide sans écriture', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await expect(
     page.getByRole('heading', { name: 'Variables', exact: true }),
   ).toBeVisible();
@@ -201,7 +198,7 @@ test('export navigateur, import valide avec diff, fichier invalide sans écritur
 test('V2 : contraste proposé immédiat sans modifier les composants enregistrés', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByRole('button', { name: 'color.brand', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('#FFFFFF');
   await expect(
@@ -218,7 +215,7 @@ test('V2 : contraste proposé immédiat sans modifier les composants enregistré
 test('V2 : brief privé persistant, indépendant du mode IA', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByText('Mon PFE · brief privé', { exact: true }).click();
   await page
     .getByLabel('Nom du PFE', { exact: true })
@@ -244,7 +241,7 @@ test('V2 : brief privé persistant, indépendant du mode IA', async ({
 test('V2 : recherche, brouillon récupéré après recharge et abandon sans écriture', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   const before = await (await page.request.get('/api/state')).json();
   await page.getByLabel('Rechercher une variable').fill('space');
   await expect(
@@ -276,12 +273,12 @@ test('V2 : conflit multi-onglets visible dans le diff, aucune perte de données'
   page,
   context,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByRole('button', { name: 'color.brand', exact: true }).click();
   await page.getByLabel('Valeur du token').fill('#223355');
   await page.getByRole('button', { name: 'Proposer', exact: true }).click();
   const other = await context.newPage();
-  await other.goto('/');
+  await other.goto('/#/');
   await other.getByRole('button', { name: 'color.brand', exact: true }).click();
   await other.getByLabel('Valeur du token').fill('#664422');
   await other.getByRole('button', { name: 'Proposer', exact: true }).click();
@@ -303,7 +300,7 @@ test('V2 : conflit multi-onglets visible dans le diff, aucune perte de données'
 test('V2 : capacité de session périmée simulée sans rejeu ambigu', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByRole('heading', { name: 'Variables', exact: true }).waitFor();
   const boot = await (await page.request.get('/api/bootstrap')).json();
   // Un seul refus certain avant mutation, comme une capacité périmée après restart.
@@ -341,7 +338,7 @@ test('V2 : clavier, mobile 375 px et absence de stockage navigateur', async ({
     };
   });
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/');
+  await page.goto('/#/');
   await page.getByRole('heading', { name: 'Variables', exact: true }).waitFor();
   await page.keyboard.press('Tab');
   await expect(
@@ -363,7 +360,7 @@ test('V2 : clavier, mobile 375 px et absence de stockage navigateur', async ({
 test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordement', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   const app = page.frameLocator('iframe');
   // Le catalogue présente les composants dont l’app est faite.
   for (const name of [
@@ -409,7 +406,7 @@ test('app parapente par défaut : 4 onglets, tokens appliqués, sans débordemen
 test('panneau Variables : groupes, recherche, édition sur place et diff sans écriture', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/');
   const before = await (await page.request.get('/api/state')).json();
   const panel = page.locator('.variables-panel');
   await panel.getByRole('button', { name: /^Espacements/ }).click();
@@ -438,7 +435,12 @@ test('panneau Variables : groupes, recherche, édition sur place et diff sans é
 test('documentation : navigation, aperçu vivant, édition avec diff puis enregistrement', async ({
   page,
 }) => {
+  // Vue par défaut : la documentation.
   await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Bienvenue', level: 2 }),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Atelier', exact: true }).click();
   await page.getByRole('link', { name: 'Documentation', exact: true }).click();
   await expect(page).toHaveURL(/#\/docs$/);
   await expect(

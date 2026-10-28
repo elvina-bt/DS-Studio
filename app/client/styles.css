@@ -2158,11 +2158,13 @@ h2[id] {
   font-size: 12px;
   color: var(--doc-muted, #787774);
 }
+/* Composant centré dans la zone d'aperçu, comme le mode « centered » de Storybook. */
 .story-stage {
-  padding: 32px;
+  padding: 40px 32px;
+  min-height: 260px;
   overflow: auto;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 }
 .story-stage.bg-canvas {
   background: var(--color-canvas);
@@ -2178,11 +2180,9 @@ h2[id] {
   background-size: 16px 16px;
 }
 .story-frame {
-  flex: 1;
   max-width: 100%;
 }
 .story-frame[style*='width'] {
-  flex: none;
   outline: 1px dashed #d6d6d3;
   outline-offset: 8px;
 }

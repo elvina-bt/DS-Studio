@@ -8,7 +8,7 @@ import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
 import DocsView from './DocsView.js';
 
-// Deux vues : l'atelier (#/) et la documentation (#/docs/<page>), avec une
+// Deux vues : la documentation, par défaut (#/docs/<page>), et l'atelier (#/), avec une
 // variante de composant facultative (#/docs/<page>?story=<groupe--variante>).
 type Route = {
   view: 'atelier' | 'docs';
@@ -20,9 +20,10 @@ function readRoute(): Route {
     /^#\/docs(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
       location.hash,
     );
-  return m
-    ? { view: 'docs', slug: m[1] ?? null, story: m[2] ?? null }
-    : { view: 'atelier', slug: null };
+  if (m) return { view: 'docs', slug: m[1] ?? null, story: m[2] ?? null };
+  return location.hash === '#/'
+    ? { view: 'atelier', slug: null }
+    : { view: 'docs', slug: null };
 }
 import { useTokenDraft } from './useTokenDraft.js';
 import {
@@ -317,7 +318,15 @@ export default function App() {
   return (
     <>
       {route.view === 'atelier' && (
-        <a className="skip-link" href="#variables-title">
+        <a
+          className="skip-link"
+          href="#variables-title"
+          onClick={(e) => {
+            // L'adresse sert au routage : on déplace le focus sans la changer.
+            e.preventDefault();
+            document.getElementById('variables-title')?.focus();
+          }}
+        >
           Aller aux variables
         </a>
       )}
@@ -352,9 +361,6 @@ export default function App() {
         </nav>
         <div className="header-status">
           <span className="local-badge">● Local · V2</span>
-          <span className="muted">
-            {boot?.figma.label ?? 'Figma : synchro manuelle via Claude Code'}
-          </span>
           <button
             onClick={() => setHistoryOpen(!historyOpen)}
             aria-expanded={historyOpen}

@@ -13,8 +13,7 @@ Codex ou recopier des cookies pour contourner cette restriction.
 
 ## Synchro manuelle via Claude Code (projet PFE parapente)
 
-L’en-tête affiche « Figma : synchro manuelle via Claude Code » : l’application reste
-**non connectée** (`figmaStatus.connected = false`). La synchro est faite par l’agent du
+L’application reste **non connectée** (l’en-tête n’affiche plus de mention Figma) (`figmaStatus.connected = false`). La synchro est faite par l’agent du
 terminal, client MCP autorisé par Figma, en suivant `.agents/skills/figma-sync` :
 relevé en lecture seule de la collection Semantics, conversion testée
 (`app/shared/figma.ts`, `npm run figma:import` / `figma:plan`), import par diff validé

@@ -209,6 +209,11 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : pas encore de contrôles pour modifier les props en direct ; seul écart
   d’affichage, la barre d’onglets est posée dans la page au lieu d’être fixée en bas ;
   renommer un ID casse les liens existants.
+- **Ajout** : composant centré dans le canvas ; un trait du sommaire par entrée
+  (titre compris) ; la Documentation devient la vue par défaut (`/`), l’Atelier
+  passe sur `#/` ; mention Figma retirée de l’en-tête. Bug vu en e2e : le lien
+  d’évitement « Aller aux variables » changeait l’adresse et renvoyait vers la doc ;
+  il déplace désormais le focus sans toucher à l’adresse. 52 tests, 14 e2e.
 
 ## À compléter par l’étudiant
 

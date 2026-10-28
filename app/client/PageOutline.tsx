@@ -75,6 +75,8 @@ export default function PageOutline({
   return (
     <nav className="page-outline" aria-label="Sur cette page">
       <div className="page-outline-lines" aria-hidden="true">
+        {/* Un trait par entrée de la liste : le titre de la page, puis les intertitres. */}
+        <span className={`level-2${active === null ? ' active' : ''}`} />
         {anchors.map((a) => (
           <span
             key={a.id}
