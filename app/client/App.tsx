@@ -8,6 +8,14 @@ import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
 import DocsView from './DocsView.js';
 
+const sourceLabel = {
+  manual: 'Manuel',
+  codex: 'Codex',
+  claude: 'Claude',
+  import: 'Import',
+  undo: 'Annulation',
+} as const;
+
 // Deux vues : la documentation, par défaut (#/docs/<page>), et l'atelier (#/), avec une
 // variante de composant facultative (#/docs/<page>?story=<groupe--variante>).
 type Route = {
@@ -443,29 +451,43 @@ export default function App() {
               ✕
             </button>
           </header>
-          <p>
-            Annuler une révision ne touche qu’à ses tokens, et s’enregistre
-            aussi.
-          </p>
-          {!state.history.length && <p>Aucun changement enregistré.</p>}
+          {!state.history.length && (
+            <p className="history-empty">Aucun changement enregistré.</p>
+          )}
           <ol>
             {[...state.history].reverse().map((event) => (
               <li key={event.id}>
-                <div>
-                  <strong>Révision {event.revision}</strong> · {event.source} ·{' '}
-                  <time>{new Date(event.date).toLocaleString('fr-FR')}</time>
-                  <p>{event.patches.map((p) => p.key).join(', ')}</p>
+                {/* Ce qui a changé d'abord, la révision ensuite. */}
+                <div className="history-what">
+                  <p className="history-tokens">
+                    {event.patches.map((p) => (
+                      <code key={p.key}>{p.key}</code>
+                    ))}
+                  </p>
+                  <p className="history-meta">
+                    Révision {event.revision} · {sourceLabel[event.source]} ·{' '}
+                    <time dateTime={event.date}>
+                      {new Date(event.date).toLocaleString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </time>
+                  </p>
                 </div>
                 <div className="history-actions">
                   <button
+                    aria-label={`Revoir la révision ${event.revision}`}
                     aria-expanded={reviewing === event.id}
                     onClick={() =>
                       setReviewing(reviewing === event.id ? null : event.id)
                     }
                   >
-                    Revoir la révision {event.revision}
+                    {reviewing === event.id ? 'Masquer' : 'Revoir'}
                   </button>
                   <button
+                    aria-label={`Annuler la révision ${event.revision}`}
                     onClick={() => {
                       // Une seule fenêtre à la fois : le diff remplace l'historique.
                       setHistoryOpen(false);
@@ -479,15 +501,11 @@ export default function App() {
                       );
                     }}
                   >
-                    Annuler la révision {event.revision}
+                    Annuler
                   </button>
                 </div>
                 {reviewing === event.id && (
                   <div className="history-review">
-                    <p>
-                      Avant et après cette révision ; les autres tokens prennent
-                      leur valeur actuelle.
-                    </p>
                     <Review
                       tokens={state.tokens}
                       patches={event.patches}
