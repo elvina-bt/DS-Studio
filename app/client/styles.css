@@ -2261,6 +2261,17 @@ h2[id] {
   align-items: center;
   gap: 5px;
 }
+.story-figma {
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--doc-muted, #787774);
+  text-decoration: none;
+}
+.story-figma:hover {
+  background: var(--doc-soft, #f7f7f5);
+  color: var(--doc-text, #2f3437);
+}
 .story .story-meta button.is-copied {
   background: #eef8f2;
   color: #1d6b47;

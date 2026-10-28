@@ -486,6 +486,9 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
   await expect(specimen.locator('.story-meta code')).toHaveText(
     'bouton--secondaire',
   );
+  await expect(
+    specimen.getByRole('link', { name: 'Ouvrir dans Figma' }),
+  ).toHaveAttribute('href', /PFE---Components\?node-id=9-34$/);
   await page.goto('/#/docs/carte-prevision?story=carte-prevision--sans-note');
   const card = page.getByRole('figure', {
     name: 'Aperçu : Carte de prévision',

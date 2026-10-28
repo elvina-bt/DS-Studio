@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  figmaUrl,
   findStory,
   storyCode,
   storyGroups,
@@ -32,6 +33,19 @@ test('stories : ID stables, uniques, et un groupe par bloc composant de la doc',
         `stories manquantes : ${id}`,
       );
   }
+});
+
+test('stories : chaque variante a son composant dans PFE – Components', () => {
+  for (const g of storyGroups)
+    for (const s of g.stories) {
+      assert(s.figma, `lien Figma manquant : ${g.id}--${s.id}`);
+      assert.match(s.figma.node, /^\d+:\d+$/);
+      assert.match(s.figma.key, /^[0-9a-f]{40}$/);
+    }
+  assert.equal(
+    figmaUrl('9:30'),
+    'https://www.figma.com/design/dRoA2PB74Ne8TWXz5Cafin/PFE---Components?node-id=9-30',
+  );
 });
 
 test('code des stories : JSX lisible généré depuis les mêmes props', () => {

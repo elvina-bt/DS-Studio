@@ -10,6 +10,6 @@
   "networkAccess": {
     "allowedDomains": ["none"],
     "devAllowedDomains": ["http://127.0.0.1:4310", "http://localhost:4310"],
-    "reasoning": "Lit, en lecture seule, la documentation du Design System servie par DS-Studio sur ce poste."
+    "reasoning": "Lit la documentation du Design System servie par DS-Studio sur ce poste."
   }
 }

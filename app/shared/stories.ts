@@ -22,7 +22,14 @@ export type StoryNode = {
   props?: Record<string, StoryProp>;
   children?: (StoryNode | string)[];
 };
-export type Story = { id: string; name: string; node: StoryNode };
+// Composant correspondant dans PFE – Components : nœud (lien) et clé (import).
+export type FigmaRef = { node: string; key: string };
+export type Story = {
+  id: string;
+  name: string;
+  node: StoryNode;
+  figma?: FigmaRef;
+};
 export type StoryGroup = { id: string; name: string; stories: Story[] };
 
 const forecast = {
@@ -42,11 +49,19 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'principal',
         name: 'Principal',
+        figma: {
+          node: '9:30',
+          key: '7585fbd206595b4c1922029d986d6d20d70fb173',
+        },
         node: { type: 'Button', children: ['Nouvelle sortie'] },
       },
       {
         id: 'secondaire',
         name: 'Secondaire',
+        figma: {
+          node: '9:34',
+          key: 'a4b5e0dde9b1dc6285053821fd94f545ded36d6b',
+        },
         node: {
           type: 'Button',
           props: { variant: 'secondary' },
@@ -56,6 +71,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'danger',
         name: 'Destructif',
+        figma: {
+          node: '9:38',
+          key: '70548b0f5656a399e83ebfccf1877c405aed7a4f',
+        },
         node: {
           type: 'Button',
           props: { variant: 'danger' },
@@ -65,6 +84,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'desactive',
         name: 'Désactivé',
+        figma: {
+          node: '9:32',
+          key: 'b557840a5e0e48f2357b09ba961b347b4f87dc16',
+        },
         node: {
           type: 'Button',
           props: { disabled: true },
@@ -80,11 +103,19 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'grand-titre',
         name: 'Grand titre',
+        figma: {
+          node: '9:43',
+          key: 'b6b0e97cb87e68bae3b7058dc6376f65ae9764d2',
+        },
         node: { type: 'LargeTitle', children: ['Préparer'] },
       },
       {
         id: 'en-tete-section',
         name: 'En-tête de section',
+        figma: {
+          node: '9:45',
+          key: '2fe71328062408c3fc25d65b184faa5fda4c7577',
+        },
         node: { type: 'SectionHeader', children: ['Prochaine sortie'] },
       },
     ],
@@ -96,6 +127,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'site',
         name: 'Recherche de site',
+        figma: {
+          node: '9:48',
+          key: 'e7f9314a9e3dec2fb8725f2956633652e264a349',
+        },
         node: { type: 'SearchField', props: { label: 'Rechercher un site' } },
       },
     ],
@@ -107,6 +142,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'confiance-moyenne',
         name: 'Confiance moyenne',
+        figma: {
+          node: '11:19',
+          key: '5f4c5d763826db07ad94007a8b02f5782700d1fa',
+        },
         node: {
           type: 'ForecastCard',
           props: {
@@ -119,6 +158,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'sans-note',
         name: 'Sans note',
+        figma: {
+          node: '11:38',
+          key: '021c5c9dcd28cb057f08743b80c72dc0578b3428',
+        },
         node: {
           type: 'ForecastCard',
           props: { ...forecast, confidence: 'Élevée · maille 1,3 km' },
@@ -133,11 +176,19 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'confiance',
         name: 'Confiance',
+        figma: {
+          node: '9:50',
+          key: '6147bed703222d499e18c396d1c1cbf5ca769f50',
+        },
         node: { type: 'Badge', children: ['Confiance moyenne'] },
       },
       {
         id: 'ecart',
         name: 'Écart',
+        figma: {
+          node: '9:50',
+          key: '6147bed703222d499e18c396d1c1cbf5ca769f50',
+        },
         node: { type: 'Badge', children: ['Écart'] },
       },
     ],
@@ -149,6 +200,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'liste',
         name: 'Liste groupée',
+        figma: {
+          node: '10:23',
+          key: 'b91eb3b2148bdda99489a9826e870d7243002063',
+        },
         node: {
           type: 'Card',
           props: { list: true },
@@ -176,6 +231,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'valeur',
         name: 'Ligne avec valeur',
+        figma: {
+          node: '10:7',
+          key: 'e326d6aa34f7dacee970a7257b8b64dd23fc587a',
+        },
         node: {
           type: 'Card',
           props: { list: true },
@@ -187,6 +246,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'interrupteur',
         name: 'Interrupteur',
+        figma: {
+          node: '10:16',
+          key: 'a6a5ab189af9d9d106ed7d0affd5bbb14eeeef1d',
+        },
         node: {
           type: 'Card',
           props: { list: true },
@@ -207,6 +270,10 @@ export const storyGroups: StoryGroup[] = [
       {
         id: 'preparer',
         name: 'Préparer actif',
+        figma: {
+          node: '11:57',
+          key: 'b544c7177adadb6744c50be679906dced14caebc',
+        },
         node: {
           type: 'TabBar',
           props: { current: 'Préparer', onChange: { handler: 'setTab' } },
@@ -217,6 +284,20 @@ export const storyGroups: StoryGroup[] = [
 ];
 
 export const storyId = (group: string, story: string) => `${group}--${story}`;
+
+// Fichier Figma des composants (PFE – Components) et lien vers un nœud.
+export const figmaFile = 'dRoA2PB74Ne8TWXz5Cafin';
+export const figmaUrl = (node: string) =>
+  `https://www.figma.com/design/${figmaFile}/PFE---Components?node-id=${node.replace(':', '-')}`;
+// Stories des blocs {{composant:id}} d'une page de doc.
+export function storiesInBody(body: string) {
+  const ids = [...body.matchAll(/\{\{composant:([a-z0-9-]+)\}\}/g)].map(
+    (m) => m[1],
+  );
+  return storyGroups
+    .filter((g) => ids.includes(g.id))
+    .flatMap((g) => g.stories.map((s) => ({ group: g, story: s })));
+}
 export function findStory(id: string) {
   for (const group of storyGroups)
     for (const story of group.stories)

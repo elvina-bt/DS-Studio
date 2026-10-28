@@ -13,6 +13,7 @@ import {
   parseMarkdown,
   renderHtml,
 } from '../shared/docs.js';
+import { figmaUrl, storiesInBody, storyId } from '../shared/stories.js';
 import { tokenKeys } from '../shared/model.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
@@ -163,6 +164,19 @@ export async function createStudioServer(options: {
             status: d.status,
             html: renderHtml(parseMarkdown(d.body)),
             url: `${origin}/#/docs/${d.slug}`,
+            // Variantes à insérer dans Figma : clé du composant publié.
+            stories: storiesInBody(d.body).flatMap(({ group, story }) =>
+              story.figma
+                ? [
+                    {
+                      id: storyId(group.id, story.id),
+                      name: story.name,
+                      key: story.figma.key,
+                      figma: figmaUrl(story.figma.node),
+                    },
+                  ]
+                : [],
+            ),
           })),
           variables: variables.flatMap((name) => {
             const key = tokenKeys.find((k) => k.replace('.', '/') === name);

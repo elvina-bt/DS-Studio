@@ -119,6 +119,21 @@
         padding: 4px 10px;
         cursor: pointer;
       }
+      ul.stories {
+        list-style: none;
+        padding: 0;
+        margin: 4px 0 10px;
+      }
+      ul.stories li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      ul.stories li span {
+        flex: 1;
+      }
       ul.index {
         padding-left: 16px;
       }
@@ -143,8 +158,9 @@
     </header>
     <main id="content"></main>
     <script>
-      // Lecture seule. Le HTML des pages est produit par DS-Studio à partir du
-      // Markdown, texte échappé ; tout le reste est inséré en textContent.
+      // Le HTML des pages est produit par DS-Studio à partir du Markdown, texte
+      // échappé ; tout le reste est inséré en textContent. Seule écriture :
+      // « Insérer » pose une instance du composant, sur clic.
       const hosts = ['http://127.0.0.1:4310', 'http://localhost:4310'];
       const content = document.getElementById('content');
       const status = document.getElementById('status');
@@ -183,6 +199,33 @@
         const body = el('div');
         body.innerHTML = doc.html;
         box.append(body);
+        if (doc.stories?.length) {
+          box.append(el('h2', 'Composants'));
+          const list = el('ul', undefined, 'stories');
+          for (const story of doc.stories) {
+            const item = el('li');
+            item.append(el('span', story.name));
+            const insert = el('button', 'Insérer');
+            insert.title = `Poser une instance de ${story.id}`;
+            insert.onclick = () => {
+              status.textContent = 'Insertion…';
+              parent.postMessage(
+                { pluginMessage: { type: 'insert', key: story.key } },
+                '*',
+              );
+            };
+            const source = el('button', 'Figma');
+            source.title = 'Ouvrir le composant dans PFE – Components';
+            source.onclick = () =>
+              parent.postMessage(
+                { pluginMessage: { type: 'open', url: story.figma } },
+                '*',
+              );
+            item.append(insert, source);
+            list.append(item);
+          }
+          box.append(list);
+        }
         const open = el('button', 'Ouvrir dans DS-Studio');
         open.onclick = () =>
           parent.postMessage(
@@ -249,7 +292,7 @@
           return;
         }
         if (id !== requestId) return;
-        status.textContent = `Connecté à ${data.studio} · lecture seule`;
+        status.textContent = `Connecté à ${data.studio}`;
         const nodes = [];
         if (!selection.count && !extra.slug)
           nodes.push(
@@ -287,6 +330,12 @@
 
       onmessage = (event) => {
         const message = event.data.pluginMessage;
+        if (message?.type === 'inserted') {
+          status.textContent = message.ok
+            ? `Instance posée : ${message.name}`
+            : message.error;
+          return;
+        }
         if (message?.type !== 'selection') return;
         selection = message;
         void show();

@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { Tokens } from '../shared/model.js';
 import {
+  figmaUrl,
   storyCode,
   storyId,
   type ComponentName,
@@ -278,6 +279,16 @@ export default function StoryCanvas({
             `${location.origin}/#/docs/${page}?story=${id}`,
           )}
         {copyButton('Code', 'Copier le code', code)}
+        {story.figma && (
+          <a
+            className="story-figma"
+            href={figmaUrl(story.figma.node)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Ouvrir dans Figma
+          </a>
+        )}
         <span className="sr-only" aria-live="polite">
           {copied &&
             (copied.ok

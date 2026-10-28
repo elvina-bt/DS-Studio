@@ -224,6 +224,23 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   Bug corrigé : les styles des outils du canvas restylaient aussi les boutons du DS
   dans l’aperçu (texte brut) ; contrôle e2e ajouté. 52 tests, 14 e2e.
 
+## 2026-10-28 — Composants dans PFE – Components, reliés aux stories
+
+- **Problème** : PFE – Components était vide ; impossible de relier une story à un
+  composant Figma ni d’en poser une instance dans mes flows.
+- **Décision** : 8 composants (21 variantes) créés par l’agent du terminal via le MCP
+  Figma, après mon accord, fidèles au code et liés aux variables Semantics. Chaque
+  story porte son nœud et sa clé (`figma` dans `app/shared/stories.ts`). Canvas :
+  « Ouvrir dans Figma ». Plugin : « Insérer » pose une instance (seule écriture,
+  sur clic, refusée en Dev Mode) et « Figma » ouvre le composant source.
+- **Choix contraint** : police Inter, car SF Pro (police locale) donnait des textes
+  de largeur nulle dans l’environnement de création.
+- **Preuves** : captures Figma de chaque composant ; 53 tests unitaires (lien et clé
+  sur chaque story, variantes renvoyées au plugin), 14 e2e (lien du canvas), macOS.
+- **Limites** : plugin pas encore lancé dans Figma (insertion non testée en vrai) ;
+  insertion depuis un autre fichier seulement après publication de la bibliothèque ;
+  tailles dérivées fixées en dur, sans variable.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

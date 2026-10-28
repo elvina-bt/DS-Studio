@@ -4,7 +4,7 @@ section: composants
 order: 60
 summary: Ligne de 44 pt minimum dans une carte groupée : libellé, valeur, chevron ou interrupteur.
 status: brouillon
-figma: Ligne de liste, List row
+figma: Ligne de liste, List row, Liste groupée
 ---
 
 ## Aperçu
