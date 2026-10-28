@@ -454,6 +454,12 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
     specimen.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
   ).toBeVisible();
   await expect(page.locator('.doc-callout.dont')).toHaveCount(1);
+  const outline = page.getByRole('navigation', { name: 'Sur cette page' });
+  await outline.hover();
+  await outline.getByRole('button', { name: 'Aperçu', exact: true }).click();
+  await expect(
+    outline.getByRole('button', { name: 'Aperçu', exact: true }),
+  ).toHaveAttribute('aria-current', 'location');
 
   await page.getByRole('button', { name: 'Modifier la page' }).click();
   const editor = page.getByRole('form', { name: 'Modifier la page' });

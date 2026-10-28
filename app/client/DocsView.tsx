@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   docSchema,
   docSections,
+  headingAnchors,
   lineDiff,
   parseMarkdown,
   serializeDoc,
@@ -12,6 +13,7 @@ import {
 import type { Tokens } from '../shared/model.js';
 import { request } from './api.js';
 import { DocContent } from './DocContent.js';
+import PageOutline from './PageOutline.js';
 
 type Stored = Doc & { base: string };
 
@@ -164,6 +166,9 @@ export default function DocsView({
       : [];
   const editing = draft !== null;
   const shown = editing ? draft : current;
+  const body = !editing && current ? current.body : '';
+  const blocks = useMemo(() => parseMarkdown(body), [body]);
+  const anchors = useMemo(() => [...headingAnchors(blocks).values()], [blocks]);
 
   return (
     <div className="docs">
@@ -440,10 +445,12 @@ export default function DocsView({
               {shown.summary && <p className="docs-summary">{shown.summary}</p>}
             </header>
             <DocContent
-              blocks={parseMarkdown(shown.body)}
+              blocks={blocks}
               tokens={tokens}
               onNavigate={(s) => go(s)}
+              anchored
             />
+            <PageOutline title={shown.title} anchors={anchors} />
           </article>
         )}
       </div>

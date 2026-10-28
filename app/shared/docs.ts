@@ -269,6 +269,37 @@ const inlineHtml = (c: Inline[]): string =>
                 : `<span class="link">${inlineHtml(n.c)}</span>`,
     )
     .join('');
+export const inlineText = (nodes: Inline[]): string =>
+  nodes.map((n) => ('v' in n ? n.v : inlineText(n.c))).join('');
+
+// Sommaire de page : intertitres h2 et h3 de premier niveau, ancres uniques
+// (« section-usage », « section-usage-2 »…), indexées par position du bloc.
+export type Anchor = { id: string; level: 2 | 3; text: string };
+export function headingAnchors(blocks: Block[]): Map<number, Anchor> {
+  const anchors = new Map<number, Anchor>();
+  const seen = new Map<string, number>();
+  const used = new Set<string>();
+  blocks.forEach((b, i) => {
+    if (b.t !== 'heading' || b.level === 4) return;
+    const text = inlineText(b.c).trim();
+    const base =
+      'section-' +
+      (text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50) || 'titre');
+    let n = seen.get(base) ?? 0;
+    let id = base;
+    while (used.has(id)) id = `${base}-${++n + 1}`;
+    seen.set(base, n);
+    used.add(id);
+    anchors.set(i, { id, level: b.level, text });
+  });
+  return anchors;
+}
 const calloutLabel = { do: 'À faire', dont: 'À éviter', note: 'Note' };
 
 // Les blocs vivants (composant, tokens) ne s'exécutent pas dans Figma : un renvoi

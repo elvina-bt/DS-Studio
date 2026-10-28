@@ -10,6 +10,7 @@ import { DocsStore } from '../app/server/docs.js';
 import { createStudioServer } from '../app/server/http.js';
 import { tokensSchema } from '../app/shared/model.js';
 import {
+  headingAnchors,
   lineDiff,
   parseDoc,
   parseMarkdown,
@@ -82,6 +83,22 @@ test('Markdown : blocs du DS, liens sûrs et HTML échappé', () => {
   );
   assert.ok(!/<script|<img/i.test(hostile));
   assert.ok(hostile.includes('&lt;img src=x onerror=alert(1)&gt;'));
+});
+
+test('sommaire : ancres uniques des h2 et h3, sans accents ni h4', () => {
+  const blocks = parseMarkdown(
+    '## Usage\n\n### Écart **prévu**\n\n#### Détail\n\n## Usage\n\n## Usage 2\n\n## Usage',
+  );
+  assert.deepEqual(
+    [...headingAnchors(blocks).values()].map((a) => [a.id, a.level, a.text]),
+    [
+      ['section-usage', 2, 'Usage'],
+      ['section-ecart-prevu', 3, 'Écart prévu'],
+      ['section-usage-2', 2, 'Usage'],
+      ['section-usage-2-2', 2, 'Usage 2'],
+      ['section-usage-3', 2, 'Usage'],
+    ],
+  );
 });
 
 test('diff ligne à ligne : ajouts, suppressions et lignes inchangées', () => {

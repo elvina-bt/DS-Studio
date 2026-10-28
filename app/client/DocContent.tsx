@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import type { Block, Inline } from '../shared/docs.js';
+import { headingAnchors, type Block, type Inline } from '../shared/docs.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
 import { DSProvider } from './DesignSystem.js';
 import {
@@ -181,11 +181,14 @@ export function DocContent({
   blocks,
   tokens,
   onNavigate,
+  anchored = false,
 }: {
   blocks: Block[];
   tokens: Tokens;
   onNavigate: (slug: string) => void;
+  anchored?: boolean;
 }) {
+  const anchors = anchored ? headingAnchors(blocks) : null;
   const inline = (c: Inline[]) => (
     <InlineContent nodes={c} onNavigate={onNavigate} />
   );
@@ -195,7 +198,11 @@ export function DocContent({
         switch (b.t) {
           case 'heading': {
             const H = `h${b.level}` as 'h2' | 'h3' | 'h4';
-            return <H key={i}>{inline(b.c)}</H>;
+            return (
+              <H key={i} id={anchors?.get(i)?.id}>
+                {inline(b.c)}
+              </H>
+            );
           }
           case 'paragraph':
             return <p key={i}>{inline(b.c)}</p>;

@@ -165,6 +165,10 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   blanche, colonne de lecture centrée, grand titre et chapeau, navigation grise
   discrète. Retirés : badges de statut, étiquettes Figma, chemin du fichier, légendes
   des aperçus, aide de l’éditeur, barre export / import dans la doc. 13 tests e2e.
+- **Ajout** : sommaire de page à droite (un trait par intertitre, section lue en
+  foncé, liste des titres au survol ou au clavier), masqué sous 1180 px. Section
+  cliquée gardée active même si la page est trop courte pour la remonter (bug vu
+  en e2e). 47 tests unitaires, 13 e2e.
 
 ## À compléter par l’étudiant
 
