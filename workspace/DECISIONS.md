@@ -161,6 +161,10 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : plugin **pas encore lancé dans Figma** ; PFE – Components ne
   contient encore aucun composant, donc les noms Figma des pages sont des
   propositions ; Markdown volontairement restreint (pas d’images ni de HTML).
+- **Ajout** : style épuré inspiré de ma doc zeroheight N’PY et de Notion : page
+  blanche, colonne de lecture centrée, grand titre et chapeau, navigation grise
+  discrète. Retirés : badges de statut, étiquettes Figma, chemin du fichier, légendes
+  des aperçus, aide de l’éditeur, barre export / import dans la doc. 13 tests e2e.
 
 ## À compléter par l’étudiant
 

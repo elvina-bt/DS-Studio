@@ -11,7 +11,7 @@ import {
 } from '../shared/docs.js';
 import type { Tokens } from '../shared/model.js';
 import { request } from './api.js';
-import { DocContent, docComponents } from './DocContent.js';
+import { DocContent } from './DocContent.js';
 
 type Stored = Doc & { base: string };
 
@@ -168,15 +168,14 @@ export default function DocsView({
   return (
     <div className="docs">
       <nav className="docs-nav" aria-label="Pages de documentation">
-        <label className="field">
-          Rechercher dans la doc
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="couleurs, bouton, ton…"
-          />
-        </label>
+        <input
+          type="search"
+          className="docs-search"
+          aria-label="Rechercher dans la doc"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher"
+        />
         {docSections.map((section) => {
           const pages = sorted.filter(
             (d) =>
@@ -202,9 +201,6 @@ export default function DocsView({
                       }}
                     >
                       {d.title}
-                      {d.status === 'brouillon' && (
-                        <span className="docs-status">brouillon</span>
-                      )}
                     </a>
                   </li>
                 ))}
@@ -236,7 +232,7 @@ export default function DocsView({
         </button>
         {invalid.length > 0 && (
           <p className="doc-warning">
-            Ignorés (lien, taille ou en-tête invalide) : {invalid.join(', ')}.
+            Fichiers ignorés : {invalid.join(', ')}.
           </p>
         )}
       </nav>
@@ -258,10 +254,6 @@ export default function DocsView({
         {loaded && !shown && (
           <div className="docs-empty">
             <h2>{slug ? 'Page introuvable' : 'Aucune page pour l’instant'}</h2>
-            <p>
-              Les pages sont des fichiers Markdown de{' '}
-              <code>workspace/docs/</code>, versionnés avec ton projet.
-            </p>
           </div>
         )}
         {editing && draft && (
@@ -356,8 +348,7 @@ export default function DocsView({
                 />
               </label>
               <label className="field docs-wide">
-                Noms dans Figma (composants ou groupes de variables, séparés par
-                des virgules)
+                Noms dans Figma
                 <input
                   value={draft.figma.join(', ')}
                   placeholder="Bouton, Button, color"
@@ -373,10 +364,6 @@ export default function DocsView({
                   }
                 />
               </label>
-              <p className="token-hint docs-wide">
-                Fichier : <code>workspace/docs/{draft.slug || '…'}.md</code>
-                {!draft.base && ' (nouvelle page)'}
-              </p>
             </div>
             <div
               className="docs-toolbar"
@@ -389,7 +376,7 @@ export default function DocsView({
                   type="button"
                   onClick={() => insert(s.text)}
                 >
-                  + {s.label}
+                  {s.label}
                 </button>
               ))}
             </div>
@@ -405,7 +392,6 @@ export default function DocsView({
                 />
               </label>
               <div className="docs-preview" aria-label="Aperçu">
-                <span className="token-hint">Aperçu</span>
                 <DocContent
                   blocks={parseMarkdown(draft.body)}
                   tokens={tokens}
@@ -413,14 +399,6 @@ export default function DocsView({
                 />
               </div>
             </div>
-            <p className="token-hint">
-              Blocs : <code>:::do Titre</code> … <code>:::</code>,{' '}
-              <code>:::dont</code>, <code>:::note</code>,{' '}
-              <code>{'{{composant:id}}'}</code> (
-              {Object.keys(docComponents).join(', ')}
-              ), <code>{'{{tokens:color}}'}</code> (color, font, space, radius),
-              liens <code>[texte](doc:slug)</code>.
-            </p>
             <div className="button-row">
               <button
                 className="studio-primary"
@@ -437,50 +415,35 @@ export default function DocsView({
               >
                 Annuler
               </button>
-              {dirty && (
-                <span className="token-hint">
-                  Modifications non enregistrées.
-                </span>
-              )}
             </div>
           </form>
         )}
         {!editing && shown && (
           <article className="docs-page">
             <header className="docs-head">
-              <span className="docs-kicker">
-                {docSections.find((s) => s.id === shown.section)?.label}
-              </span>
+              <div className="docs-crumb">
+                <span>
+                  {docSections.find((s) => s.id === shown.section)?.label}
+                </span>
+                <button
+                  type="button"
+                  className="docs-edit"
+                  onClick={() => {
+                    setNotice('');
+                    setDraft({ ...shown });
+                  }}
+                >
+                  Modifier la page
+                </button>
+              </div>
               <h2>{shown.title}</h2>
               {shown.summary && <p className="docs-summary">{shown.summary}</p>}
-              <div className="docs-tags">
-                <span className={`docs-status ${shown.status}`}>
-                  {shown.status === 'stable' ? 'Stable' : 'Brouillon'}
-                </span>
-                {shown.figma.map((f) => (
-                  <span key={f} className="docs-figma" title="Nom dans Figma">
-                    Figma · {f}
-                  </span>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setNotice('');
-                  setDraft({ ...shown });
-                }}
-              >
-                Modifier la page
-              </button>
             </header>
             <DocContent
               blocks={parseMarkdown(shown.body)}
               tokens={tokens}
               onNavigate={(s) => go(s)}
             />
-            <footer className="token-hint">
-              Source : <code>workspace/docs/{shown.slug}.md</code>
-            </footer>
           </article>
         )}
       </div>
@@ -493,9 +456,7 @@ export default function DocsView({
       >
         <h2 id="docs-diff-title">Valider la page</h2>
         <p>
-          {original ? 'Modification' : 'Création'} de{' '}
-          <code>workspace/docs/{draft?.slug}.md</code>. Rien n’est écrit avant
-          validation.
+          <code>workspace/docs/{draft?.slug}.md</code>
         </p>
         <pre className="docs-diff" aria-label="Différences">
           {withContext(diff).map((l, i) =>

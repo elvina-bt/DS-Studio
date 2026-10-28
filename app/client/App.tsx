@@ -305,7 +305,6 @@ export default function App() {
           <span className="brand-symbol">ds.</span>
           <div>
             <strong>DS-Studio</strong>
-            <span>Votre atelier de Design System</span>
           </div>
         </div>
         <nav className="view-switch" aria-label="Vues">
@@ -330,7 +329,7 @@ export default function App() {
             Documentation
           </a>
         </nav>
-        <div className="header-status">
+        <div className="header-status" hidden={route.view === 'docs'}>
           <span className="local-badge">● Local · V2</span>
           <span className="muted">
             {boot?.figma.label ?? 'Figma : synchro manuelle via Claude Code'}
@@ -343,7 +342,7 @@ export default function App() {
           </button>
         </div>
       </header>
-      <div className="intro">
+      <div className="intro" hidden={route.view === 'docs'}>
         <h1 className="pp-sr">DS-Studio · atelier du Design System</h1>
         <div className="intro-actions">
           <button onClick={() => void perform(exportTokens)}>

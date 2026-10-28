@@ -142,7 +142,6 @@ function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
         <tr>
           <th scope="col">Aperçu</th>
           <th scope="col">Token</th>
-          <th scope="col">Figma</th>
           <th scope="col">CSS</th>
           <th scope="col">Valeur</th>
         </tr>
@@ -160,9 +159,6 @@ function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
             <th scope="row">
               <code>{k}</code>
             </th>
-            <td>
-              <code>{k.replace('.', '/')}</code>
-            </td>
             <td>
               <code>var(--{k.replace('.', '-')})</code>
             </td>
@@ -271,9 +267,6 @@ export function DocContent({
                 <DSProvider tokens={tokens}>
                   <div className="doc-specimen-stage">{spec.render()}</div>
                 </DSProvider>
-                <figcaption>
-                  {spec.name} · aperçu vivant, tokens enregistrés de l’atelier
-                </figcaption>
               </figure>
             ) : (
               <p key={i} className="doc-warning">
