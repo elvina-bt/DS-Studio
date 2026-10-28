@@ -6,6 +6,9 @@ import { z } from 'zod';
 import { imageSchema, maxImages, proposeSchema } from '../shared/model.js';
 import { Store, StudioError } from './store.js';
 import { ProjectStore } from './project.js';
+import { DocsStore } from './docs.js';
+import { docSchema, parseMarkdown, renderHtml } from '../shared/docs.js';
+import { tokenKeys } from '../shared/model.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
 import { ClaudeAdapter } from '../../connectors/agents/claude.js';
@@ -20,6 +23,7 @@ export async function createStudioServer(options: {
   agent?: AgentAdapter;
   claude?: AgentAdapter;
   dev?: boolean;
+  docsDirectory?: string;
   control?: { record: RecordInfo; stop: () => void };
 }) {
   const { root, store } = options;
@@ -29,6 +33,9 @@ export async function createStudioServer(options: {
     gemini: unvalidatedAdapter('gemini'),
   };
   const project = new ProjectStore(store.directory);
+  const docs = new DocsStore(
+    options.docsDirectory ?? path.join(root, 'workspace', 'docs'),
+  );
   const context = async (name: string) => {
     const file = path.join(root, 'workspace', name);
     const stat = await fs.lstat(file);
@@ -69,11 +76,104 @@ export async function createStudioServer(options: {
       `default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'${options.dev ? ' ws://127.0.0.1:*' : ''}; frame-ancestors 'self'; base-uri 'none'; form-action 'self'`,
     );
     try {
-      if (req.headers.host !== `127.0.0.1:${port}`)
+      // `localhost` n'est accepté que pour la lecture du plugin Figma : un nom choisi
+      // par un site tiers (rebinding DNS) reste refusé.
+      const pluginRead =
+        (req.method === 'GET' || req.method === 'OPTIONS') &&
+        !!req.url?.startsWith('/plugin/');
+      if (
+        req.headers.host !== `127.0.0.1:${port}` &&
+        !(pluginRead && req.headers.host === `localhost:${port}`)
+      )
         throw new StudioError(
           'Hôte refusé. Utilisez l’adresse 127.0.0.1 affichée au démarrage.',
           403,
         );
+      // Plugin Figma : lecture seule de la doc, depuis l'iframe du plugin (origine
+      // « null »). Aucune écriture, aucun brief, aucun historique.
+      if (req.url?.startsWith('/plugin/')) {
+        if (req.headers.origin && req.headers.origin !== 'null')
+          throw new StudioError('Origine non autorisée.', 403);
+        res.setHeader('Access-Control-Allow-Origin', 'null');
+        // Pré-vérification Chromium (Private Network Access) : l'iframe du plugin,
+        // servie par Figma, demande l'accord avant d'appeler une adresse locale.
+        if (req.method === 'OPTIONS') {
+          res.writeHead(204, {
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Private-Network': 'true',
+            'Access-Control-Max-Age': '600',
+          });
+          return res.end();
+        }
+        if (req.method !== 'GET')
+          throw new StudioError('Méthode non autorisée.', 405);
+        const url = new URL(req.url, origin);
+        if (url.pathname !== '/plugin/lookup')
+          throw new StudioError('Route inconnue.', 404);
+        const list = (name: string) =>
+          z
+            .array(z.string().trim().min(1).max(80))
+            .max(20)
+            .parse(
+              (url.searchParams.get(name) ?? '')
+                .split(',')
+                .map((v) => v.trim())
+                .filter(Boolean),
+            );
+        const components = list('components').map((c) => c.toLowerCase());
+        const variables = list('variables');
+        const all = (await docs.list()).docs;
+        const tokens = store.snapshot().tokens;
+        // Rang : page demandée, composant sélectionné, variable exacte, groupe.
+        const exact = new Set(variables.map((v) => v.toLowerCase()));
+        const groups = new Set(
+          variables.map((v) => v.split('/')[0].toLowerCase()),
+        );
+        const slug = url.searchParams.get('slug');
+        const rank = (d: (typeof all)[number]) => {
+          const names = d.figma.map((f) => f.toLowerCase());
+          if (d.slug === slug) return 0;
+          if (names.some((n) => components.includes(n))) return 1;
+          if (names.some((n) => exact.has(n))) return 2;
+          if (names.some((n) => groups.has(n))) return 3;
+          return -1;
+        };
+        const matched = all
+          .map((d) => ({ d, r: rank(d) }))
+          .filter((m) => m.r >= 0)
+          .sort((x, y) => x.r - y.r || x.d.order - y.d.order)
+          .map((m) => m.d);
+        return send(200, {
+          studio: origin,
+          index: all.map((d) => ({
+            slug: d.slug,
+            title: d.title,
+            section: d.section,
+          })),
+          docs: matched.map((d) => ({
+            slug: d.slug,
+            title: d.title,
+            section: d.section,
+            summary: d.summary,
+            status: d.status,
+            html: renderHtml(parseMarkdown(d.body)),
+            url: `${origin}/#/docs/${d.slug}`,
+          })),
+          variables: variables.flatMap((name) => {
+            const key = tokenKeys.find((k) => k.replace('.', '/') === name);
+            return key
+              ? [
+                  {
+                    name,
+                    key,
+                    value: tokens[key].$value,
+                    cssVar: `--${key.replace('.', '-')}`,
+                  },
+                ]
+              : [];
+          }),
+        });
+      }
       if (req.headers.origin && req.headers.origin !== origin)
         throw new StudioError('Origine non autorisée.', 403);
       if (req.headers['sec-fetch-site'] === 'cross-site')
@@ -119,6 +219,7 @@ export async function createStudioServer(options: {
           if (url.pathname === '/api/project/prefill')
             return send(200, briefFromMarkdown(await context('PFE.md')));
           if (url.pathname === '/api/state') return send(200, store.snapshot());
+          if (url.pathname === '/api/docs') return send(200, await docs.list());
           if (url.pathname === '/api/export')
             return send(200, store.snapshot().tokens);
           throw new StudioError('Route inconnue.', 404);
@@ -158,6 +259,13 @@ export async function createStudioServer(options: {
             .strict()
             .parse(body);
           return send(200, await project.save(b.base, b.project));
+        }
+        if (url.pathname === '/api/docs/save') {
+          const b = z
+            .object({ base: z.string().max(64), doc: docSchema })
+            .strict()
+            .parse(body);
+          return send(200, await docs.save(b.base, b.doc));
         }
         if (url.pathname === '/api/proposals') {
           const b = proposeSchema.parse(body);

@@ -6,6 +6,16 @@ import { ParapenteApp } from './ParapenteApp.js';
 import TokenPreview from './TokenPreview.js';
 import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
+import DocsView from './DocsView.js';
+
+// Deux vues : l'atelier (#/) et la documentation (#/docs/<page>).
+type Route = { view: 'atelier' | 'docs'; slug: string | null };
+function readRoute(): Route {
+  const m = /^#\/docs(?:\/([a-z0-9-]{1,60}))?$/.exec(location.hash);
+  return m
+    ? { view: 'docs', slug: m[1] ?? null }
+    : { view: 'atelier', slug: null };
+}
 import { useTokenDraft } from './useTokenDraft.js';
 import {
   bootstrap,
@@ -112,6 +122,17 @@ export default function App() {
   const [scenario, setScenario] = useState('cards');
   const [previewApp, setPreviewApp] = useState('parapente');
   const [dsTab, setDsTab] = useState<'composants' | 'apercu'>('composants');
+  const [route, setRoute] = useState<Route>(readRoute);
+  useEffect(() => {
+    const sync = () => setRoute(readRoute());
+    addEventListener('hashchange', sync);
+    return () => removeEventListener('hashchange', sync);
+  }, []);
+  const navigate = (next: Route) => {
+    location.hash =
+      next.view === 'docs' ? `#/docs${next.slug ? `/${next.slug}` : ''}` : '#/';
+    setRoute(next);
+  };
   const [agent, setAgent] = useState('claude');
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState<
@@ -274,9 +295,11 @@ export default function App() {
   const staleProposal = !!proposal && proposal.revision !== state.revision;
   return (
     <>
-      <a className="skip-link" href="#variables-title">
-        Aller aux variables
-      </a>
+      {route.view === 'atelier' && (
+        <a className="skip-link" href="#variables-title">
+          Aller aux variables
+        </a>
+      )}
       <header className="studio-header">
         <div className="wordmark">
           <span className="brand-symbol">ds.</span>
@@ -285,6 +308,28 @@ export default function App() {
             <span>Votre atelier de Design System</span>
           </div>
         </div>
+        <nav className="view-switch" aria-label="Vues">
+          <a
+            href="#/"
+            aria-current={route.view === 'atelier' ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate({ view: 'atelier', slug: null });
+            }}
+          >
+            Atelier
+          </a>
+          <a
+            href="#/docs"
+            aria-current={route.view === 'docs' ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate({ view: 'docs', slug: route.slug });
+            }}
+          >
+            Documentation
+          </a>
+        </nav>
         <div className="header-status">
           <span className="local-badge">● Local · V2</span>
           <span className="muted">
@@ -401,286 +446,306 @@ export default function App() {
           </ol>
         </section>
       )}
-      <main className="studio-grid">
-        <section
-          className="panel variables-panel"
-          aria-labelledby="variables-title"
+      {route.view === 'docs' ? (
+        <main
+          className="docs-shell"
+          aria-label="Documentation du Design System"
         >
-          <div className="panel-heading">
-            <div>
-              <h2 id="variables-title" tabIndex={-1}>
-                Variables
-              </h2>
-              <p>Collections et tokens, comme dans Figma</p>
-            </div>
-          </div>
-          <div className="panel-body">
-            <VariablesPanel
-              tokens={state.tokens}
-              selected={key}
-              draft={draft}
-              onSelect={setKey}
-              onDraft={setDraft}
-              onPropose={() => void proposeToken()}
-              recovered={recovered}
-              onDiscard={discard}
-              disabled={!boot}
-            />
-          </div>
-        </section>
-        <section className="panel ds-panel" aria-labelledby="ds-title">
-          <div className="panel-heading">
-            <div>
-              <h2 id="ds-title" tabIndex={-1}>
-                Design System
-              </h2>
-              <p>Composants et aperçu responsive</p>
-            </div>
-            <span className="revision-tag">r{state.revision}</span>
-          </div>
-          <div
-            className="panel-tabs"
-            role="tablist"
-            aria-label="Vue du Design System"
+          <DocsView
+            tokens={state.tokens}
+            slug={route.slug}
+            onNavigate={(slug) => navigate({ view: 'docs', slug })}
+          />
+        </main>
+      ) : (
+        <main className="studio-grid">
+          <section
+            className="panel variables-panel"
+            aria-labelledby="variables-title"
           >
-            {(
-              [
-                ['composants', 'Composants'],
-                ['apercu', 'Aperçu'],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                id={`ds-tab-${id}`}
-                aria-controls={`ds-panel-${id}`}
-                aria-selected={dsTab === id}
-                onClick={() => setDsTab(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div
-            role="tabpanel"
-            id="ds-panel-composants"
-            aria-labelledby="ds-tab-composants"
-            hidden={dsTab !== 'composants'}
-          >
-            <ParapenteCatalogue tokens={state.tokens} />
-          </div>
-          <div
-            role="tabpanel"
-            id="ds-panel-apercu"
-            aria-labelledby="ds-tab-apercu"
-            hidden={dsTab !== 'apercu'}
-          >
-            <div className="preview-controls">
-              <label className="field">
-                Viewport
-                <select
-                  value={device}
-                  onChange={(e) => setDevice(Number(e.target.value))}
-                >
-                  {devices.map((d, i) => (
-                    <option key={d.width} value={i}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                Application
-                <select
-                  value={previewApp}
-                  onChange={(e) => setPreviewApp(e.target.value)}
-                >
-                  <option value="parapente">Mon app parapente</option>
-                  <option value="lisiere">Lisière · exemple du starter</option>
-                </select>
-              </label>
-              {previewApp === 'lisiere' && (
-                <label className="field">
-                  Scénario
-                  <select
-                    value={scenario}
-                    onChange={(e) => setScenario(e.target.value)}
-                  >
-                    <option value="cards">Découvrir</option>
-                    <option value="form">Inscription</option>
-                  </select>
-                </label>
-              )}
+            <div className="panel-heading">
+              <div>
+                <h2 id="variables-title" tabIndex={-1}>
+                  Variables
+                </h2>
+                <p>Collections et tokens, comme dans Figma</p>
+              </div>
             </div>
-            <div className="viewport-scroll">
-              <iframe
-                title="Aperçu responsive"
-                src={`/?preview=1&app=${previewApp}&scenario=${scenario}`}
-                width={devices[device].width}
-                height={760}
+            <div className="panel-body">
+              <VariablesPanel
+                tokens={state.tokens}
+                selected={key}
+                draft={draft}
+                onSelect={setKey}
+                onDraft={setDraft}
+                onPropose={() => void proposeToken()}
+                recovered={recovered}
+                onDiscard={discard}
+                disabled={!boot}
               />
             </div>
-            <div className="panel-foot">
-              {devices[device].width} px CSS · aucun zoom appliqué · défilez si
-              nécessaire
-            </div>
-          </div>
-        </section>
-        <section className="panel agent-panel" aria-labelledby="agent-title">
-          <div className="panel-heading">
-            <div>
-              <h2 id="agent-title" tabIndex={-1}>
-                Assistant
-              </h2>
-              <p>Un assistant, pas un pilote automatique</p>
-            </div>
-          </div>
-          <div className="panel-body">
-            <ProjectBrief />
-            <label className="field">
-              Mode de travail
-              <select value={agent} onChange={(e) => setAgent(e.target.value)}>
-                <option value="manual">Manuel · sans compte IA</option>
-                <option value="codex">Codex · expérimental qualifié</option>
-                <option value="claude">Claude Code · expérimental</option>
-                <option value="gemini" disabled>
-                  Gemini CLI · non implémenté
-                </option>
-              </select>
-            </label>
-            {agent === 'manual' ? (
-              <div className="agent-empty">
-                <div className="line-icon">✳</div>
-                <h3>Le Design System vous appartient.</h3>
-                <p>
-                  Aucun compte nécessaire. Sélectionnez une variable à gauche,
-                  modifiez sa valeur et examinez le diff avant de l’appliquer.
-                </p>
-                <ol>
-                  <li>Choisissez une couleur.</li>
-                  <li>Proposez un changement.</li>
-                  <li>Validez et observez les deux vues.</li>
-                </ol>
-                <p className="privacy-note">
-                  Les changements restent sur votre machine. Figma et l’IA sont
-                  facultatifs.
-                </p>
+          </section>
+          <section className="panel ds-panel" aria-labelledby="ds-title">
+            <div className="panel-heading">
+              <div>
+                <h2 id="ds-title" tabIndex={-1}>
+                  Design System
+                </h2>
+                <p>Composants et aperçu responsive</p>
               </div>
-            ) : (
-              <>
-                <p className="privacy-note">
-                  {selectedAgent?.detail ?? 'Détection du CLI…'}
-                </p>
-                <p className="privacy-note">
-                  Envoi à {agentName} : tokens, workspace/PFE.md, brief privé,
-                  DESIGN_RULES.md et 10 messages récents
-                  {agent === 'claude' ? ', plus les captures jointes' : ''}.
-                  Aucun outil ni commande ; propositions seulement.
-                </p>
-                <div
-                  className="chat-log"
-                  aria-label="Conversation"
-                  aria-live="polite"
+              <span className="revision-tag">r{state.revision}</span>
+            </div>
+            <div
+              className="panel-tabs"
+              role="tablist"
+              aria-label="Vue du Design System"
+            >
+              {(
+                [
+                  ['composants', 'Composants'],
+                  ['apercu', 'Aperçu'],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`ds-tab-${id}`}
+                  aria-controls={`ds-panel-${id}`}
+                  aria-selected={dsTab === id}
+                  onClick={() => setDsTab(id)}
                 >
-                  {chat.map((c, i) => (
-                    <article className={`chat-message ${c.role}`} key={i}>
-                      <strong>{c.role === 'user' ? 'Vous' : agentName}</strong>
-                      <p>{c.text}</p>
-                    </article>
-                  ))}
-                </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void sendMessage();
-                  }}
-                >
-                  <label className="field">
-                    Votre demande
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onPaste={(e) => {
-                        if (agent !== 'claude') return;
-                        const files = [...e.clipboardData.files].filter((f) =>
-                          f.type.startsWith('image/'),
-                        );
-                        if (files.length) {
-                          e.preventDefault();
-                          void attach(files);
-                        }
-                      }}
-                      maxLength={8000}
-                      placeholder="Propose une couleur de marque plus chaleureuse."
-                      disabled={thinking}
-                    />
-                  </label>
-                  {agent === 'claude' && (
-                    <div className="chat-attachments">
-                      <label className="field">
-                        Joindre une capture (ou collez-la avec Cmd+V)
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/gif,image/webp"
-                          multiple
-                          disabled={thinking || images.length >= maxImages}
-                          onChange={(e) => {
-                            void attach([...(e.target.files ?? [])]);
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
-                      {images.length > 0 && (
-                        <ul aria-label="Captures jointes">
-                          {images.map((image, i) => (
-                            <li key={i}>
-                              <img
-                                src={`data:${image.mediaType};base64,${image.data}`}
-                                alt={`Capture ${i + 1}`}
-                              />
-                              <button
-                                type="button"
-                                aria-label={`Retirer la capture ${i + 1}`}
-                                onClick={() =>
-                                  setImages(images.filter((_, j) => j !== i))
-                                }
-                              >
-                                Retirer
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                  <button
-                    className="studio-primary"
-                    disabled={
-                      thinking || !message.trim() || !selectedAgent?.available
-                    }
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div
+              role="tabpanel"
+              id="ds-panel-composants"
+              aria-labelledby="ds-tab-composants"
+              hidden={dsTab !== 'composants'}
+            >
+              <ParapenteCatalogue tokens={state.tokens} />
+            </div>
+            <div
+              role="tabpanel"
+              id="ds-panel-apercu"
+              aria-labelledby="ds-tab-apercu"
+              hidden={dsTab !== 'apercu'}
+            >
+              <div className="preview-controls">
+                <label className="field">
+                  Viewport
+                  <select
+                    value={device}
+                    onChange={(e) => setDevice(Number(e.target.value))}
                   >
-                    {thinking
-                      ? 'Réflexion en cours…'
-                      : `Envoyer à ${agentName}`}
-                  </button>
-                  {thinking && (
-                    <button
-                      type="button"
-                      onClick={() => controller.current?.abort()}
+                    {devices.map((d, i) => (
+                      <option key={d.width} value={i}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  Application
+                  <select
+                    value={previewApp}
+                    onChange={(e) => setPreviewApp(e.target.value)}
+                  >
+                    <option value="parapente">Mon app parapente</option>
+                    <option value="lisiere">
+                      Lisière · exemple du starter
+                    </option>
+                  </select>
+                </label>
+                {previewApp === 'lisiere' && (
+                  <label className="field">
+                    Scénario
+                    <select
+                      value={scenario}
+                      onChange={(e) => setScenario(e.target.value)}
                     >
-                      Arrêter
+                      <option value="cards">Découvrir</option>
+                      <option value="form">Inscription</option>
+                    </select>
+                  </label>
+                )}
+              </div>
+              <div className="viewport-scroll">
+                <iframe
+                  title="Aperçu responsive"
+                  src={`/?preview=1&app=${previewApp}&scenario=${scenario}`}
+                  width={devices[device].width}
+                  height={760}
+                />
+              </div>
+              <div className="panel-foot">
+                {devices[device].width} px CSS · aucun zoom appliqué · défilez
+                si nécessaire
+              </div>
+            </div>
+          </section>
+          <section className="panel agent-panel" aria-labelledby="agent-title">
+            <div className="panel-heading">
+              <div>
+                <h2 id="agent-title" tabIndex={-1}>
+                  Assistant
+                </h2>
+                <p>Un assistant, pas un pilote automatique</p>
+              </div>
+            </div>
+            <div className="panel-body">
+              <ProjectBrief />
+              <label className="field">
+                Mode de travail
+                <select
+                  value={agent}
+                  onChange={(e) => setAgent(e.target.value)}
+                >
+                  <option value="manual">Manuel · sans compte IA</option>
+                  <option value="codex">Codex · expérimental qualifié</option>
+                  <option value="claude">Claude Code · expérimental</option>
+                  <option value="gemini" disabled>
+                    Gemini CLI · non implémenté
+                  </option>
+                </select>
+              </label>
+              {agent === 'manual' ? (
+                <div className="agent-empty">
+                  <div className="line-icon">✳</div>
+                  <h3>Le Design System vous appartient.</h3>
+                  <p>
+                    Aucun compte nécessaire. Sélectionnez une variable à gauche,
+                    modifiez sa valeur et examinez le diff avant de l’appliquer.
+                  </p>
+                  <ol>
+                    <li>Choisissez une couleur.</li>
+                    <li>Proposez un changement.</li>
+                    <li>Validez et observez les deux vues.</li>
+                  </ol>
+                  <p className="privacy-note">
+                    Les changements restent sur votre machine. Figma et l’IA
+                    sont facultatifs.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="privacy-note">
+                    {selectedAgent?.detail ?? 'Détection du CLI…'}
+                  </p>
+                  <p className="privacy-note">
+                    Envoi à {agentName} : tokens, workspace/PFE.md, brief privé,
+                    DESIGN_RULES.md et 10 messages récents
+                    {agent === 'claude' ? ', plus les captures jointes' : ''}.
+                    Aucun outil ni commande ; propositions seulement.
+                  </p>
+                  <div
+                    className="chat-log"
+                    aria-label="Conversation"
+                    aria-live="polite"
+                  >
+                    {chat.map((c, i) => (
+                      <article className={`chat-message ${c.role}`} key={i}>
+                        <strong>
+                          {c.role === 'user' ? 'Vous' : agentName}
+                        </strong>
+                        <p>{c.text}</p>
+                      </article>
+                    ))}
+                  </div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void sendMessage();
+                    }}
+                  >
+                    <label className="field">
+                      Votre demande
+                      <textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onPaste={(e) => {
+                          if (agent !== 'claude') return;
+                          const files = [...e.clipboardData.files].filter((f) =>
+                            f.type.startsWith('image/'),
+                          );
+                          if (files.length) {
+                            e.preventDefault();
+                            void attach(files);
+                          }
+                        }}
+                        maxLength={8000}
+                        placeholder="Propose une couleur de marque plus chaleureuse."
+                        disabled={thinking}
+                      />
+                    </label>
+                    {agent === 'claude' && (
+                      <div className="chat-attachments">
+                        <label className="field">
+                          Joindre une capture (ou collez-la avec Cmd+V)
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/gif,image/webp"
+                            multiple
+                            disabled={thinking || images.length >= maxImages}
+                            onChange={(e) => {
+                              void attach([...(e.target.files ?? [])]);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+                        {images.length > 0 && (
+                          <ul aria-label="Captures jointes">
+                            {images.map((image, i) => (
+                              <li key={i}>
+                                <img
+                                  src={`data:${image.mediaType};base64,${image.data}`}
+                                  alt={`Capture ${i + 1}`}
+                                />
+                                <button
+                                  type="button"
+                                  aria-label={`Retirer la capture ${i + 1}`}
+                                  onClick={() =>
+                                    setImages(images.filter((_, j) => j !== i))
+                                  }
+                                >
+                                  Retirer
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                    <button
+                      className="studio-primary"
+                      disabled={
+                        thinking || !message.trim() || !selectedAgent?.available
+                      }
+                    >
+                      {thinking
+                        ? 'Réflexion en cours…'
+                        : `Envoyer à ${agentName}`}
                     </button>
-                  )}
-                </form>
-              </>
-            )}
-          </div>
-          <div className="panel-foot">
-            Périmètre : contexte PFE + tokens autorisés
-          </div>
-        </section>
-      </main>
+                    {thinking && (
+                      <button
+                        type="button"
+                        onClick={() => controller.current?.abort()}
+                      >
+                        Arrêter
+                      </button>
+                    )}
+                  </form>
+                </>
+              )}
+            </div>
+            <div className="panel-foot">
+              Périmètre : contexte PFE + tokens autorisés
+            </div>
+          </section>
+        </main>
+      )}
       <footer className="studio-footer">
         <span>DS-Studio V2 · Fait pour être transformé.</span>
         <span>JSON local → validation → composants partagés</span>

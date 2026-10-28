@@ -138,6 +138,30 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limite** : écriture réelle dans Figma pas encore exécutée ; publication des
   bibliothèques par l’étudiante dans Figma ; consomme le quota Figma MCP et Claude.
 
+## 2026-10-28 — Documentation du DS façon zeroheight
+
+- **Problème** : fondations, ton, tokens et composants n’étaient documentés nulle
+  part ; je voulais tout centraliser moi-même, sans dépendre d’un outil payant.
+- **Options** : outil SaaS (zeroheight, Supernova) ; doc dans l’état privé de
+  l’app ; fichiers Markdown versionnés. **Choix : Markdown** dans `workspace/docs/`,
+  édité dans DS-Studio, lisible sur GitHub, par Claude et par le plugin.
+- **Décision** : vue **Documentation** (accueil, fondations, tone of voice, tokens,
+  composants, ressources), éditeur avec aperçu et blocs (À faire, À éviter, Note,
+  composant vivant, tableau de tokens), diff à valider avant écriture, contrôle de
+  conflit. 15 pages de départ tirées du PFE et de `DESIGN_RULES.md`. Plugin Figma
+  **DS-Studio Docs** (lecture seule) : page du composant sélectionné et variables
+  liées, via `/plugin/lookup` (origine `null`, `localhost` accepté pour ce seul
+  usage, pré-vérification Private Network Access).
+- **Preuves** : 46 tests unitaires (dont 5 pour la doc : en-tête, Markdown, HTML
+  échappé, liens dangereux refusés, conflit, lien symbolique, CSRF, plugin), 13 tests
+  e2e (dont lecture → édition → diff → enregistrement sur une copie temporaire),
+  macOS. Interface du plugin vérifiée dans un navigateur avec une vraie réponse du
+  serveur. Deux bugs trouvés et corrigés en cours de route : bloc « dont » lu comme
+  « do », éditeur qui plantait sur un brouillon.
+- **Limites** : plugin **pas encore lancé dans Figma** ; PFE – Components ne
+  contient encore aucun composant, donc les noms Figma des pages sont des
+  propositions ; Markdown volontairement restreint (pas d’images ni de HTML).
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

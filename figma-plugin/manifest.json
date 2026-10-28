@@ -1,0 +1,15 @@
+{
+  "name": "DS-Studio Docs",
+  "id": "ds-studio-docs-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma", "dev"],
+  "capabilities": ["inspect"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://127.0.0.1:4310", "http://localhost:4310"],
+    "reasoning": "Lit, en lecture seule, la documentation du Design System servie par DS-Studio sur ce poste."
+  }
+}

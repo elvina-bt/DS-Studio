@@ -434,3 +434,51 @@ test('panneau Variables : groupes, recherche, édition sur place et diff sans é
   const after = await (await page.request.get('/api/state')).json();
   expect(after.revision).toBe(before.revision);
 });
+
+test('documentation : navigation, aperçu vivant, édition avec diff puis enregistrement', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Documentation', exact: true }).click();
+  await expect(page).toHaveURL(/#\/docs$/);
+  await expect(
+    page.getByRole('heading', { name: 'Bienvenue', level: 2 }),
+  ).toBeVisible();
+  const nav = page.getByRole('navigation', {
+    name: 'Pages de documentation',
+  });
+  await nav.getByRole('link', { name: /^Bouton/ }).click();
+  await expect(page).toHaveURL(/#\/docs\/bouton$/);
+  const specimen = page.getByRole('figure', { name: 'Aperçu : Bouton' });
+  await expect(
+    specimen.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.doc-callout.dont')).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Modifier la page' }).click();
+  const editor = page.getByRole('form', { name: 'Modifier la page' });
+  const body = editor.getByLabel('Contenu (Markdown)');
+  await body.fill((await body.inputValue()) + '\n\n:::note\nTest e2e.\n:::');
+  await expect(
+    page.getByLabel('Aperçu').locator('.doc-callout.note'),
+  ).toHaveCount(1);
+  await editor.getByRole('button', { name: 'Enregistrer…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Valider la page' });
+  await expect(dialog).toContainText('+ :::note');
+  await expect(dialog).toContainText('+ Test e2e.');
+  await dialog.getByRole('button', { name: 'Valider et enregistrer' }).click();
+  await expect(page.getByRole('status')).toContainText(
+    'workspace/docs/bouton.md',
+  );
+  await expect(page.locator('.docs-page .doc-callout.note')).toContainText(
+    'Test e2e.',
+  );
+  await page.reload();
+  await expect(page.locator('.docs-page .doc-callout.note')).toContainText(
+    'Test e2e.',
+  );
+  await page.getByRole('link', { name: 'Atelier', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Variables', exact: true }),
+  ).toBeVisible();
+});

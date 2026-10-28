@@ -67,6 +67,16 @@ perdu les permissions exécutables : `sh start.sh` ou `sh start.command`.
 `npm run doctor` vérifie les prérequis sans ouvrir d’identifiants. Un dossier
 contenant des espaces est accepté. N’utilisez ni `sudo` ni installation de service.
 
+## Documentation du DS (façon zeroheight)
+
+Le bouton **Documentation** de l’en-tête ouvre la doc du Design System : accueil,
+fondations, tone of voice, design tokens et composants. Chaque page est un fichier
+Markdown de `workspace/docs/`, versionné avec le projet. **Modifier la page** ouvre
+un éditeur avec aperçu, blocs prêts à l’emploi (À faire, À éviter, Note, aperçu de
+composant vivant, tableau de tokens) et un diff à valider avant l’écriture.
+Le plugin Figma [DS-Studio Docs](figma-plugin/README.md) affiche la page du
+composant sélectionné dans Figma, en lecture seule.
+
 ## Ce qui change en V2
 
 - **Mon PFE** : brief privé éditable et exportable en Markdown ; aucun compte nécessaire.
@@ -104,6 +114,7 @@ simulé. Les propositions périmées et annulations conflictuelles sont refusée
 | `workspace/PFE.md`                    | Votre sujet, publics et objectifs                          |
 | `workspace/DESIGN_RULES.md`           | Vos règles de conception et contraintes                    |
 | `workspace/DECISIONS.md`              | Vos arbitrages et preuves                                  |
+| `workspace/docs/`                     | Documentation du DS, une page Markdown par sujet           |
 | `workspace/design-system.tokens.json` | Seed versionné, utilisé uniquement à la création d’un état |
 | `.ds-studio/project.json`             | Brief PFE privé du panneau, ignoré par Git                 |
 | `.ds-studio/state.previous.json`      | Copie de la révision précédente des tokens et du journal   |
@@ -155,7 +166,7 @@ Inspirez-vous des deux skills fournis, sans copier vos identifiants ou vos conve
 | Chat Codex, JSON proposé avant acceptation                          | **TESTED**, CLI 0.164.0, compte enseignant disponible pendant la qualification ; quota non garanti |
 | Chat Claude Code, JSON proposé avant acceptation                    | **TESTED**, macOS, CLI 2.1.311, compte personnel ; quota non garanti, expérimental                 |
 | Gemini dans l’application                                           | **NOT IMPLEMENTED**, adaptateur indisponible et contrat documenté                                  |
-| Figma MCP et synchronisation                                        | **PARTIAL**, application non connectée ; synchro manuelle via Claude Code (skill `figma-sync`)    |
+| Figma MCP et synchronisation                                        | **PARTIAL**, application non connectée ; synchro manuelle via Claude Code (skill `figma-sync`)     |
 | Skills et harness personnalisable                                   | **IMPLEMENTED**, structure et liens vérifiés ; pas une validation des choix d’un étudiant          |
 | Qualification automatisée Windows / macOS                           | **TESTED en CI** pour API, navigateur et contrôleur ; **PARTIAL** pour Finder/WSH natifs           |
 | Application desktop installable                                     | **NOT IMPLEMENTED**, application web locale uniquement                                             |

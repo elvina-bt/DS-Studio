@@ -11,6 +11,9 @@ Lire [START_HERE.md](START_HERE.md). Le contexte appartient à l’étudiant.
 - `connectors/agents/` : Codex qualifié, Claude Code expérimental (testé macOS,
   2.1.311, captures acceptées), Gemini explicitement indisponible.
 - `connectors/figma/` : contrat seulement, aucune connexion réseau.
+- `app/shared/docs.ts`, `app/server/docs.ts` : pages de doc (`workspace/docs/`),
+  Markdown restreint, diff avant écriture ; `/plugin/lookup` en lecture seule.
+- `figma-plugin/` : plugin Figma de consultation de la doc, sans écriture.
 - `workspace/` : PFE, règles, décisions et DS d’exemple versionnables.
 - `.ds-studio/` : état privé d’exécution, jamais à commiter.
 

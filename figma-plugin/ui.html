@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --text: var(--figma-color-text, #1e1e1e);
+        --muted: var(--figma-color-text-secondary, #6b6b6b);
+        --bg: var(--figma-color-bg, #fff);
+        --soft: var(--figma-color-bg-secondary, #f5f5f5);
+        --line: var(--figma-color-border, #e6e6e6);
+        --brand: var(--figma-color-text-brand, #0d6efd);
+      }
+      body {
+        margin: 0;
+        font:
+          12px/1.5 Inter,
+          system-ui,
+          sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+      header {
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        padding: 10px 12px;
+      }
+      header strong {
+        font-size: 13px;
+      }
+      #status {
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      main {
+        padding: 12px;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0 0 2px;
+      }
+      h2 {
+        font-size: 14px;
+        margin: 14px 0 4px;
+      }
+      h3,
+      h4 {
+        font-size: 12px;
+        margin: 10px 0 2px;
+      }
+      p {
+        margin: 4px 0 8px;
+      }
+      .doc {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+      }
+      .meta {
+        color: var(--muted);
+      }
+      .tag {
+        display: inline-block;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 6px;
+        font-size: 10px;
+        margin-right: 4px;
+      }
+      .callout {
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin: 8px 0;
+        border: 1px solid var(--line);
+      }
+      .callout.do {
+        border-color: #7cc49a;
+      }
+      .callout.dont {
+        border-color: #e38b98;
+      }
+      .callout strong {
+        display: block;
+      }
+      .embed {
+        color: var(--muted);
+        font-style: italic;
+      }
+      code {
+        background: var(--soft);
+        border-radius: 3px;
+        padding: 0 3px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 6px 0;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        padding: 4px;
+      }
+      button {
+        font: inherit;
+        border: 1px solid var(--line);
+        background: var(--soft);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      ul.index {
+        padding-left: 16px;
+      }
+      .link {
+        color: var(--brand);
+      }
+      .swatch {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1px solid var(--line);
+        vertical-align: middle;
+        margin-right: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>DS-Studio Docs</strong>
+      <div id="status">Connexion à DS-Studio…</div>
+    </header>
+    <main id="content"></main>
+    <script>
+      // Lecture seule. Le HTML des pages est produit par DS-Studio à partir du
+      // Markdown, texte échappé ; tout le reste est inséré en textContent.
+      const hosts = ['http://127.0.0.1:4310', 'http://localhost:4310'];
+      const content = document.getElementById('content');
+      const status = document.getElementById('status');
+      let selection = { count: 0, components: [], variables: [] };
+      let requestId = 0;
+
+      const el = (tag, text, className) => {
+        const node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text;
+        if (className) node.className = className;
+        return node;
+      };
+
+      async function lookup(params) {
+        const query = new URLSearchParams(params).toString();
+        for (const host of hosts) {
+          try {
+            const res = await fetch(`${host}/plugin/lookup?${query}`);
+            if (res.ok) return await res.json();
+          } catch (e) {
+            /* Hôte suivant. */
+          }
+        }
+        throw new Error('DS-Studio injoignable');
+      }
+
+      function renderDoc(doc) {
+        const box = el('article', undefined, 'doc');
+        box.append(el('h1', doc.title));
+        const meta = el('div', undefined, 'meta');
+        meta.append(
+          el('span', doc.status === 'stable' ? 'Stable' : 'Brouillon', 'tag'),
+        );
+        meta.append(el('span', doc.summary));
+        box.append(meta);
+        const body = el('div');
+        body.innerHTML = doc.html;
+        box.append(body);
+        const open = el('button', 'Ouvrir dans DS-Studio');
+        open.onclick = () =>
+          parent.postMessage(
+            { pluginMessage: { type: 'open', url: doc.url } },
+            '*',
+          );
+        box.append(open);
+        return box;
+      }
+
+      function renderVariables(variables) {
+        const table = el('table');
+        const head = el('tr');
+        ['Variable', 'Valeur', 'CSS'].forEach((h) => head.append(el('th', h)));
+        table.append(head);
+        for (const v of variables) {
+          const row = el('tr');
+          row.append(el('td', v.name));
+          const value = el('td');
+          if (typeof v.value === 'string' && /^#[0-9a-f]{6}$/i.test(v.value)) {
+            const swatch = el('span', undefined, 'swatch');
+            swatch.style.background = v.value;
+            value.append(swatch);
+          }
+          value.append(document.createTextNode(String(v.value)));
+          row.append(value);
+          row.append(el('td', v.cssVar));
+          table.append(row);
+        }
+        return table;
+      }
+
+      function renderIndex(index) {
+        const list = el('ul', undefined, 'index');
+        for (const page of index) {
+          const item = el('li');
+          const link = el('button', page.title);
+          link.onclick = () => show({ slug: page.slug });
+          item.append(link);
+          list.append(item);
+        }
+        return list;
+      }
+
+      async function show(extra = {}) {
+        const id = ++requestId;
+        let data;
+        try {
+          data = await lookup({
+            components: selection.components.join(','),
+            variables: selection.variables.join(','),
+            ...extra,
+          });
+        } catch (e) {
+          if (id !== requestId) return;
+          status.textContent =
+            'DS-Studio injoignable : lance-le sur ce Mac (port 4310).';
+          content.replaceChildren(
+            el(
+              'p',
+              'Le plugin lit la doc servie par DS-Studio. Démarre l’atelier, puis relance le plugin.',
+            ),
+          );
+          return;
+        }
+        if (id !== requestId) return;
+        status.textContent = `Connecté à ${data.studio} · lecture seule`;
+        const nodes = [];
+        if (!selection.count && !extra.slug)
+          nodes.push(
+            el(
+              'p',
+              'Sélectionne un composant ou un calque lié à des variables.',
+              'meta',
+            ),
+          );
+        else if (selection.count)
+          nodes.push(
+            el(
+              'p',
+              `Sélection : ${[...selection.components, ...selection.variables].join(', ') || 'calque sans composant ni variable'}`,
+              'meta',
+            ),
+          );
+        if (data.variables.length) {
+          nodes.push(el('h2', 'Variables liées'));
+          nodes.push(renderVariables(data.variables));
+        }
+        if (data.docs.length)
+          data.docs.forEach((d) => nodes.push(renderDoc(d)));
+        else if (selection.count)
+          nodes.push(
+            el(
+              'p',
+              'Aucune page de doc pour cette sélection. Dans DS-Studio, ajoute son nom Figma au champ « Noms dans Figma » de la page.',
+            ),
+          );
+        nodes.push(el('h2', 'Toutes les pages'));
+        nodes.push(renderIndex(data.index));
+        content.replaceChildren(...nodes);
+      }
+
+      onmessage = (event) => {
+        const message = event.data.pluginMessage;
+        if (message?.type !== 'selection') return;
+        selection = message;
+        void show();
+      };
+      parent.postMessage({ pluginMessage: { type: 'ready' } }, '*');
+    </script>
+  </body>
+</html>

@@ -43,6 +43,10 @@ try {
   };
   const app = await createStudioServer({
     root,
+    // Les tests e2e travaillent sur une copie de la doc, jamais sur workspace/docs.
+    docsDirectory: process.env.DS_STUDIO_DOCS_DIR
+      ? path.resolve(process.env.DS_STUDIO_DOCS_DIR)
+      : undefined,
     store,
     dev: process.argv.includes('--dev'),
     control: {
