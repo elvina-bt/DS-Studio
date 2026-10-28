@@ -1,92 +1,12 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment } from 'react';
 import { headingAnchors, type Block, type Inline } from '../shared/docs.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
-import { DSProvider } from './DesignSystem.js';
-import {
-  Badge,
-  Button,
-  Card,
-  ForecastCard,
-  LargeTitle,
-  ListRow,
-  ListToggle,
-  SearchField,
-  SectionHeader,
-  TabBar,
-} from './ParapenteDS.js';
+import { storyGroups } from '../shared/stories.js';
+import StoryCanvas from './StoryCanvas.js';
 import TokenPreview from './TokenPreview.js';
 
-// Rendu React d'une page de doc : aucun HTML injecté. Les blocs `composant` et
-// `tokens` sont vivants : ils utilisent les tokens enregistrés de l'atelier.
-export const docComponents: Record<
-  string,
-  { name: string; render: () => ReactNode }
-> = {
-  bouton: {
-    name: 'Bouton',
-    render: () => (
-      <div className="button-row">
-        <Button>Nouvelle sortie</Button>
-        <Button variant="secondary">Voir les sites</Button>
-        <Button variant="danger">Supprimer le vol</Button>
-        <Button disabled>Indisponible</Button>
-      </div>
-    ),
-  },
-  titre: {
-    name: 'Titre et en-tête de section',
-    render: () => (
-      <>
-        <LargeTitle>Préparer</LargeTitle>
-        <SectionHeader>Prochaine sortie</SectionHeader>
-      </>
-    ),
-  },
-  recherche: {
-    name: 'Champ de recherche',
-    render: () => <SearchField label="Rechercher un site" />,
-  },
-  'carte-prevision': {
-    name: 'Carte de prévision',
-    render: () => (
-      <ForecastCard
-        place="Saint-Hilaire"
-        slot="sam. 14 h–16 h"
-        wind="12–18 km/h"
-        summary="Ouest, rafales possibles l’après-midi."
-        gusts="jusqu’à 25 km/h"
-        ceiling="2 400 m"
-        confidence="Moyenne · maille 1,3 km"
-        note="Prévision enregistrée à 9 h 12, pour la comparer après le vol."
-      />
-    ),
-  },
-  badge: {
-    name: 'Badge',
-    render: () => (
-      <div className="button-row">
-        <Badge>Confiance moyenne</Badge>
-        <Badge>Écart</Badge>
-      </div>
-    ),
-  },
-  'ligne-liste': {
-    name: 'Ligne de liste',
-    render: () => (
-      <Card list>
-        <ListRow label="Comprendre les rafales" chevron />
-        <ListRow label="Niveau" value="Brevet initial" chevron />
-        <ListRow label="Plafond" value="2 400 m" />
-        <ListToggle label="Contraste renforcé" defaultChecked />
-      </Card>
-    ),
-  },
-  'barre-onglets': {
-    name: 'Barre d’onglets',
-    render: () => <TabBar current="Préparer" onChange={() => {}} inline />,
-  },
-};
-
+// Rendu React d'une page de doc : aucun HTML injecté. Les blocs `composant` (canvas
+// de stories) et `tokens` sont vivants : ils utilisent les tokens enregistrés.
 function InlineContent({
   nodes,
   onNavigate,
@@ -182,11 +102,16 @@ export function DocContent({
   tokens,
   onNavigate,
   anchored = false,
+  page,
+  story,
 }: {
   blocks: Block[];
   tokens: Tokens;
   onNavigate: (slug: string) => void;
   anchored?: boolean;
+  // Page affichée et variante demandée par un lien `?story=`.
+  page?: string;
+  story?: string | null;
 }) {
   const anchors = anchored ? headingAnchors(blocks) : null;
   const inline = (c: Inline[]) => (
@@ -260,25 +185,25 @@ export function DocContent({
                   blocks={b.c}
                   tokens={tokens}
                   onNavigate={onNavigate}
+                  page={page}
+                  story={story}
                 />
               </aside>
             );
           case 'component': {
-            const spec = docComponents[b.id];
-            return spec ? (
-              <figure
-                key={i}
-                className="doc-specimen"
-                aria-label={`Aperçu : ${spec.name}`}
-              >
-                <DSProvider tokens={tokens}>
-                  <div className="doc-specimen-stage">{spec.render()}</div>
-                </DSProvider>
-              </figure>
+            const group = storyGroups.find((g) => g.id === b.id);
+            return group ? (
+              <StoryCanvas
+                key={`${i}-${group.id}`}
+                group={group}
+                tokens={tokens}
+                page={page}
+                selected={story}
+              />
             ) : (
               <p key={i} className="doc-warning">
                 Composant inconnu : {b.id}. Disponibles :{' '}
-                {Object.keys(docComponents).join(', ')}.
+                {storyGroups.map((g) => g.id).join(', ')}.
               </p>
             );
           }

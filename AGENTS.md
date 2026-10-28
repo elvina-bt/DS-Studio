@@ -14,6 +14,8 @@ Lire [START_HERE.md](START_HERE.md). Le contexte appartient à l’étudiant.
 - `app/shared/docs.ts`, `app/server/docs.ts` : pages de doc (`workspace/docs/`),
   Markdown restreint, diff avant écriture ; `/plugin/lookup` en lecture seule ;
   `/api/ask` (panneau Demander) : questions à Claude sur la doc, sans écriture.
+- `app/shared/stories.ts` : stories des composants (ID `groupe--variante` stables,
+  JSX généré depuis les mêmes props) ; `app/client/StoryCanvas.tsx` les affiche.
 - `figma-plugin/` : plugin Figma de consultation de la doc, sans écriture.
 - `workspace/` : PFE, règles, décisions et DS d’exemple versionnables.
 - `.ds-studio/` : état privé d’exécution, jamais à commiter.

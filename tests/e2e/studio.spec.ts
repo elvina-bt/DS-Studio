@@ -454,6 +454,31 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
     specimen.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
   ).toBeVisible();
   await expect(page.locator('.doc-callout.dont')).toHaveCount(1);
+  // Stories : variante, code généré et lien direct vers une variante.
+  await specimen.getByRole('button', { name: 'Secondaire' }).click();
+  await expect(
+    specimen.getByRole('button', { name: 'Voir les sites', exact: true }),
+  ).toBeVisible();
+  await specimen.getByRole('tab', { name: 'Code' }).click();
+  await expect(specimen.getByLabel('Code de la variante')).toContainText(
+    '<Button variant="secondary">Voir les sites</Button>',
+  );
+  await expect(specimen.locator('.story-meta code')).toHaveText(
+    'bouton--secondaire',
+  );
+  await page.goto('/#/docs/carte-prevision?story=carte-prevision--sans-note');
+  const card = page.getByRole('figure', {
+    name: 'Aperçu : Carte de prévision',
+  });
+  await expect(card.getByRole('button', { name: 'Sans note' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(card.getByRole('tab', { name: 'Aperçu' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.goto('/#/docs/bouton');
   const outline = page.getByRole('navigation', { name: 'Sur cette page' });
   await outline.hover();
   await outline.getByRole('button', { name: 'Aperçu', exact: true }).click();

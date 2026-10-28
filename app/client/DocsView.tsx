@@ -68,10 +68,12 @@ export const slugify = (title: string) =>
 export default function DocsView({
   tokens,
   slug,
+  story,
   onNavigate,
 }: {
   tokens: Tokens;
   slug: string | null;
+  story: string | null;
   onNavigate: (slug: string | null) => void;
 }) {
   const [docs, setDocs] = useState<Stored[]>([]);
@@ -466,6 +468,8 @@ export default function DocsView({
               tokens={tokens}
               onNavigate={(s) => go(s)}
               anchored
+              page={shown.slug}
+              story={story}
             />
             <PageOutline
               title={shown.title}

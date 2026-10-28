@@ -8,12 +8,20 @@ import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
 import DocsView from './DocsView.js';
 
-// Deux vues : l'atelier (#/) et la documentation (#/docs/<page>).
-type Route = { view: 'atelier' | 'docs'; slug: string | null };
+// Deux vues : l'atelier (#/) et la documentation (#/docs/<page>), avec une
+// variante de composant facultative (#/docs/<page>?story=<groupe--variante>).
+type Route = {
+  view: 'atelier' | 'docs';
+  slug: string | null;
+  story?: string | null;
+};
 function readRoute(): Route {
-  const m = /^#\/docs(?:\/([a-z0-9-]{1,60}))?$/.exec(location.hash);
+  const m =
+    /^#\/docs(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
+      location.hash,
+    );
   return m
-    ? { view: 'docs', slug: m[1] ?? null }
+    ? { view: 'docs', slug: m[1] ?? null, story: m[2] ?? null }
     : { view: 'atelier', slug: null };
 }
 import { useTokenDraft } from './useTokenDraft.js';
@@ -466,6 +474,7 @@ export default function App() {
           <DocsView
             tokens={state.tokens}
             slug={route.slug}
+            story={route.story ?? null}
             onNavigate={(slug) => navigate({ view: 'docs', slug })}
           />
         </main>

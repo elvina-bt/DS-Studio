@@ -192,6 +192,24 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   ouvre la page puis défile jusqu’à la section. Police Arial dans toute l’interface
   (les composants du DS gardent le token `font.family`). 50 tests, 14 e2e.
 
+## 2026-10-28 — Stories de composants façon Storybook
+
+- **Problème** : l’aperçu de la doc montrait les composants, sans variantes ni code
+  à reprendre, et sans moyen de désigner une variante précise.
+- **Options** : installer Storybook (second outil, dépendances, composants à
+  re-déclarer) ; stories intégrées à la doc. **Choix : intégrées.**
+- **Décision** : `app/shared/stories.ts` décrit chaque variante en données, avec un
+  ID stable (`bouton--secondaire`) ; l’aperçu et le JSX affiché sortent des mêmes
+  props. Canvas : variantes, Aperçu / Code, fond, largeur (320, 375, 430 px), zoom ;
+  copie de l’ID, du lien (`#/docs/page?story=id`) et du code. Lecture et copie
+  seulement.
+- **Preuves** : 52 tests unitaires (ID uniques, chaque bloc composant couvert, JSX
+  attendu), 14 e2e (variante, code, lien direct), macOS ; copie vérifiée par un vrai
+  clic.
+- **Limites** : pas encore de contrôles pour modifier les props en direct ; seul écart
+  d’affichage, la barre d’onglets est posée dans la page au lieu d’être fixée en bas ;
+  renommer un ID casse les liens existants.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

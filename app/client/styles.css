@@ -1635,14 +1635,6 @@ h2[id] {
 .doc-callout.dont > strong {
   color: #a5302b;
 }
-.doc-specimen {
-  margin: 20px 0;
-}
-.doc-specimen-stage {
-  padding: 32px;
-  background: var(--color-canvas);
-  border-radius: 8px;
-}
 .doc-table,
 .doc-tokens {
   width: 100%;
@@ -2104,4 +2096,120 @@ h2[id] {
   .docs-main {
     padding-right: 88px;
   }
+}
+/* Canvas de stories façon Storybook : variantes, aperçu ou code, outils discrets. */
+.story {
+  margin: 20px 0;
+  border: 1px solid var(--doc-line, #ececea);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.story button,
+.story select {
+  border: 0;
+  background: transparent;
+  color: var(--doc-muted, #787774);
+  font-weight: 400;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.story button:hover:not(:disabled),
+.story select:hover {
+  background: var(--doc-soft, #f7f7f5);
+  color: var(--doc-text, #2f3437);
+}
+.story-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 10px 0;
+}
+.story-variants button[aria-pressed='true'] {
+  background: #efefed;
+  color: var(--doc-text, #2f3437);
+}
+.story-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--doc-line, #ececea);
+}
+.story-toolbar [role='tablist'] {
+  display: flex;
+  gap: 2px;
+}
+.story-toolbar [role='tab'][aria-selected='true'] {
+  color: var(--doc-text, #2f3437);
+  box-shadow: inset 0 -2px 0 var(--doc-text, #2f3437);
+  border-radius: 0;
+}
+.story-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.story-zoom {
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--doc-muted, #787774);
+}
+.story-stage {
+  padding: 32px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+.story-stage.bg-canvas {
+  background: var(--color-canvas);
+}
+.story-stage.bg-white {
+  background: white;
+}
+.story-stage.bg-grid {
+  background-color: white;
+  background-image:
+    linear-gradient(#ececea 1px, transparent 1px),
+    linear-gradient(90deg, #ececea 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.story-frame {
+  flex: 1;
+  max-width: 100%;
+}
+.story-frame[style*='width'] {
+  flex: none;
+  outline: 1px dashed #d6d6d3;
+  outline-offset: 8px;
+}
+.docs-page .story-code {
+  margin: 0;
+  border-radius: 0;
+  max-height: 360px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.story-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--doc-line, #ececea);
+  font-size: 13px;
+}
+.docs-page .story-meta code {
+  margin-right: auto;
+  background: none;
+  color: var(--doc-muted, #787774);
+  padding: 0;
+}
+.story-copied {
+  color: #1d6b47;
+  font-size: 12px;
+  min-width: 0;
 }
