@@ -1612,7 +1612,6 @@ h2[id] {
   padding: 14px 18px;
   margin: 16px 0;
   background: var(--doc-soft);
-  border-top: 3px solid transparent;
 }
 .doc-callout > strong {
   display: block;
@@ -1627,13 +1626,13 @@ h2[id] {
   margin-top: 0;
 }
 .doc-callout.do {
-  border-top-color: #2f9e6a;
+  background: #eef8f2;
 }
 .doc-callout.do > strong {
   color: #1d6b47;
 }
 .doc-callout.dont {
-  border-top-color: #d44c47;
+  background: #fdf1f0;
 }
 .doc-callout.dont > strong {
   color: #a5302b;
