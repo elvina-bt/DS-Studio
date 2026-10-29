@@ -238,6 +238,55 @@ function Card({
   );
 }
 
+// Idées de questions, écrites puis effacées comme à la machine dans le champ
+// vide. La flèche → reprend l'idée affichée (Tab reste libre pour quitter le
+// champ). Mouvement réduit : l'idée change sans frappe.
+const promptIdeas = [
+  'Quel token pour le contour de la carte de prévision ?',
+  'Quelle couleur pour un écart entre prévu et vécu ?',
+  'Passe la bordure de la carte de prévision en couleur de marque',
+  'Comment formuler une prévision incertaine ?',
+  'Quand utiliser le bouton secondaire plutôt que le principal ?',
+  'Quelle taille de texte pour les valeurs météo ?',
+];
+function useTypewriter(ideas: string[], active: boolean) {
+  const [state, setState] = useState({ index: 0, shown: ideas[0] });
+  useEffect(() => {
+    if (!active) return;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let index = 0;
+    let length = still ? ideas[0].length : 0;
+    let erasing = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const idea = ideas[index];
+      let wait = 42;
+      if (still) {
+        index = (index + 1) % ideas.length;
+        length = ideas[index].length;
+        wait = 4000;
+      } else if (!erasing && length < idea.length) length++;
+      else if (!erasing) {
+        erasing = true;
+        wait = 2200;
+      } else if (length > 0) {
+        length--;
+        wait = 16;
+      } else {
+        erasing = false;
+        index = (index + 1) % ideas.length;
+        wait = 380;
+      }
+      setState({ index, shown: ideas[index].slice(0, length) });
+      timer = setTimeout(tick, wait);
+    };
+    setState({ index, shown: ideas[index].slice(0, length) });
+    timer = setTimeout(tick, still ? 4000 : 600);
+    return () => clearTimeout(timer);
+  }, [active, ideas]);
+  return { idea: ideas[state.index], shown: state.shown };
+}
+
 export default function HomeView({
   tokens,
   notice,
@@ -253,6 +302,7 @@ export default function HomeView({
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
   const [docs, setDocs] = useState<DocPage[]>([]);
+  const hint = useTypewriter(promptIdeas, !question);
   useEffect(() => {
     request<{ docs: DocPage[] }>('docs')
       .then((r) => setDocs(r.docs))
@@ -313,12 +363,18 @@ export default function HomeView({
         >
           <textarea
             aria-label="Une question sur desys"
-            placeholder="Quel token pour le contour de la carte de prévision ?"
+            placeholder={hint.shown}
             rows={2}
             maxLength={4000}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => {
+              // Champ vide : → reprend l'idée en cours d'écriture.
+              if (e.key === 'ArrowRight' && !question) {
+                e.preventDefault();
+                setQuestion(hint.idea);
+                return;
+              }
               if (
                 e.key === 'Enter' &&
                 !e.shiftKey &&
