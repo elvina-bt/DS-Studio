@@ -2208,10 +2208,12 @@ h2[id] {
 }
 
 /* Barre d'enregistrement flottante. */
+/* Au-dessus des blocs, même du bloc actif (z-index 25), avec un fond plein. */
 .be-savebar {
   position: sticky;
   bottom: 20px;
-  z-index: 20;
+  z-index: 40;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: 6px;
