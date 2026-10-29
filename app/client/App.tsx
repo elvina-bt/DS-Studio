@@ -533,67 +533,92 @@ export default function App() {
       >
         <div className="history-body">
           <header>
-            <h2>Historique</h2>
+            <div>
+              <h2>Historique des versions</h2>
+              <p>
+                {state.history.length
+                  ? `${state.history.length} révision${state.history.length > 1 ? 's' : ''} validée${state.history.length > 1 ? 's' : ''}, la plus récente en haut`
+                  : 'Aucun changement enregistré.'}
+              </p>
+            </div>
             <button
               type="button"
+              className="history-close"
               aria-label="Fermer l’historique"
               onClick={() => setHistoryOpen(false)}
             >
-              ✕
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" />
+              </svg>
             </button>
           </header>
-          {!state.history.length && (
-            <p className="history-empty">Aucun changement enregistré.</p>
-          )}
-          <ol>
-            {[...state.history].reverse().map((event) => (
-              <li key={event.id}>
-                {/* Ce qui a changé d'abord, la révision ensuite. */}
-                <div className="history-what">
-                  <p className="history-tokens">
-                    {event.patches.map((p) => (
-                      <code key={p.key}>{p.key}</code>
-                    ))}
-                  </p>
-                  <p className="history-meta">
-                    Révision {event.revision} · {sourceLabel[event.source]} ·{' '}
-                    <time dateTime={event.date}>
-                      {new Date(event.date).toLocaleString('fr-FR', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </time>
-                  </p>
-                </div>
-                <div className="history-actions">
-                  <button
-                    aria-label={`Revoir la révision ${event.revision}`}
-                    aria-expanded={reviewing === event.id}
-                    onClick={() =>
-                      setReviewing(reviewing === event.id ? null : event.id)
-                    }
-                  >
-                    {reviewing === event.id ? 'Masquer' : 'Revoir'}
-                  </button>
-                  <button
-                    aria-label={`Annuler la révision ${event.revision}`}
-                    onClick={() => {
-                      // Une seule fenêtre à la fois : le diff remplace l'historique.
-                      setHistoryOpen(false);
-                      void perform(async () =>
-                        setProposal(
-                          await request('undo', {
-                            revision: state.revision,
-                            id: event.id,
-                          }),
-                        ),
-                      );
-                    }}
-                  >
-                    Annuler
-                  </button>
+          <ol className="history-list">
+            {[...state.history].reverse().map((event, i) => (
+              <li
+                key={event.id}
+                className={reviewing === event.id ? 'is-open' : undefined}
+              >
+                <span className="history-dot" aria-hidden="true" />
+                <div className="history-row">
+                  {/* La révision d'abord, ce qui a changé ensuite. */}
+                  <div className="history-what">
+                    <p className="history-title">
+                      <strong>Révision {event.revision}</strong>
+                      {i === 0 && (
+                        <span className="history-current">Actuelle</span>
+                      )}
+                      <span className="history-source">
+                        {sourceLabel[event.source]}
+                      </span>
+                      <time dateTime={event.date}>
+                        {new Date(event.date).toLocaleString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </time>
+                    </p>
+                    <p className="history-tokens">
+                      {event.patches.map((p) => (
+                        <code key={p.key}>{p.key}</code>
+                      ))}
+                    </p>
+                  </div>
+                  <div className="history-actions">
+                    <button
+                      type="button"
+                      aria-label={`Revoir la révision ${event.revision}`}
+                      aria-expanded={reviewing === event.id}
+                      onClick={() =>
+                        setReviewing(reviewing === event.id ? null : event.id)
+                      }
+                    >
+                      {reviewing === event.id ? 'Masquer' : 'Revoir'}
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M5 6.5l3 3 3-3" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Annuler la révision ${event.revision}`}
+                      title="Propose un diff qui défait cette révision"
+                      onClick={() => {
+                        // Une seule fenêtre à la fois : le diff remplace l'historique.
+                        setHistoryOpen(false);
+                        void perform(async () =>
+                          setProposal(
+                            await request('undo', {
+                              revision: state.revision,
+                              id: event.id,
+                            }),
+                          ),
+                        );
+                      }}
+                    >
+                      Défaire
+                    </button>
+                  </div>
                 </div>
                 {reviewing === event.id && (
                   <div className="history-review">
