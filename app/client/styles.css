@@ -2979,12 +2979,23 @@ body[data-view='home'] {
 body[data-view='home'] #root {
   margin: 12px;
   border-radius: 20px;
-  overflow: hidden;
+  /* clip et non hidden : hidden empêcherait l'en-tête sticky. */
+  overflow: clip;
   background: linear-gradient(180deg, #f1d9ca 0, white 460px);
 }
 body[data-view='home'] .studio-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   background: transparent;
   border-bottom: 0;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+body[data-view='home'][data-scrolled='true'] .studio-header {
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 rgba(72, 47, 31, 0.08);
 }
 .home-shell {
   color: var(--app-brown);

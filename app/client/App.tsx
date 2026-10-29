@@ -186,6 +186,16 @@ export default function App() {
   useEffect(() => {
     document.body.dataset.view = route.view;
   }, [route.view]);
+  // Accueil : l'en-tête reste visible au défilement et prend un fond dès qu'il
+  // passe au-dessus du contenu.
+  useEffect(() => {
+    const update = () => {
+      document.body.dataset.scrolled = String(window.scrollY > 4);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
   // Question posée depuis l'accueil, envoyée par le chat de la doc.
   const [askSeed, setAskSeed] = useState<{ question: string; id: number }>();
   // Historique en fenêtre modale centrée : Échap, le fond ou le bouton le ferme ;
