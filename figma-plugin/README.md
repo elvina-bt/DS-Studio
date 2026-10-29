@@ -39,7 +39,7 @@ doc DS-Studio) contient :
   (ex. `Carte de prévision`) ;
 - le nom d’une variable liée au calque (ex. `color/brand`) ou son groupe (`color`).
 
-Les variantes et leurs clés viennent de `app/shared/stories.ts` (champ `figma`).
+Les variantes et leurs clés viennent de `desys/src/web/stories.ts` (champ `figma`).
 
 ## Limites
 

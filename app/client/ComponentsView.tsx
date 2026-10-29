@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
-import { storyGroups, storyId } from '../shared/stories.js';
+import { storyGroups, storyId } from '@desys/stories.js';
 import { request } from './api.js';
 import StoryCanvas from './StoryCanvas.js';
 

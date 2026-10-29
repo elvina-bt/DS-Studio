@@ -11,14 +11,17 @@ Lire [START_HERE.md](START_HERE.md). Le contexte appartient à l’étudiant.
 - `connectors/agents/` : Codex qualifié, Claude Code expérimental (testé macOS,
   2.1.311, captures acceptées), Gemini explicitement indisponible.
 - `connectors/figma/` : contrat seulement, aucune connexion réseau.
-- `app/shared/docs.ts`, `app/server/docs.ts` : pages de doc (`workspace/docs/`),
+- **Design system : dépôt voisin `../desys`** (iso Figma). Tokens, icônes, composants
+  React / SwiftUI, stories et doc y vivent ; DS-Studio est l’app **desys** qui les
+  lit (alias `@desys`) et écrit les tokens validés (`app/server/desys.ts`).
+- `app/shared/docs.ts`, `app/server/docs.ts` : pages de doc (`desys/docs/`),
   Markdown restreint, diff avant écriture ; `/plugin/lookup` en lecture seule ;
   `/api/ask` (panneau Demander) : questions à Claude sur la doc, sans écriture.
-- `app/shared/stories.ts` : stories des composants (ID `groupe--variante` stables,
-  JSX généré depuis les mêmes props, propriétés façon Figma) ; `app/client/StoryCanvas.tsx`
-  les affiche (doc et onglet Composants, `app/client/ComponentsView.tsx`).
+- `app/client/StoryCanvas.tsx` affiche les stories de `desys/src/web/stories.ts` (doc et
+  onglet Composants, `app/client/ComponentsView.tsx`).
 - `figma-plugin/` : plugin Figma de consultation de la doc, sans écriture.
-- `workspace/` : PFE, règles, décisions et DS d’exemple versionnables.
+- `workspace/` : PFE, règles, décisions ; `design-system.tokens.json` reste le jeu
+  de tokens des tests et outils du starter, pas la source du DS.
 - `.ds-studio/` : état privé d’exécution, jamais à commiter.
 
 Ne remplacez pas le mécanisme de validation par un accès fichier libre de l’agent.
@@ -29,8 +32,8 @@ dialogue de permissions. Le chat ne propose que des tokens connus. Le brief priv
 ## Skills
 
 Codex peut découvrir `.agents/skills/`. Utilisez `$token-change` pour une évolution
-de token, `$component-audit` pour vérifier sa propagation et `figma-sync` pour
-synchroniser la collection Semantics de Figma (agent du terminal uniquement). Les autres agents
+de token et `$component-audit` pour vérifier sa propagation. La synchro Figma est dans
+le dépôt desys (`../desys/.agents/skills/figma-sync`, agent du terminal uniquement). Les autres agents
 peuvent lire ces fichiers explicitement ; leur découverte native n’est pas affirmée.
 
 ## Vérifications

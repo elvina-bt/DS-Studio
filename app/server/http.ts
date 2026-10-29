@@ -13,8 +13,8 @@ import {
   parseMarkdown,
   renderHtml,
 } from '../shared/docs.js';
-import { figmaUrl, storiesInBody, storyId } from '../shared/stories.js';
-import { tokenKeys } from '../shared/model.js';
+import { figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
+import { tokenKeys, type Tokens } from '../shared/model.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
 import { ClaudeAdapter } from '../../connectors/agents/claude.js';
@@ -31,6 +31,11 @@ export async function createStudioServer(options: {
   dev?: boolean;
   docsDirectory?: string;
   control?: { record: RecordInfo; stop: () => void };
+  // Dépôt du design system (iso Figma) : tokens lus, et écrits après validation.
+  desys?: {
+    read: () => Promise<Tokens>;
+    write?: (tokens: Tokens) => Promise<string[]>;
+  };
 }) {
   const { root, store } = options;
   const adapters: Record<string, AgentAdapter> = {
@@ -223,6 +228,19 @@ export async function createStudioServer(options: {
               figma: figmaStatus,
               agents: [],
             });
+          if (url.pathname === '/api/desys') {
+            if (!options.desys)
+              throw new StudioError('Dépôt desys non configuré.', 404);
+            const repo = await options.desys.read();
+            const current = store.snapshot().tokens;
+            return send(200, {
+              tokens: repo,
+              differs: tokenKeys.filter(
+                (k) => repo[k].$value !== current[k].$value,
+              ),
+              writable: !!options.desys.write,
+            });
+          }
           if (url.pathname === '/api/agents')
             return send(
               200,
@@ -312,7 +330,19 @@ export async function createStudioServer(options: {
         }
         if (url.pathname === '/api/commit') {
           const b = z.object({ id: z.string().uuid() }).strict().parse(body);
-          return send(200, await store.commit(b.id));
+          const state = await store.commit(b.id);
+          if (!options.desys?.write) return send(200, state);
+          // La révision validée part dans le dépôt desys ; un échec d'écriture
+          // n'annule pas la validation, il est signalé.
+          try {
+            const files = await options.desys.write(state.tokens);
+            return send(200, { ...state, desys: { files } });
+          } catch {
+            return send(200, {
+              ...state,
+              desys: { error: 'Écriture dans le dépôt desys impossible.' },
+            });
+          }
         }
         if (url.pathname === '/api/agent') {
           const b = z

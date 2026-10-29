@@ -10,7 +10,13 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@desys/*": ["../desys/src/web/*"],
+      "@desys-scripts/*": ["../desys/scripts/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
+    }
   },
   "include": [
     "app",

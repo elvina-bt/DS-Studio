@@ -55,6 +55,7 @@ import {
   getState,
   request,
   type Bootstrap,
+  type DesysStatus,
 } from './api.js';
 import {
   imageSchema,
@@ -242,6 +243,19 @@ export default function App() {
       );
     });
   }
+  // Écart entre le dépôt desys (iso Figma) et l'atelier : proposé en diff, jamais
+  // appliqué sans validation.
+  const [desysDiff, setDesysDiff] = useState<string[]>([]);
+  async function loadDesys() {
+    try {
+      setDesysDiff((await request<DesysStatus>('desys')).differs);
+    } catch {
+      setDesysDiff([]);
+    }
+  }
+  useEffect(() => {
+    void loadDesys();
+  }, []);
   async function accept() {
     if (!proposal) return;
     setSaving(true);
@@ -255,7 +269,15 @@ export default function App() {
       setState(next);
       setProposal(undefined);
       announceChange();
-      setNotice(`Révision ${next.revision} enregistrée sur disque.`);
+      setNotice(
+        `Révision ${next.revision} enregistrée sur disque.` +
+          (next.desys?.files
+            ? ` Écrite dans desys : tokens.json et ${next.desys.files.length} sortie(s) web / iOS, à commiter dans le dépôt desys.`
+            : next.desys?.error
+              ? ` ${next.desys.error}`
+              : ''),
+      );
+      void loadDesys();
     });
     setSaving(false);
   }
@@ -420,6 +442,27 @@ export default function App() {
       </header>
       <div className="intro" hidden={route.view !== 'atelier'}>
         <h1 className="pp-sr">desys · atelier du Design System</h1>
+        {desysDiff.length > 0 && (
+          <p className="desys-diff" role="note">
+            Le dépôt desys (iso Figma) diffère de l’atelier :{' '}
+            <code>{desysDiff.join(', ')}</code>.
+            <button
+              onClick={() =>
+                void perform(async () => {
+                  const repo = await request<DesysStatus>('desys');
+                  setProposal(
+                    await request('import', {
+                      revision: state.revision,
+                      tokens: repo.tokens,
+                    }),
+                  );
+                })
+              }
+            >
+              Voir le diff
+            </button>
+          </p>
+        )}
         <div className="intro-actions">
           <button onClick={() => void perform(exportTokens)}>
             Exporter les tokens

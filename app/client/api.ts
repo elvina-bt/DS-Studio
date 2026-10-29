@@ -48,8 +48,16 @@ export async function bootstrap() {
   return b;
 }
 export const getState = () => request<State>('state');
+// La validation écrit aussi la révision dans le dépôt desys (si configuré).
 export const commit = (proposal: Proposal) =>
-  request<State>('commit', { id: proposal.id });
+  request<State & { desys?: { files?: string[]; error?: string } }>('commit', {
+    id: proposal.id,
+  });
+export type DesysStatus = {
+  tokens: Tokens;
+  differs: string[];
+  writable: boolean;
+};
 export async function exportTokens() {
   const tokens = await request<Tokens>('export');
   downloadText(

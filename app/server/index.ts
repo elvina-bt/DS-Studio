@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { tokensSchema } from '../shared/model.js';
+import { desysDocs, readDesysTokens, writeDesysTokens } from './desys.js';
 import { Store } from './store.js';
 import { createStudioServer } from './http.js';
 import { acquireLease } from '../../scripts/runtime.mjs';
@@ -22,14 +22,8 @@ try {
   if ((await fs.lstat(directory)).isSymbolicLink())
     throw new Error('Dossier de données symbolique refusé.');
   lease = await acquireLease(directory, 'server', { root, directory, port });
-  const seed = tokensSchema.parse(
-    JSON.parse(
-      await fs.readFile(
-        path.join(root, 'workspace', 'design-system.tokens.json'),
-        'utf8',
-      ),
-    ),
-  );
+  // Tokens de départ : ceux du dépôt desys (iso Figma).
+  const seed = await readDesysTokens();
   const store = new Store(directory, seed);
   await store.init();
   let stopping = false;
@@ -43,10 +37,15 @@ try {
   };
   const app = await createStudioServer({
     root,
-    // Les tests e2e travaillent sur une copie de la doc, jamais sur workspace/docs.
+    // Doc du dépôt desys ; les tests e2e travaillent sur une copie.
     docsDirectory: process.env.DS_STUDIO_DOCS_DIR
       ? path.resolve(process.env.DS_STUDIO_DOCS_DIR)
-      : undefined,
+      : desysDocs,
+    // Les tests e2e lisent desys sans jamais y écrire.
+    desys: {
+      read: readDesysTokens,
+      write: process.env.DESYS_WRITE === 'off' ? undefined : writeDesysTokens,
+    },
     store,
     dev: process.argv.includes('--dev'),
     control: {
@@ -61,7 +60,7 @@ try {
     app.server.listen(port, '127.0.0.1', () => resolve());
   });
   console.log(
-    `DS-Studio · http://127.0.0.1:${port}\nMode manuel autonome · Figma non connecté (synchro manuelle via Claude Code) · Ctrl+C pour fermer.`,
+    `desys · http://127.0.0.1:${port}\nDesign system : ../desys (tokens lus et écrits après validation) · Ctrl+C pour fermer.`,
   );
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);

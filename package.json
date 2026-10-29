@@ -23,9 +23,7 @@
     "qualify": "node scripts/qualify-local.mjs",
     "qualify:live": "node scripts/qualify-local.mjs --with-codex",
     "test:auth": "tsx scripts/check-auth-failure.ts",
-    "format": "prettier --write .",
-    "figma:import": "tsx scripts/figma-sync.ts import",
-    "figma:plan": "tsx scripts/figma-sync.ts plan"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "react": "19.3.1",

@@ -13,11 +13,11 @@ Codex ou recopier des cookies pour contourner cette restriction.
 
 ## Synchro manuelle via Claude Code (projet PFE parapente)
 
-L’application reste **non connectée** (l’en-tête n’affiche plus de mention Figma) (`figmaStatus.connected = false`). La synchro est faite par l’agent du
-terminal, client MCP autorisé par Figma, en suivant `.agents/skills/figma-sync` :
-relevé en lecture seule de la collection Semantics, conversion testée
-(`app/shared/figma.ts`, `npm run figma:import` / `figma:plan`), import par diff validé
-dans l’atelier, et report vers Figma après accord explicite, simulation puis relecture.
+L’application reste **non connectée** (`figmaStatus.connected = false`). Depuis le
+2026-10-29, la synchro vit dans le dépôt du design system `../desys` : l’agent du
+terminal, client MCP autorisé par Figma, y suit `.agents/skills/figma-sync` pour les
+trois bibliothèques (tokens, assets, composants). desys (cette app) lit les tokens du
+dépôt, propose l’écart en diff et y écrit chaque révision validée.
 Le chat embarqué n’a toujours aucun accès Figma. Testé sous macOS le 2026-10-27 :
 relevé, conversion, plan et simulation sur PFE – Tokens ; écriture réelle non encore
 exécutée.

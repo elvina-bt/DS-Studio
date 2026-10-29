@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Documentation du DS (façon zeroheight) : une page = un fichier Markdown de
-// workspace/docs/, versionné avec le projet. En-tête simple entre `---`, puis un
+// ../desys/docs, versionné avec le design system. En-tête simple entre `---`, puis un
 // Markdown restreint et des blocs propres au DS :
 //   :::do Titre … :::   :::dont Titre … :::   :::note … :::
 //   {{composant:bouton}}   {{tokens:color}}

@@ -258,6 +258,27 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limite** : modifier un composant dans Figma ne met pas DS-Studio à jour tout
   seul (voir la réponse sur la synchro) ; les tailles dérivées restent en dur.
 
+## 2026-10-29 — Dépôt du design system : desys
+
+- **Problème** : le DS (tokens, composants, doc, synchro Figma) vivait dans l’outil ;
+  impossible de le livrer à des devs iOS et web, ni de le tenir iso Figma pour les
+  trois bibliothèques.
+- **Décision** : nouveau dépôt **desys** (`../desys`) : `tokens/tokens.json` (iso
+  PFE – Tokens), `assets/` (6 icônes, iso PFE – Assets), composants React et SwiftUI,
+  manifeste `components/components.json` (iso PFE – Components), 15 pages de doc ;
+  générateur web (CSS, TS, icônes) et iOS (Swift Package : tokens, `.xcassets`,
+  composants) ; synchro Figma par Claude Code (skill `figma-sync` du dépôt).
+  DS-Studio ne garde que l’app desys : elle importe composants et stories du dépôt
+  (alias `@desys`), y lit la doc et les tokens, propose l’écart en diff et y écrit
+  chaque révision validée (sorties régénérées, commit par moi).
+- **Écart à trancher** : Figma (`color.canvas` #F3F5FA, `font.heading` 28) ≠ atelier
+  (#F2F2F7, 34). Le dépôt suit Figma ; l’atelier affiche l’écart, « Voir le diff ».
+- **Preuves** : desys : 10 tests (sources, génération déterministe, synchro tokens /
+  assets / composants), `npm run build` ; DS-Studio : 48 tests, 15 e2e, macOS.
+- **Limites** : package Swift écrit mais **non compilé** (licence Xcode non acceptée
+  sur ce Mac) ; PFE – Assets encore vide (icônes à y pousser après accord) ;
+  `workspace/design-system.tokens.json` reste le jeu de test du starter.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

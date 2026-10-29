@@ -72,7 +72,7 @@ décrite correctement, aucun token modifié.
 Questions sur le DS (`/api/ask`, panneau **Demander** de la vue Documentation) :
 même profil sans outils, autre schéma de réponse `{message, sources}` qui ne peut
 porter aucun changement (une réponse avec `changes` est refusée). Contexte : pages de
-`workspace/docs/`, tokens validés et `DESIGN_RULES.md` (pas de brief privé ni de
+`desys/docs/`, tokens validés et `DESIGN_RULES.md` (pas de brief privé ni de
 capture). Le serveur ne garde comme sources que les pages existantes ; la révision
 ne change jamais. Conversation en mémoire du navigateur, jamais stockée. Testé :
 faux CLI (contexte par stdin, `changes` refusé), route HTTP (CSRF, sources

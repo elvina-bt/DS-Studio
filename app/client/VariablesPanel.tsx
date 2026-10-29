@@ -81,7 +81,7 @@ export default function VariablesPanel({
             type="button"
             key={c.name}
             disabled
-            title="Dans Figma uniquement, voir workspace/FIGMA_MAPPING.md"
+            title="Dans Figma uniquement, voir desys/FIGMA.md"
           >
             {c.name} <span>Figma · {c.count}</span>
           </button>

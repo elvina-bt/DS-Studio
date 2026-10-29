@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { headingAnchors, type Block, type Inline } from '../shared/docs.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
-import { storyGroups } from '../shared/stories.js';
+import { storyGroups } from '@desys/stories.js';
 import StoryCanvas from './StoryCanvas.js';
 import TokenPreview from './TokenPreview.js';
 

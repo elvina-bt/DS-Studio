@@ -4,4 +4,3 @@ dist/
 test-results/
 package-lock.json
 # Pages de doc : format écrit par l’éditeur de DS-Studio (serializeDoc).
-workspace/docs/

@@ -16,7 +16,7 @@ import {
   type StoryGroup,
   type StoryNode,
   type Values,
-} from '../shared/stories.js';
+} from '@desys/stories.js';
 import { DSProvider } from './DesignSystem.js';
 import {
   Badge,

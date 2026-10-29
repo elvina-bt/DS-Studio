@@ -42,7 +42,7 @@ function fileText(d: Stored): string | null {
   }
 }
 
-// Documentation façon zeroheight : pages Markdown de workspace/docs/, lues et
+// Documentation façon zeroheight : pages Markdown de desys/docs/, lues et
 // éditées ici. Un enregistrement montre le diff du fichier avant d'écrire.
 const snippets: { label: string; text: string }[] = [
   { label: 'À faire', text: '\n:::do Titre\nCe qu’il faut faire.\n:::\n' },
@@ -158,7 +158,7 @@ export default function DocsView({
       setDraft(null);
       setConfirming(false);
       setNotice(
-        `Page « ${stored.title} » enregistrée dans workspace/docs/${stored.slug}.md.`,
+        `Page « ${stored.title} » enregistrée dans desys/docs/${stored.slug}.md.`,
       );
       onNavigate(stored.slug);
     } catch (e) {
@@ -503,7 +503,7 @@ export default function DocsView({
       >
         <h2 id="docs-diff-title">Valider la page</h2>
         <p>
-          <code>workspace/docs/{draft?.slug}.md</code>
+          <code>desys/docs/{draft?.slug}.md</code>
         </p>
         <pre className="docs-diff" aria-label="Différences">
           {withContext(diff).map((l, i) =>

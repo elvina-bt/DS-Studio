@@ -4,7 +4,8 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 const dir = await mkdtemp(path.join(tmpdir(), 'ds-e2e-'));
 const docs = path.join(dir, 'docs');
-await cp('workspace/docs', docs, { recursive: true });
+// Copie de la doc de desys : les tests n'écrivent jamais dans le vrai dépôt.
+await cp('../desys/docs', docs, { recursive: true });
 await mkdir(path.join(dir, 'state'));
 const child = spawn(
   process.execPath,
@@ -15,6 +16,7 @@ const child = spawn(
       PORT: '4318',
       DS_STUDIO_DATA_DIR: path.join(dir, 'state'),
       DS_STUDIO_DOCS_DIR: docs,
+      DESYS_WRITE: 'off',
     },
     stdio: 'inherit',
   },

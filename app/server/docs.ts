@@ -13,7 +13,7 @@ import { StudioError } from './store.js';
 
 const hash = (raw: string) => createHash('sha256').update(raw).digest('hex');
 
-// Pages Markdown de workspace/docs/. Le chemin vient toujours d'un slug validé,
+// Pages Markdown du dépôt desys (../desys/docs). Le chemin vient toujours d'un slug validé,
 // jamais d'une saisie HTTP brute ; liens symboliques et gros fichiers refusés.
 export class DocsStore {
   private queue: Promise<unknown> = Promise.resolve();

@@ -1,43 +1,11 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
-import { tokenCss, type Tokens } from '../shared/model.js';
+import { useState } from 'react';
+import type { Tokens } from '../shared/model.js';
+import { Button, DesysProvider } from '@desys/components.js';
 
-export function DSProvider({
-  tokens,
-  children,
-}: {
-  tokens: Tokens;
-  children: ReactNode;
-}) {
-  return (
-    <div className="ds" style={tokenCss(tokens) as CSSProperties}>
-      {children}
-    </div>
-  );
-}
-export function Button({
-  variant = 'primary',
-  children,
-  disabled = false,
-  onClick,
-  type = 'button',
-}: {
-  variant?: 'primary' | 'secondary' | 'danger';
-  children: ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
-  type?: 'button' | 'submit';
-}) {
-  return (
-    <button
-      type={type}
-      className={`ds-button ${variant}`}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
+// Exemple Lisière : il réutilise le bouton et le Provider du design system desys.
+export { Button };
+export const DSProvider = DesysProvider;
+
 export function BookingCard() {
   const [booked, setBooked] = useState(false);
   return (

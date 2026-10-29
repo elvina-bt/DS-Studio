@@ -39,6 +39,6 @@
 
 - Exemples du catalogue fictifs : aucun vrai vol, lieu personnel ou niveau de pilote.
 - Ne jamais annoncer une synchronisation Figma qui n’a pas été relue et démontrée.
-  Le rapprochement suit `workspace/FIGMA_MAPPING.md`.
+  Le rapprochement suit `../desys/FIGMA.md`.
 
 Ces règles sont des objectifs à tester, pas une certification automatique.

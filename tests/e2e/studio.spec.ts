@@ -524,9 +524,7 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
   await expect(dialog).toContainText('+ :::note');
   await expect(dialog).toContainText('+ Test e2e.');
   await dialog.getByRole('button', { name: 'Valider et enregistrer' }).click();
-  await expect(page.getByRole('status')).toContainText(
-    'workspace/docs/bouton.md',
-  );
+  await expect(page.getByRole('status')).toContainText('desys/docs/bouton.md');
   await expect(page.locator('.docs-page .doc-callout.note')).toContainText(
     'Test e2e.',
   );
