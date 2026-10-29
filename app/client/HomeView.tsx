@@ -258,9 +258,14 @@ function useTypewriter(ideas: string[], active: boolean) {
     let length = still ? ideas[0].length : 0;
     let erasing = false;
     let timer: ReturnType<typeof setTimeout>;
+    // Ease-in-out : lent au début et à la fin de la phrase, rapide au milieu.
+    const pace = (min: number, max: number) => {
+      const p = length / Math.max(1, ideas[index].length);
+      return min + (max - min) * (1 - Math.sin(Math.PI * p));
+    };
     const tick = () => {
       const idea = ideas[index];
-      let wait = 42;
+      let wait = pace(22, 90);
       if (still) {
         index = (index + 1) % ideas.length;
         length = ideas[index].length;
@@ -271,7 +276,7 @@ function useTypewriter(ideas: string[], active: boolean) {
         wait = 2200;
       } else if (length > 0) {
         length--;
-        wait = 16;
+        wait = pace(8, 40);
       } else {
         erasing = false;
         index = (index + 1) % ideas.length;

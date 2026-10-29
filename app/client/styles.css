@@ -1991,7 +1991,7 @@ h2[id] {
   display: flex;
   gap: 2px;
   opacity: 0;
-  transition: opacity 0.12s;
+  transition: opacity 0.12s var(--ease);
 }
 .be-row:hover .be-table-tools,
 .be-row:focus-within .be-table-tools {
@@ -2049,7 +2049,7 @@ h2[id] {
   display: flex;
   gap: 2px;
   opacity: 0;
-  transition: opacity 0.12s;
+  transition: opacity 0.12s var(--ease);
   z-index: 5;
 }
 .be-row-h2 .be-gutter {
@@ -2335,7 +2335,7 @@ h2[id] {
   width: 36px;
   border-radius: 2px;
   background: #dcdcd9;
-  transition: background 0.15s;
+  transition: background 0.15s var(--ease);
 }
 .page-outline-lines span.level-3 {
   width: 24px;
@@ -2359,9 +2359,9 @@ h2[id] {
   visibility: hidden;
   transform: translateX(6px);
   transition:
-    opacity 0.15s,
-    transform 0.15s,
-    visibility 0.15s;
+    opacity 0.15s var(--ease),
+    transform 0.15s var(--ease),
+    visibility 0.15s var(--ease);
 }
 .page-outline:hover .page-outline-card,
 .page-outline:has(:focus-visible) .page-outline-card {
@@ -2914,6 +2914,8 @@ h2[id] {
 /* Identité de l'app desys (maquette d'accueil, PFE – Components 17:50) : palette
    chaude, distincte des tokens du DS parapente que l'app documente. */
 :root {
+  /* Courbe commune des animations : départ et arrivée en douceur. */
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
   --app-brown: #482f1f;
   --app-brown-strong: #472916;
   --app-accent: #b3581e;
@@ -2994,7 +2996,9 @@ body[data-view='home'] .studio-header {
   z-index: 40;
   background: transparent;
   border-bottom: 0;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
 }
 body[data-view='home'][data-scrolled='true'] .studio-header {
   background: rgba(255, 255, 255, 0.86);
@@ -3073,8 +3077,8 @@ body[data-view='home'][data-scrolled='true'] .studio-header {
   background: #d15d3a;
   color: white;
   transition:
-    background 0.15s,
-    opacity 0.15s;
+    background 0.15s var(--ease),
+    opacity 0.15s var(--ease);
 }
 .home-ask button svg {
   display: block;
@@ -3114,7 +3118,7 @@ body[data-view='home'][data-scrolled='true'] .studio-header {
 }
 .home-card {
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s var(--ease);
   background: white;
   border: 1px solid var(--app-line);
   border-radius: 16px;
