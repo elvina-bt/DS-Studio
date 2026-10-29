@@ -21,9 +21,12 @@ const suggestions = [
 
 export default function AskPanel({
   tokens,
+  seed,
   onNavigate,
 }: {
   tokens: Tokens;
+  // Question venue de l'accueil : envoyée une fois, dès l'ouverture.
+  seed?: { question: string; id: number };
   onNavigate: (slug: string) => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -43,6 +46,12 @@ export default function AskPanel({
       .catch(() => {});
     return () => controller.current?.abort();
   }, []);
+  const sent = useRef<number | null>(null);
+  useEffect(() => {
+    if (!seed || sent.current === seed.id) return;
+    sent.current = seed.id;
+    void ask(seed.question);
+  }, [seed]);
   // Défilement du fil seul : la page de doc ne bouge pas.
   useEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;

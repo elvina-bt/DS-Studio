@@ -7,7 +7,9 @@ import TokenPreview from './TokenPreview.js';
 import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
 import DocsView from './DocsView.js';
-import logo from './logo.svg';
+import logoIcon from './home/logo-icon.svg';
+import HomeView from './HomeView.js';
+import { TokenEditContext } from './TokenEdit.js';
 import ComponentsView from './ComponentsView.js';
 
 const sourceLabel = {
@@ -18,34 +20,30 @@ const sourceLabel = {
   undo: 'Annulation',
 } as const;
 
-// Deux vues : la documentation, par défaut (#/docs/<page>), et l'atelier (#/), avec une
-// variante de composant facultative (#/docs/<page>?story=<groupe--variante>).
+// Vues : l'accueil (#/, par défaut), la documentation (#/docs/<page>) et le
+// playground des composants (#/playground/<composant>), avec une variante
+// facultative (?story=<groupe--variante>). L'atelier n'a plus d'onglet : il reste
+// joignable à #/atelier (brief, chat de propositions, outils du starter).
 type Route = {
-  view: 'atelier' | 'docs' | 'composants';
-  // Page de doc, ou composant dans l'onglet Composants.
+  view: 'home' | 'atelier' | 'docs' | 'composants';
+  // Page de doc, ou composant dans le playground.
   slug: string | null;
   story?: string | null;
 };
 function readRoute(): Route {
-  const docs =
-    /^#\/docs(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
+  const m =
+    /^#\/(docs|playground|composants)(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
       location.hash,
     );
-  if (docs)
-    return { view: 'docs', slug: docs[1] ?? null, story: docs[2] ?? null };
-  const parts =
-    /^#\/composants(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
-      location.hash,
-    );
-  if (parts)
+  if (m)
     return {
-      view: 'composants',
-      slug: parts[1] ?? null,
-      story: parts[2] ?? null,
+      view: m[1] === 'docs' ? 'docs' : 'composants',
+      slug: m[2] ?? null,
+      story: m[3] ?? null,
     };
-  return location.hash === '#/'
+  return location.hash === '#/atelier'
     ? { view: 'atelier', slug: null }
-    : { view: 'docs', slug: null };
+    : { view: 'home', slug: null };
 }
 import { useTokenDraft } from './useTokenDraft.js';
 import {
@@ -162,7 +160,12 @@ export default function App() {
   }, []);
   const navigate = (next: Route) => {
     const tail = `${next.slug ? `/${next.slug}` : ''}${next.story ? `?story=${next.story}` : ''}`;
-    location.hash = next.view === 'atelier' ? '#/' : `#/${next.view}${tail}`;
+    location.hash = {
+      home: '#/',
+      atelier: '#/atelier',
+      docs: `#/docs${tail}`,
+      composants: `#/playground${tail}`,
+    }[next.view];
     setRoute(next);
   };
   const [agent, setAgent] = useState('claude');
@@ -175,6 +178,12 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // La vue courante habille la page (cadre en dégradé de l'accueil).
+  useEffect(() => {
+    document.body.dataset.view = route.view;
+  }, [route.view]);
+  // Question posée depuis l'accueil, envoyée par le chat de la doc.
+  const [askSeed, setAskSeed] = useState<{ question: string; id: number }>();
   // Historique en fenêtre modale centrée : Échap, le fond ou le bouton le ferme ;
   // le navigateur rend le focus au bouton Historique.
   const historyDialog = useRef<HTMLDialogElement>(null);
@@ -230,6 +239,17 @@ export default function App() {
       setError((e as Error).message);
     }
   }
+  // Proposition depuis un tableau de tokens de la doc : même diff à valider.
+  const proposeFromDocs = (key: TokenKey, value: string | number) =>
+    void perform(async () => {
+      if (!state) return;
+      setProposal(
+        await request<Proposal>('proposals', {
+          revision: state.revision,
+          changes: [{ key, value }],
+        }),
+      );
+    });
   async function proposeToken() {
     if (!state) return;
     await perform(async () => {
@@ -367,6 +387,29 @@ export default function App() {
   const selectedAgent = agents.find((a) => a.id === agent);
   const agentName = agent === 'claude' ? 'Claude Code' : 'Codex';
   const staleProposal = !!proposal && proposal.revision !== state.revision;
+  // Écart entre le dépôt desys et l'atelier : proposé en diff, sur l'accueil
+  // comme dans l'atelier.
+  const desysNotice = desysDiff.length > 0 && (
+    <p className="desys-diff" role="note">
+      Le dépôt desys (iso Figma) diffère des tokens validés :{' '}
+      <code>{desysDiff.join(', ')}</code>.
+      <button
+        onClick={() =>
+          void perform(async () => {
+            const repo = await request<DesysStatus>('desys');
+            setProposal(
+              await request('import', {
+                revision: state.revision,
+                tokens: repo.tokens,
+              }),
+            );
+          })
+        }
+      >
+        Voir le diff
+      </button>
+    </p>
+  );
   return (
     <>
       {route.view === 'atelier' && (
@@ -383,86 +426,58 @@ export default function App() {
         </a>
       )}
       <header ref={header} className="studio-header">
-        <div className="wordmark">
-          <img
-            className="brand-symbol"
-            src={logo}
-            alt=""
-            width="40"
-            height="40"
-          />
-          <div>
-            <strong>desys</strong>
-          </div>
-        </div>
+        <a
+          className="wordmark"
+          href="#/"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate({ view: 'home', slug: null });
+          }}
+        >
+          <span className="brand-symbol" aria-hidden="true">
+            <img src={logoIcon} alt="" width="24" height="24" />
+          </span>
+          <strong>desys</strong>
+        </a>
         <nav className="view-switch" aria-label="Vues">
-          <a
-            href="#/"
-            aria-current={route.view === 'atelier' ? 'page' : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate({ view: 'atelier', slug: null });
-            }}
-          >
-            Atelier
-          </a>
-          <a
-            href="#/docs"
-            aria-current={route.view === 'docs' ? 'page' : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate({
-                view: 'docs',
-                slug: route.view === 'docs' ? route.slug : null,
-              });
-            }}
-          >
-            Documentation
-          </a>
-          <a
-            href="#/composants"
-            aria-current={route.view === 'composants' ? 'page' : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate({ view: 'composants', slug: null });
-            }}
-          >
-            Composants
-          </a>
+          {(
+            [
+              ['home', 'Accueil', '#/'],
+              ['docs', 'Documentation', '#/docs'],
+              ['composants', 'Playground', '#/playground'],
+            ] as const
+          ).map(([view, label, href]) => (
+            <a
+              key={view}
+              href={href}
+              aria-current={route.view === view ? 'page' : undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate({
+                  view,
+                  slug:
+                    view === 'docs' && route.view === 'docs'
+                      ? route.slug
+                      : null,
+                });
+              }}
+            >
+              {label}
+            </a>
+          ))}
         </nav>
         <div className="header-status">
-          <span className="local-badge">● Local · V2</span>
           <button
             onClick={() => setHistoryOpen(!historyOpen)}
             aria-expanded={historyOpen}
           >
-            Historique · {state.revision}
+            Historique des versions
           </button>
         </div>
       </header>
       <div className="intro" hidden={route.view !== 'atelier'}>
         <h1 className="pp-sr">desys · atelier du Design System</h1>
-        {desysDiff.length > 0 && (
-          <p className="desys-diff" role="note">
-            Le dépôt desys (iso Figma) diffère de l’atelier :{' '}
-            <code>{desysDiff.join(', ')}</code>.
-            <button
-              onClick={() =>
-                void perform(async () => {
-                  const repo = await request<DesysStatus>('desys');
-                  setProposal(
-                    await request('import', {
-                      revision: state.revision,
-                      tokens: repo.tokens,
-                    }),
-                  );
-                })
-              }
-            >
-              Voir le diff
-            </button>
-          </p>
-        )}
+        {desysNotice}
         <div className="intro-actions">
           <button onClick={() => void perform(exportTokens)}>
             Exporter les tokens
@@ -594,7 +609,19 @@ export default function App() {
           </ol>
         </div>
       </dialog>
-      {route.view === 'composants' ? (
+      {route.view === 'home' ? (
+        <main className="home-shell" aria-label="Accueil">
+          <HomeView
+            tokens={state.tokens}
+            notice={desysNotice}
+            onAsk={(question) => {
+              setAskSeed({ question, id: Date.now() });
+              navigate({ view: 'docs', slug: null });
+            }}
+            onOpen={(target) => navigate({ ...target })}
+          />
+        </main>
+      ) : route.view === 'composants' ? (
         <main className="docs-shell" aria-label="Composants du Design System">
           <ComponentsView
             tokens={state.tokens}
@@ -611,12 +638,15 @@ export default function App() {
           className="docs-shell"
           aria-label="Documentation du Design System"
         >
-          <DocsView
-            tokens={state.tokens}
-            slug={route.slug}
-            story={route.story ?? null}
-            onNavigate={(slug) => navigate({ view: 'docs', slug })}
-          />
+          <TokenEditContext.Provider value={proposeFromDocs}>
+            <DocsView
+              tokens={state.tokens}
+              slug={route.slug}
+              story={route.story ?? null}
+              askSeed={askSeed}
+              onNavigate={(slug) => navigate({ view: 'docs', slug })}
+            />
+          </TokenEditContext.Provider>
         </main>
       ) : (
         <main className="studio-grid">

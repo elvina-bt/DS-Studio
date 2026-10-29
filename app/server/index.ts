@@ -1,7 +1,12 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { desysDocs, readDesysTokens, writeDesysTokens } from './desys.js';
+import {
+  desysDocs,
+  desysRoot,
+  readDesysTokens,
+  writeDesysTokens,
+} from './desys.js';
 import { Store } from './store.js';
 import { createStudioServer } from './http.js';
 import { acquireLease } from '../../scripts/runtime.mjs';
@@ -43,6 +48,7 @@ try {
       : desysDocs,
     // Les tests e2e lisent desys sans jamais y écrire.
     desys: {
+      root: desysRoot,
       read: readDesysTokens,
       write: process.env.DESYS_WRITE === 'off' ? undefined : writeDesysTokens,
     },

@@ -1260,24 +1260,30 @@ h2[id] {
 }
 
 /* Vues Atelier / Documentation. */
+/* Navigation de la maquette d'accueil : pilule blanche, vue active pêche. */
 .view-switch {
   display: flex;
+  align-items: center;
   gap: 4px;
-  background: #eef1f7;
-  border-radius: 9px;
-  padding: 3px;
+  background: white;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 0 0 1px var(--app-line);
 }
 .view-switch a {
-  padding: 6px 14px;
-  border-radius: 7px;
-  color: #44577e;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--app-brown);
   text-decoration: none;
-  font-weight: 550;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.view-switch a:hover {
+  background: #fbf1ea;
 }
 .view-switch a[aria-current='page'] {
-  background: white;
-  color: #202b40;
-  box-shadow: 0 1px 3px #1a2a4a22;
+  background: var(--app-peach);
 }
 
 /* Documentation, sobre façon zeroheight / Notion : page blanche, colonne de
@@ -2248,4 +2254,357 @@ h2[id] {
 .desys-diff button {
   font-size: 12px;
   padding: 4px 10px;
+}
+/* Identité de l'app desys (maquette d'accueil, PFE – Components 17:50) : palette
+   chaude, distincte des tokens du DS parapente que l'app documente. */
+:root {
+  --app-brown: #482f1f;
+  --app-brown-strong: #472916;
+  --app-accent: #b3581e;
+  --app-orange: #da6419;
+  --app-peach: #f6decf;
+  --app-chip: #eef3f7;
+  --app-chip-text: #183148;
+  --app-line: #f2f2f2;
+  --app-preview: #e7e5e5;
+}
+/* Police du titre d'accueil : celle de la maquette si elle est installée sur le
+   poste (non distribuée avec l'app), sinon une police à chasse fixe. */
+@font-face {
+  font-family: 'DotStudio';
+  src:
+    local('DotStudio'), local('DotStudio-Regular'), local('DotStudio Regular');
+}
+.studio-header {
+  background: white;
+  border-bottom-color: var(--app-line);
+  padding: 16px 24px;
+}
+.wordmark {
+  text-decoration: none;
+  color: var(--app-brown-strong);
+}
+.wordmark strong {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.brand-symbol {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--app-orange), #f2bc99);
+}
+.header-status button {
+  background: white;
+  border: 0;
+  box-shadow: 0 0 0 1px var(--app-line);
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 46px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--app-brown);
+}
+.header-status button:hover {
+  background: #fbf1ea;
+}
+
+/* Accueil : cadre arrondi en dégradé pêche, en-tête compris. */
+body[data-view='home'] {
+  background: white;
+}
+body[data-view='home'] #root {
+  margin: 24px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f1d9ca 0, white 460px);
+}
+body[data-view='home'] .studio-header {
+  background: transparent;
+  border-bottom: 0;
+}
+.home-shell {
+  color: var(--app-brown);
+}
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 16px 0 48px;
+}
+.home-hero {
+  width: min(600px, calc(100% - 32px));
+  margin: 48px auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+}
+.home-hero h1 {
+  margin: 0;
+  font-family: 'DotStudio', ui-monospace, Menlo, monospace;
+  font-weight: 400;
+  font-size: 48px;
+  color: var(--app-brown);
+  text-align: center;
+}
+.home-hero h1 span {
+  color: var(--app-accent);
+}
+.home-ask {
+  position: relative;
+  width: 100%;
+  background: white;
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  padding: 16px 60px 16px 16px;
+}
+.home-ask textarea {
+  width: 100%;
+  border: 0;
+  outline: none;
+  resize: none;
+  font-size: 16px;
+  line-height: 1.4;
+  color: black;
+  background: transparent;
+}
+.home-ask textarea::placeholder {
+  color: black;
+  opacity: 0.5;
+}
+.home-ask:focus-within {
+  border-color: #e9cdbb;
+}
+.home-ask button {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  padding: 0;
+  border: 0;
+  background: none;
+  width: 34px;
+  height: 34px;
+}
+.home-ask button:disabled {
+  opacity: 1;
+}
+.home-ask button:not(:disabled) img {
+  filter: saturate(1.3) brightness(0.9);
+}
+.home-section {
+  padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.home-section h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--app-brown-strong);
+}
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.home-card {
+  background: white;
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.home-preview {
+  position: relative;
+  height: 200px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--app-preview);
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+.home-preview:hover {
+  background: #e1dede;
+}
+.home-preview-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.home-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 16px;
+}
+.home-status.is-added {
+  background: #dbf7d5;
+  color: #202519;
+}
+.home-status.is-modified {
+  background: #e9d5f7;
+  color: #491a57;
+}
+.home-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.home-card-head h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: black;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.home-chip {
+  flex: none;
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: var(--app-chip);
+  color: var(--app-chip-text);
+  font-size: 16px;
+  font-weight: 400;
+}
+.home-chip.is-title {
+  font-size: 24px;
+}
+.home-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: var(--app-chip-text);
+}
+.home-date {
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #f8f8f8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.home-ago {
+  opacity: 0.4;
+  white-space: nowrap;
+}
+.home-empty {
+  color: var(--app-brown);
+  opacity: 0.6;
+}
+.home-swatches {
+  display: flex;
+  gap: 14px;
+}
+.home-swatches span {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: 10px;
+}
+.home-swatches .on-light {
+  background: white;
+}
+.home-swatches .on-dark {
+  background: #343434;
+}
+.home-swatches i {
+  display: block;
+  width: 77px;
+  height: 77px;
+  border-radius: 8px;
+}
+.home-type {
+  font-size: 40px;
+  color: black;
+}
+.home-radius {
+  display: block;
+  width: 96px;
+  height: 96px;
+  background: white;
+  border: 3px solid #343434;
+}
+.home-space {
+  display: block;
+  height: 24px;
+  background: var(--app-orange);
+  border-radius: 4px;
+}
+.home-component {
+  max-width: 343px;
+}
+.home-doc {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--app-brown);
+  padding: 0 16px;
+  text-align: center;
+}
+.home-hero .desys-diff {
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-section {
+    padding: 0 16px;
+  }
+  body[data-view='home'] #root {
+    margin: 8px;
+  }
+}
+/* Valeur de token modifiable dans la doc. */
+.token-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.token-value.is-editing input:not([type='color']) {
+  width: 110px;
+  font-size: 13px;
+  padding: 3px 6px;
+  border: 1px solid #dcdcd9;
+  border-radius: 6px;
+}
+.token-value input[type='color'] {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.token-edit {
+  border: 0;
+  background: transparent;
+  color: var(--app-accent);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.token-edit:hover {
+  background: #fbf1ea;
 }

@@ -47,7 +47,8 @@ const registry: Record<ComponentName, ComponentType<any>> = {
   TabBar,
 };
 const noop = () => {};
-function render(node: StoryNode, key?: number): ReactNode {
+// Rendu d'une story avec les vrais composants (canvas, cartes de l'accueil).
+export function render(node: StoryNode, key?: number): ReactNode {
   const Component = registry[node.type];
   const props = Object.fromEntries(
     Object.entries(node.props ?? {}).map(([k, v]) => [

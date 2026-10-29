@@ -15,6 +15,7 @@ import {
 } from '../shared/docs.js';
 import { figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
+import { recentItems } from './recent.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
 import { ClaudeAdapter } from '../../connectors/agents/claude.js';
@@ -33,6 +34,7 @@ export async function createStudioServer(options: {
   control?: { record: RecordInfo; stop: () => void };
   // Dépôt du design system (iso Figma) : tokens lus, et écrits après validation.
   desys?: {
+    root?: string;
     read: () => Promise<Tokens>;
     write?: (tokens: Tokens) => Promise<string[]>;
   };
@@ -44,9 +46,9 @@ export async function createStudioServer(options: {
     gemini: unvalidatedAdapter('gemini'),
   };
   const project = new ProjectStore(store.directory);
-  const docs = new DocsStore(
-    options.docsDirectory ?? path.join(root, 'workspace', 'docs'),
-  );
+  const docsDirectory =
+    options.docsDirectory ?? path.join(root, 'workspace', 'docs');
+  const docs = new DocsStore(docsDirectory);
   const context = async (name: string) => {
     const file = path.join(root, 'workspace', name);
     const stat = await fs.lstat(file);
@@ -240,6 +242,18 @@ export async function createStudioServer(options: {
               ),
               writable: !!options.desys.write,
             });
+          }
+          if (url.pathname === '/api/recent') {
+            if (!options.desys?.root)
+              throw new StudioError('Dépôt desys non configuré.', 404);
+            return send(
+              200,
+              await recentItems({
+                state: store.snapshot(),
+                docsDirectory,
+                desysRoot: options.desys.root,
+              }),
+            );
           }
           if (url.pathname === '/api/agents')
             return send(

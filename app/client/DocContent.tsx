@@ -1,6 +1,7 @@
-import { Fragment } from 'react';
+import { Fragment, useContext, useState } from 'react';
 import { headingAnchors, type Block, type Inline } from '../shared/docs.js';
-import { tokenKeys, type Tokens } from '../shared/model.js';
+import { tokenKeys, type TokenKey, type Tokens } from '../shared/model.js';
+import { TokenEditContext } from './TokenEdit.js';
 import { storyGroups } from '@desys/stories.js';
 import StoryCanvas from './StoryCanvas.js';
 import TokenPreview from './TokenPreview.js';
@@ -50,6 +51,78 @@ function InlineContent({
   );
 }
 
+// Valeur d'un token, modifiable quand l'app fournit TokenEditContext : la
+// proposition ouvre le diff à valider, rien n'est écrit avant.
+function TokenValue({
+  tokenKey,
+  tokens,
+}: {
+  tokenKey: TokenKey;
+  tokens: Tokens;
+}) {
+  const propose = useContext(TokenEditContext);
+  const token = tokens[tokenKey];
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = (
+    <code>
+      {String(token.$value)}
+      {token.$type === 'dimension' ? ' px' : ''}
+    </code>
+  );
+  if (!propose) return shown;
+  if (draft === null)
+    return (
+      <span className="token-value">
+        {shown}
+        <button
+          type="button"
+          className="token-edit"
+          aria-label={`Modifier ${tokenKey}`}
+          onClick={() => setDraft(String(token.$value))}
+        >
+          Modifier
+        </button>
+      </span>
+    );
+  return (
+    <form
+      className="token-value is-editing"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const value =
+          token.$type === 'dimension' ? Number(draft) : draft.trim();
+        propose(tokenKey, value);
+        setDraft(null);
+      }}
+    >
+      {token.$type === 'color' && /^#[0-9a-f]{6}$/i.test(draft) && (
+        <input
+          type="color"
+          aria-label={`Couleur de ${tokenKey}`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value.toUpperCase())}
+        />
+      )}
+      <input
+        aria-label={`Nouvelle valeur de ${tokenKey}`}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        autoFocus
+      />
+      <button type="submit" className="token-edit">
+        Proposer
+      </button>
+      <button
+        type="button"
+        className="token-edit"
+        onClick={() => setDraft(null)}
+      >
+        Annuler
+      </button>
+    </form>
+  );
+}
+
 function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
   const keys = tokenKeys.filter(
     (k) => k === group || k.startsWith(`${group}.`),
@@ -83,10 +156,7 @@ function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
               <code>var(--{k.replace('.', '-')})</code>
             </td>
             <td>
-              <code>
-                {String(tokens[k].$value)}
-                {tokens[k].$type === 'dimension' ? ' px' : ''}
-              </code>
+              <TokenValue tokenKey={k} tokens={tokens} />
             </td>
           </tr>
         ))}

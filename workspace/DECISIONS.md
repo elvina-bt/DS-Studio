@@ -279,6 +279,21 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   sur ce Mac) ; PFE – Assets encore vide (icônes à y pousser après accord) ;
   `workspace/design-system.tokens.json` reste le jeu de test du starter.
 
+## 2026-10-29 — Accueil de desys et fin de l’onglet Atelier
+
+- **Décision** : écran d’accueil d’après ma maquette (PFE – Components, nœud 17:50) :
+  question à Claude, éléments récents, tokens et composants ajoutés récemment, avec
+  aperçus réels. Données réelles : révisions validées et pages de doc (modifié),
+  premier commit dans le dépôt desys (ajouté). Navigation Accueil · Documentation ·
+  Playground ; l’onglet Atelier disparaît (adresse `#/atelier` conservée pour le brief,
+  le chat de propositions et les outils du starter). Les tokens se modifient depuis
+  les tableaux de la doc, par le même diff validé. Palette chaude de la maquette pour
+  l’app (les tokens du DS ne changent pas) ; police DotStudio appelée si installée.
+- **Preuves** : 49 tests unitaires (dont l’accueil), 17 e2e (accueil, édition d’un
+  token depuis la doc), macOS ; rendu comparé à la maquette à 1512 px.
+- **Limites** : DotStudio non distribuée (licence inconnue) : police de repli sur un
+  poste qui ne l’a pas ; dates « ajouté » limitées à l’historique git de desys.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.
