@@ -717,3 +717,19 @@ test('documentation : un token se modifie depuis son tableau, via le diff', asyn
   await dialog.getByRole('button', { name: 'Ne pas appliquer' }).click();
   await expect(dialog).not.toBeVisible();
 });
+
+test('documentation : proposer un token pendant l’édition de la page ne la ferme pas', async ({
+  page,
+}) => {
+  await page.goto('/#/docs/couleurs');
+  await page.getByRole('button', { name: 'Modifier la page' }).click();
+  const editor = page.getByRole('form', { name: 'Modifier la page' });
+  await editor.getByRole('button', { name: 'Modifier color.focus' }).click();
+  await editor.getByLabel('Nouvelle valeur de color.focus').fill('#5B3FB0');
+  await editor.getByRole('button', { name: 'Proposer', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Valider le changement' });
+  await expect(dialog).toContainText('color.focus');
+  await dialog.getByRole('button', { name: 'Ne pas appliquer' }).click();
+  // Avant la correction, le formulaire imbriqué soumettait la page et la rechargeait.
+  await expect(editor).toBeVisible();
+});

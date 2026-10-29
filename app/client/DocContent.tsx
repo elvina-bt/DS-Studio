@@ -70,6 +70,12 @@ function TokenValue({
     </code>
   );
   if (!propose) return shown;
+  const submit = () => {
+    if (draft === null) return;
+    const value = token.$type === 'dimension' ? Number(draft) : draft.trim();
+    propose(tokenKey, value);
+    setDraft(null);
+  };
   if (draft === null)
     return (
       <span className="token-value">
@@ -85,15 +91,12 @@ function TokenValue({
       </span>
     );
   return (
-    <form
+    // Pas de <form> : le tableau peut vivre dans l'éditeur de page, lui-même un
+    // formulaire ; un formulaire imbriqué soumettrait la page et la rechargerait.
+    <span
+      role="group"
+      aria-label={`Modifier ${tokenKey}`}
       className="token-value is-editing"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const value =
-          token.$type === 'dimension' ? Number(draft) : draft.trim();
-        propose(tokenKey, value);
-        setDraft(null);
-      }}
     >
       {token.$type === 'color' && /^#[0-9a-f]{6}$/i.test(draft) && (
         <input
@@ -107,9 +110,15 @@ function TokenValue({
         aria-label={`Nouvelle valeur de ${tokenKey}`}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            submit();
+          } else if (e.key === 'Escape') setDraft(null);
+        }}
         autoFocus
       />
-      <button type="submit" className="token-edit">
+      <button type="button" className="token-edit" onClick={submit}>
         Proposer
       </button>
       <button
@@ -119,11 +128,17 @@ function TokenValue({
       >
         Annuler
       </button>
-    </form>
+    </span>
   );
 }
 
-export function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
+export function TokenTable({
+  group,
+  tokens,
+}: {
+  group: string;
+  tokens: Tokens;
+}) {
   const keys = tokenKeys.filter(
     (k) => k === group || k.startsWith(`${group}.`),
   );
