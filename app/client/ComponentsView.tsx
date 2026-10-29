@@ -3,9 +3,11 @@ import type { Tokens } from '../shared/model.js';
 import { storyGroups, storyId } from '@desys/stories.js';
 import { request } from './api.js';
 import StoryCanvas from './StoryCanvas.js';
+import AskPanel from './AskPanel.js';
 
 // Onglet Composants, façon Storybook : la liste des composants et de leurs
-// variantes à gauche, le canvas en grand au centre, sans le texte de la doc.
+// variantes à gauche, le canvas en grand au centre, sans le texte de la doc,
+// et le chat sur le design system à droite, comme dans la documentation.
 export default function ComponentsView({
   tokens,
   component,
@@ -124,6 +126,10 @@ export default function ComponentsView({
           onStoryChange={setActive}
         />
       </div>
+      <AskPanel
+        tokens={tokens}
+        onNavigate={(slug) => onOpenDoc(slug.split('#')[0])}
+      />
     </div>
   );
 }

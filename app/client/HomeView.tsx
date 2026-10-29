@@ -2,9 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { storyGroups } from '@desys/stories.js';
 import { DesysProvider } from '@desys/components.js';
 import type { Tokens } from '../shared/model.js';
+import { inlineText, parseMarkdown, type Block } from '../shared/docs.js';
 import { request } from './api.js';
 import { render } from './StoryCanvas.js';
-import send from './home/send.svg';
 
 // Accueil de desys (maquette PFE – Components, nœud 17:50) : une question à
 // Claude, puis les éléments récents, les tokens et les composants ajoutés.
@@ -16,6 +16,94 @@ type Item = {
   date: string;
 };
 type Recent = { recent: Item[]; tokens: Item[]; components: Item[] };
+type DocPage = { slug: string; title: string; summary: string; body: string };
+
+// Aperçu dégrossi d'une page de doc : son titre, puis ses premiers blocs en
+// traits (intertitres foncés, texte gris, encadrés teintés, canvas, tableaux).
+const lines = (text: string, max = 3) => {
+  const n = Math.min(max, Math.max(1, Math.round(text.length / 70)));
+  return Array.from({ length: n }, (_, i) => (
+    <i
+      key={i}
+      className="sk-line"
+      style={{ width: i === n - 1 && n > 1 ? '62%' : '100%' }}
+    />
+  ));
+};
+function sketchBlock(b: Block, i: number) {
+  switch (b.t) {
+    case 'heading':
+      return (
+        <b key={i} className={`sk-heading is-h${b.level}`}>
+          {inlineText(b.c)}
+        </b>
+      );
+    case 'paragraph':
+    case 'quote':
+      return (
+        <span key={i} className={`sk-text is-${b.t}`}>
+          {lines(inlineText(b.c))}
+        </span>
+      );
+    case 'list':
+      return (
+        <span key={i} className="sk-list">
+          {b.items.slice(0, 3).map((it, j) => (
+            <i
+              key={j}
+              className="sk-line"
+              style={{ width: `${Math.min(90, 30 + inlineText(it).length)}%` }}
+            />
+          ))}
+        </span>
+      );
+    case 'callout':
+      return (
+        <span key={i} className={`sk-callout is-${b.kind}`}>
+          <i className="sk-line is-strong" style={{ width: '30%' }} />
+          <i className="sk-line" />
+        </span>
+      );
+    case 'component':
+      return (
+        <span key={i} className="sk-canvas">
+          <i />
+        </span>
+      );
+    case 'tokens':
+    case 'table':
+      return (
+        <span key={i} className="sk-table">
+          {[0, 1, 2].map((j) => (
+            <span key={j}>
+              <i />
+              <i />
+              <i />
+            </span>
+          ))}
+        </span>
+      );
+    case 'code':
+      return (
+        <span key={i} className="sk-code">
+          {lines(b.v, 2)}
+        </span>
+      );
+    default:
+      return <hr key={i} className="sk-rule" />;
+  }
+}
+function DocSketch({ doc }: { doc: DocPage }) {
+  return (
+    <div className="sk-page" aria-hidden="true">
+      <b className="sk-title">{doc.title}</b>
+      {doc.summary && (
+        <span className="sk-summary">{lines(doc.summary, 2)}</span>
+      )}
+      {parseMarkdown(doc.body).slice(0, 7).map(sketchBlock)}
+    </div>
+  );
+}
 
 // Page de doc qui montre un groupe de tokens.
 const tokenPage: Record<string, string> = {
@@ -85,10 +173,12 @@ function TokenPreview({ id, tokens }: { id: string; tokens: Tokens }) {
 function Card({
   item,
   tokens,
+  docs,
   onOpen,
 }: {
   item: Item;
   tokens: Tokens;
+  docs: DocPage[];
   onOpen: (item: Item) => void;
 }) {
   const group = storyGroups.find((g) => g.id === item.id);
@@ -101,7 +191,14 @@ function Card({
         <div className="home-component">{render(group.stories[0].node)}</div>
       </DesysProvider>
     );
-  else preview = <span className="home-doc">{item.title}</span>;
+  else {
+    const doc = docs.find((d) => d.slug === item.id);
+    preview = doc ? (
+      <DocSketch doc={doc} />
+    ) : (
+      <span className="home-doc">{item.title}</span>
+    );
+  }
   const category =
     item.kind === 'token'
       ? 'Tokens'
@@ -155,6 +252,12 @@ export default function HomeView({
   const [data, setData] = useState<Recent | null>(null);
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
+  const [docs, setDocs] = useState<DocPage[]>([]);
+  useEffect(() => {
+    request<{ docs: DocPage[] }>('docs')
+      .then((r) => setDocs(r.docs))
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     request<Recent>('recent')
       .then(setData)
@@ -182,6 +285,7 @@ export default function HomeView({
               key={`${item.kind}:${item.id}`}
               item={item}
               tokens={tokens}
+              docs={docs}
               onOpen={open}
             />
           ))}
@@ -230,7 +334,9 @@ export default function HomeView({
             aria-label="Envoyer la question"
             disabled={!question.trim()}
           >
-            <img src={send} alt="" width="34" height="34" />
+            <svg aria-hidden="true" viewBox="0 0 34 34" width="34" height="34">
+              <path d="M17 23V11M12.5 15.5 17 11l4.5 4.5" />
+            </svg>
           </button>
         </form>
         {notice}
