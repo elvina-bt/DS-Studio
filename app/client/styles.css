@@ -1655,11 +1655,30 @@ h2[id] {
 .docs-page h3[id] {
   scroll-margin-top: 24px;
 }
-.page-outline {
+/* Colonne fixe à droite de la page : « Modifier la page » puis le sommaire. */
+.docs-rail {
   position: fixed;
-  top: 120px;
+  top: calc(var(--studio-header-h, 80px) + 40px);
   right: 404px;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
+}
+.docs-crumb .docs-edit {
+  display: none;
+}
+@media (max-width: 1280px) {
+  .docs-rail {
+    display: none;
+  }
+  .docs-crumb .docs-edit {
+    display: inline-flex;
+  }
+}
+.page-outline {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1972,9 +1991,10 @@ h2[id] {
     height: auto;
   }
 }
+/* Place réservée à la colonne fixe « Modifier la page » + sommaire. */
 @media (min-width: 1281px) {
   .docs-main {
-    padding-right: 88px;
+    padding-right: 196px;
   }
 }
 /* Canvas façon Storybook : scène (aperçu ou code) à gauche, propriétés façon
@@ -2275,10 +2295,15 @@ h2[id] {
   src:
     local('DotStudio'), local('DotStudio-Regular'), local('DotStudio Regular');
 }
-/* Même en-tête dans toutes les vues : seule l'accueil ajoute son dégradé derrière. */
+/* Même en-tête dans toutes les vues. L'accueil le pose dans un cadre arrondi à
+   12 px des bords ; les autres vues ajoutent ces 12 px en marge pour que logo,
+   navigation et bouton tombent exactement au même endroit. */
 .studio-header {
   background: white;
   border-bottom: 0;
+  padding: 28px 36px 16px;
+}
+body[data-view='home'] .studio-header {
   padding: 16px 24px;
 }
 .wordmark {
@@ -2313,11 +2338,14 @@ h2[id] {
   background: #fbf1ea;
 }
 
-/* Accueil : dégradé pêche derrière l'en-tête et le hero, sans décaler l'en-tête. */
+/* Accueil : cadre arrondi en dégradé pêche, en-tête compris (maquette). */
 body[data-view='home'] {
   background: white;
 }
 body[data-view='home'] #root {
+  margin: 12px;
+  border-radius: 20px;
+  overflow: hidden;
   background: linear-gradient(180deg, #f1d9ca 0, white 460px);
 }
 body[data-view='home'] .studio-header {
@@ -2358,10 +2386,12 @@ body[data-view='home'] .studio-header {
   background: white;
   border: 1px solid var(--app-line);
   border-radius: 16px;
-  padding: 16px 60px 16px 16px;
+  padding: 12px 52px 12px 14px;
 }
 .home-ask textarea {
   width: 100%;
+  padding: 0;
+  min-height: 44px;
   border: 0;
   outline: none;
   resize: none;
@@ -2610,4 +2640,24 @@ body[data-view='home'] .studio-header {
 }
 .token-edit:hover {
   background: #fbf1ea;
+}
+/* Petit écran : cadre et marges d'en-tête resserrés. */
+@media (max-width: 740px) {
+  body[data-view='home'] #root {
+    margin: 8px;
+  }
+  .studio-header,
+  body[data-view='home'] .studio-header {
+    padding: 14px;
+  }
+}
+/* Alertes et avis : même largeur que le champ de question de l'accueil. */
+.feedback {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+/* Marge portée par l'alerte : vide, la zone ne prend aucune hauteur. */
+.feedback p {
+  margin: 8px 0;
 }

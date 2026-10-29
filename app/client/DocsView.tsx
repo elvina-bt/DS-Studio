@@ -175,6 +175,31 @@ export default function DocsView({
       ? lineDiff((original && fileText(original)) || '', fileText(draft) ?? '')
       : [];
   const editing = draft !== null;
+  const editButton = current && (
+    <button
+      type="button"
+      className="docs-edit"
+      onClick={() => {
+        setNotice('');
+        setDraft({ ...current });
+      }}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M11 2.5l2.5 2.5L6 12.5H3.5V10z" />
+      </svg>
+      Modifier la page
+    </button>
+  );
   const shown = editing ? draft : current;
   const body = !editing && current ? current.body : '';
   const blocks = useMemo(() => parseMarkdown(body), [body]);
@@ -451,29 +476,7 @@ export default function DocsView({
                 <span>
                   {docSections.find((s) => s.id === shown.section)?.label}
                 </span>
-                <button
-                  type="button"
-                  className="docs-edit"
-                  onClick={() => {
-                    setNotice('');
-                    setDraft({ ...shown });
-                  }}
-                >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 16 16"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11 2.5l2.5 2.5L6 12.5H3.5V10z" />
-                  </svg>
-                  Modifier la page
-                </button>
+                {editButton}
               </div>
               <h2>{shown.title}</h2>
               {shown.summary && <p className="docs-summary">{shown.summary}</p>}
@@ -486,11 +489,15 @@ export default function DocsView({
               page={shown.slug}
               story={story}
             />
-            <PageOutline
-              title={shown.title}
-              anchors={anchors}
-              scroller={main}
-            />
+            {/* Grand écran : le bouton reste visible au défilement, au-dessus du sommaire. */}
+            <div className="docs-rail">
+              {editButton}
+              <PageOutline
+                title={shown.title}
+                anchors={anchors}
+                scroller={main}
+              />
+            </div>
           </article>
         )}
       </div>
