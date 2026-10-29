@@ -28,7 +28,7 @@ const tokenPage: Record<string, string> = {
 const longDate = (iso: string) =>
   new Date(iso).toLocaleDateString('fr-FR', {
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     year: 'numeric',
   });
 function ago(iso: string) {
@@ -129,8 +129,7 @@ function Card({
       </div>
       <div className="home-card-meta">
         <span className="home-date">
-          Dernière mise à jour :{' '}
-          <time dateTime={item.date}>{longDate(item.date)}</time>
+          Mis à jour le <time dateTime={item.date}>{longDate(item.date)}</time>
         </span>
         <span className="home-ago">{ago(item.date)}</span>
       </div>

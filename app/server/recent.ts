@@ -143,14 +143,14 @@ export async function recentItems(options: {
       latest.set(`${item.kind}:${item.id}`, item);
   const added = await addedItems(options.desysRoot);
   return {
-    recent: [...latest.values()].slice(0, 3),
+    recent: [...latest.values()].slice(0, 4),
     tokens: added
       .filter((i) => i.kind === 'token')
       .sort(byDate)
-      .slice(0, 3),
+      .slice(0, 4),
     components: added
       .filter((i) => i.kind === 'component')
       .sort(byDate)
-      .slice(0, 3),
+      .slice(0, 4),
   };
 }

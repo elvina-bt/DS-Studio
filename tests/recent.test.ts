@@ -60,7 +60,7 @@ test('accueil : révisions et pages en « modifié », ajouts datés sans git pa
       ['token', 'color.brand', 'modifié'],
     ],
   );
-  assert.equal(result.tokens.length, 3);
+  assert.equal(result.tokens.length, 4);
   assert(result.tokens.every((i) => i.status === 'ajouté' && i.date));
-  assert.equal(result.components.length, 3);
+  assert.equal(result.components.length, 4);
 });

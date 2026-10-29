@@ -2405,12 +2405,12 @@ body[data-view='home'] .studio-header {
   align-items: center;
   gap: 10px;
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--app-brown-strong);
 }
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 .home-card {
@@ -2451,6 +2451,7 @@ body[data-view='home'] .studio-header {
   border-radius: 8px;
   padding: 4px 8px;
   font-size: 16px;
+  font-weight: 400;
 }
 .home-status.is-added {
   background: #dbf7d5;
@@ -2469,7 +2470,7 @@ body[data-view='home'] .studio-header {
 .home-card-head h3 {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: black;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2492,7 +2493,7 @@ body[data-view='home'] .studio-header {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--app-chip-text);
 }
 .home-date {
@@ -2555,13 +2556,18 @@ body[data-view='home'] .studio-header {
 }
 .home-doc {
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--app-brown);
   padding: 0 16px;
   text-align: center;
 }
 .home-hero .desys-diff {
   margin: 0;
+}
+@media (max-width: 1280px) {
+  .home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 900px) {
   .home-grid {
