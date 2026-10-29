@@ -642,7 +642,7 @@ test('onglet Composants : liste, propriétés façon Figma, lien vers la doc', a
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Playground', exact: true }).click();
+  await page.getByRole('link', { name: 'Aperçu', exact: true }).click();
   await expect(page).toHaveURL(/#\/playground$/);
   const list = page.getByRole('navigation', { name: 'Composants' });
   await list.getByRole('link', { name: 'Barre d’onglets' }).click();

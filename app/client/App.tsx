@@ -458,7 +458,7 @@ export default function App() {
             [
               ['home', 'Accueil', '#/'],
               ['docs', 'Documentation', '#/docs'],
-              ['composants', 'Playground', '#/playground'],
+              ['composants', 'Aperçu', '#/playground'],
             ] as const
           ).map(([view, label, href]) => (
             <a
