@@ -2414,6 +2414,8 @@ body[data-view='home'] .studio-header {
   gap: 16px;
 }
 .home-card {
+  cursor: pointer;
+  transition: background 0.15s;
   background: white;
   border: 1px solid var(--app-line);
   border-radius: 16px;
@@ -2433,8 +2435,8 @@ body[data-view='home'] .studio-header {
   overflow: hidden;
   cursor: pointer;
 }
-.home-preview:hover {
-  background: #e1dede;
+.home-card:hover {
+  background: #fdf7f2;
 }
 .home-preview-stage {
   position: absolute;

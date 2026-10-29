@@ -109,11 +109,15 @@ function Card({
         ? 'Components'
         : 'Documentation';
   return (
-    <article className="home-card">
+    // Toute la carte s'ouvre au clic ; au clavier, le bouton de l'aperçu.
+    <article className="home-card" onClick={() => onOpen(item)}>
       <button
         type="button"
         className="home-preview"
-        onClick={() => onOpen(item)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen(item);
+        }}
         aria-label={`Ouvrir ${item.title}`}
       >
         <span
