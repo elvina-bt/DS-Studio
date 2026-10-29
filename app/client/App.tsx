@@ -7,6 +7,7 @@ import TokenPreview from './TokenPreview.js';
 import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
 import DocsView from './DocsView.js';
+import logo from './logo.svg';
 import ComponentsView from './ComponentsView.js';
 
 const sourceLabel = {
@@ -336,7 +337,7 @@ export default function App() {
   if (!state)
     return (
       <main className="loading">
-        <h1>DS-Studio</h1>
+        <h1>desys</h1>
         <p role="alert">{stateError || 'Ouverture du Design System…'}</p>
         <p>Lancez le serveur local puis rechargez cette page.</p>
       </main>
@@ -361,9 +362,15 @@ export default function App() {
       )}
       <header ref={header} className="studio-header">
         <div className="wordmark">
-          <span className="brand-symbol">ds.</span>
+          <img
+            className="brand-symbol"
+            src={logo}
+            alt=""
+            width="40"
+            height="40"
+          />
           <div>
-            <strong>DS-Studio</strong>
+            <strong>desys</strong>
           </div>
         </div>
         <nav className="view-switch" aria-label="Vues">
@@ -412,7 +419,7 @@ export default function App() {
         </div>
       </header>
       <div className="intro" hidden={route.view !== 'atelier'}>
-        <h1 className="pp-sr">DS-Studio · atelier du Design System</h1>
+        <h1 className="pp-sr">desys · atelier du Design System</h1>
         <div className="intro-actions">
           <button onClick={() => void perform(exportTokens)}>
             Exporter les tokens
