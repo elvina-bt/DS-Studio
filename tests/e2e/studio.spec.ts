@@ -584,6 +584,60 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
   await expect(panel.locator('.ask-answer')).toHaveCount(0);
 });
 
+test('playground : le chat propose les tokens d’un composant, aperçu avant / après', async ({
+  page,
+}) => {
+  // Réponse simulée ; les e2e n'écrivent jamais dans desys (bouton désactivé).
+  await page.route('**/api/ask', (route) =>
+    route.fulfill({
+      json: {
+        message: 'Je propose une bordure en couleur de marque.',
+        sources: [],
+        edits: [
+          {
+            component: 'carte-prevision',
+            slot: 'bordure',
+            token: 'color.brand',
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto('/#/playground/carte-prevision');
+  const panel = page.getByRole('complementary', {
+    name: 'Demander au Design System',
+  });
+  await panel.getByLabel('Ta question').fill('Bordure de la carte en marque');
+  await panel.getByLabel('Ta question').press('Enter');
+  const edit = panel.getByRole('region', {
+    name: 'Modification de composant proposée',
+  });
+  await expect(edit).toContainText('Carte de prévision');
+  await expect(edit).toContainText('color.border');
+  await expect(edit).toContainText('color.brand');
+  // L'aperçu « Après » applique vraiment l'emplacement proposé.
+  const after = edit.locator('figure').nth(1).locator('.pp-card').first();
+  const brand = await after.evaluate((el) =>
+    getComputedStyle(el).getPropertyValue('--color-brand').trim(),
+  );
+  await expect(after).toHaveCSS(
+    'border-top-color',
+    await page.evaluate((hex) => {
+      const d = document.createElement('div');
+      d.style.color = hex;
+      document.body.append(d);
+      const c = getComputedStyle(d).color;
+      d.remove();
+      return c;
+    }, brand),
+  );
+  await expect(
+    edit.getByRole('button', { name: 'Appliquer à desys' }),
+  ).toBeDisabled();
+  await edit.getByRole('button', { name: 'Ignorer' }).click();
+  await expect(edit).toContainText('Proposition ignorée.');
+});
+
 test('onglet Composants : liste, propriétés façon Figma, lien vers la doc', async ({
   page,
 }) => {

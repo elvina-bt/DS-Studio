@@ -1,3 +1,4 @@
+import type { Bindings } from '../../app/shared/bindings.js';
 import type {
   AgentImage,
   AgentReply,
@@ -22,6 +23,8 @@ export interface AskContext {
     anchors: { id: string; text: string }[];
   }[];
   tokens: Tokens;
+  // Tokens utilisés par chaque composant : le chat peut proposer d'en changer.
+  bindings?: Bindings;
   rules: string;
   history: { role: 'user' | 'assistant'; text: string }[];
 }

@@ -3,20 +3,25 @@ import { parseMarkdown } from '../shared/docs.js';
 import type { Tokens } from '../shared/model.js';
 import { request } from './api.js';
 import { DocContent } from './DocContent.js';
+import ComponentEdit from './ComponentEdit.js';
+import type { BindingEdit } from '../shared/bindings.js';
 
 // Questions sur le DS, posées à Claude Code en lecture seule : il reçoit la doc,
-// les tokens validés et les règles, répond et cite ses pages. Rien n'est écrit ;
+// les tokens validés et les règles, répond et cite ses pages. Il peut proposer
+// les tokens d'un composant : rien n'est écrit sans « Appliquer » ;
 // la conversation vit en mémoire, jamais dans le navigateur. Colonne toujours
 // ouverte, dans le style de claude.ai.
 type Message = {
   role: 'user' | 'assistant';
   text: string;
   sources?: { slug: string; title: string }[];
+  edits?: BindingEdit[];
 };
 const suggestions = [
   'Quelle couleur pour un écart entre prévu et vécu ?',
   'Comment formuler une prévision incertaine ?',
   'Quelle taille de texte pour les valeurs météo ?',
+  'Passe la bordure de la carte de prévision en couleur de marque',
 ];
 
 export default function AskPanel({
@@ -72,10 +77,16 @@ export default function AskPanel({
       const reply = await request<{
         message: string;
         sources: Message['sources'];
+        edits?: BindingEdit[];
       }>('ask', { question: q, history }, controller.current.signal);
       setMessages((m) => [
         ...m,
-        { role: 'assistant', text: reply.message, sources: reply.sources },
+        {
+          role: 'assistant',
+          text: reply.message,
+          sources: reply.sources,
+          edits: reply.edits,
+        },
       ]);
     } catch (e) {
       if (!controller.current.signal.aborted) setError((e as Error).message);
@@ -123,6 +134,9 @@ export default function AskPanel({
                 tokens={tokens}
                 onNavigate={onNavigate}
               />
+              {!!m.edits?.length && (
+                <ComponentEdit edits={m.edits} tokens={tokens} />
+              )}
               {!!m.sources?.length && (
                 <ul className="ask-sources" aria-label="Pages citées">
                   {m.sources.map((s) => (

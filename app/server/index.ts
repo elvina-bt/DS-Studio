@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import {
   desysDocs,
   desysRoot,
+  readDesysBindings,
+  writeDesysBindings,
   readDesysTokens,
   writeDesysTokens,
 } from './desys.js';
@@ -51,6 +53,11 @@ try {
       root: desysRoot,
       read: readDesysTokens,
       write: process.env.DESYS_WRITE === 'off' ? undefined : writeDesysTokens,
+      bindings: {
+        read: readDesysBindings,
+        write:
+          process.env.DESYS_WRITE === 'off' ? undefined : writeDesysBindings,
+      },
     },
     store,
     dev: process.argv.includes('--dev'),

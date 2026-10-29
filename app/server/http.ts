@@ -16,6 +16,12 @@ import {
 import { figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
 import { recentItems } from './recent.js';
+import {
+  bindingEditSchema,
+  checkEdits,
+  type BindingEdit,
+  type Bindings,
+} from '../shared/bindings.js';
 import { briefFromMarkdown, projectSchema } from '../shared/project.js';
 import { CodexAdapter } from '../../connectors/agents/codex.js';
 import { ClaudeAdapter } from '../../connectors/agents/claude.js';
@@ -37,6 +43,11 @@ export async function createStudioServer(options: {
     root?: string;
     read: () => Promise<Tokens>;
     write?: (tokens: Tokens) => Promise<string[]>;
+    // Tokens utilisés par chaque composant, modifiables via le chat.
+    bindings?: {
+      read: () => Promise<Bindings>;
+      write?: (edits: BindingEdit[]) => Promise<string[]>;
+    };
   };
 }) {
   const { root, store } = options;
@@ -243,6 +254,14 @@ export async function createStudioServer(options: {
               writable: !!options.desys.write,
             });
           }
+          if (url.pathname === '/api/desys/bindings') {
+            if (!options.desys?.bindings)
+              throw new StudioError('Dépôt desys non configuré.', 404);
+            return send(200, {
+              bindings: await options.desys.bindings.read(),
+              writable: !!options.desys.bindings.write,
+            });
+          }
           if (url.pathname === '/api/recent') {
             if (!options.desys?.root)
               throw new StudioError('Dépôt desys non configuré.', 404);
@@ -419,6 +438,27 @@ export async function createStudioServer(options: {
             res.off('close', cancel);
           }
         }
+        if (url.pathname === '/api/desys/bindings') {
+          const b = z
+            .object({ edits: z.array(bindingEditSchema).min(1).max(12) })
+            .strict()
+            .parse(body);
+          const target = options.desys?.bindings;
+          if (!target?.write || !options.desys)
+            throw new StudioError('Écriture dans desys désactivée.', 409);
+          const checked = checkEdits(
+            b.edits,
+            await target.read(),
+            await options.desys.read(),
+          );
+          if (checked.rejected.length)
+            throw new StudioError(
+              `Proposition refusée : ${checked.rejected.join(' ; ')}.`,
+              400,
+            );
+          const files = await target.write(checked.edits);
+          return send(200, { bindings: await target.read(), files });
+        }
         if (url.pathname === '/api/ask') {
           const b = z
             .object({
@@ -451,6 +491,9 @@ export async function createStudioServer(options: {
           res.once('close', cancel);
           try {
             const pages = (await docs.list()).docs;
+            const bindings = await options.desys?.bindings
+              ?.read()
+              .catch(() => undefined);
             const reply = await adapter.ask(
               b.question,
               {
@@ -464,11 +507,17 @@ export async function createStudioServer(options: {
                   ].map(({ id, text }) => ({ id, text })),
                 })),
                 tokens: store.snapshot().tokens,
+                bindings,
                 rules: await context('DESIGN_RULES.md'),
                 history: b.history,
               },
               controller.signal,
             );
+            // Modifications de composant : seules les propositions valides passent.
+            const edits = bindings
+              ? checkEdits(reply.edits ?? [], bindings, store.snapshot().tokens)
+                  .edits
+              : [];
             // Seules les pages qui existent sont citées.
             const sources = [
               ...new Set(reply.sources.map((s) => s.split('#')[0])),
@@ -476,7 +525,7 @@ export async function createStudioServer(options: {
               .map((slug) => pages.find((d) => d.slug === slug))
               .filter((d) => d !== undefined)
               .map((d) => ({ slug: d.slug, title: d.title }));
-            return send(200, { message: reply.message, sources });
+            return send(200, { message: reply.message, sources, edits });
           } finally {
             busy = false;
             active.delete(controller);

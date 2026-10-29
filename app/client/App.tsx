@@ -11,6 +11,8 @@ import logoIcon from './home/logo-icon.svg';
 import HomeView from './HomeView.js';
 import { TokenEditContext } from './TokenEdit.js';
 import ComponentsView from './ComponentsView.js';
+import { useBindings } from './bindings.js';
+import { bindingsCss } from '../shared/bindings.js';
 
 const sourceLabel = {
   manual: 'Manuel',
@@ -178,6 +180,8 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // Tokens des composants à jour (desys), posés sur toute l'app.
+  const bindings = useBindings();
   // La vue courante habille la page (cadre en dégradé de l'accueil).
   useEffect(() => {
     document.body.dataset.view = route.view;
@@ -521,6 +525,7 @@ export default function App() {
           </p>
         )}
       </div>
+      {bindings && <style>{bindingsCss(bindings.bindings)}</style>}
       <dialog
         ref={historyDialog}
         className="history"

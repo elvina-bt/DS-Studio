@@ -10,6 +10,11 @@ import { createStudioServer } from '../app/server/http.js';
 import { tokensSchema } from '../app/shared/model.js';
 import { ClaudeAdapter, claudeAskArgs } from '../connectors/agents/claude.js';
 import type { AskContext } from '../connectors/agents/types.js';
+import {
+  applyEdits,
+  type BindingEdit,
+  type Bindings,
+} from '../app/shared/bindings.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -140,6 +145,7 @@ test('HTTP : question protégée, sources limitées aux pages existantes', async
   assert.deepEqual(await res.json(), {
     message: 'Réponse',
     sources: [{ slug: 'bouton', title: 'Bouton' }],
+    edits: [],
   });
   assert.match(received?.docs[0].body ?? '', /Un seul bouton principal/);
   assert.deepEqual(received?.docs[0].anchors, [
@@ -150,4 +156,125 @@ test('HTTP : question protégée, sources limitées aux pages existantes', async
     seed['color.brand'].$value,
   );
   assert.equal(store.snapshot().revision, revision);
+});
+
+test('HTTP : modification de composant proposée par le chat, filtrée puis écrite', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'ds-bindings-http-'));
+  const seed = tokensSchema.parse(
+    JSON.parse(
+      await readFile(
+        path.join(root, 'workspace/design-system.tokens.json'),
+        'utf8',
+      ),
+    ),
+  );
+  const store = new Store(path.join(directory, 'state'), seed);
+  await store.init();
+  let bindings: Bindings = {
+    'carte-prevision': {
+      swift: 'Carte',
+      slots: {
+        bordure: { label: 'Bordure', type: 'color', token: 'color.border' },
+        marge: { label: 'Marge', type: 'space', token: 'space.md' },
+      },
+    },
+  };
+  const written: BindingEdit[][] = [];
+  const claude = {
+    id: 'claude',
+    async status() {
+      return { available: true, detail: 'Simulation' };
+    },
+    async reply(): Promise<never> {
+      throw new Error('Inutilisé.');
+    },
+    async ask(_q: string, context: AskContext) {
+      assert.equal(
+        context.bindings?.['carte-prevision'].slots.bordure.token,
+        'color.border',
+      );
+      return {
+        message: 'Proposition',
+        sources: [],
+        edits: [
+          {
+            component: 'carte-prevision',
+            slot: 'bordure',
+            token: 'color.brand',
+          },
+          {
+            component: 'carte-prevision',
+            slot: 'bordure',
+            token: 'color.danger',
+          },
+          { component: 'carte-prevision', slot: 'marge', token: 'color.brand' },
+          { component: 'inconnu', slot: 'fond', token: 'color.brand' },
+        ],
+      };
+    },
+  };
+  const app = await createStudioServer({
+    root,
+    store,
+    docsDirectory: path.join(directory, 'docs'),
+    claude,
+    desys: {
+      read: async () => seed,
+      bindings: {
+        read: async () => bindings,
+        write: async (edits) => {
+          written.push(edits);
+          bindings = applyEdits(bindings, edits);
+          return ['components/bindings.json'];
+        },
+      },
+    },
+  });
+  await new Promise<void>((r) => app.server.listen(0, '127.0.0.1', r));
+  t.after(async () => {
+    await app.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+  const origin = `http://127.0.0.1:${(app.server.address() as { port: number }).port}`;
+  const { csrf } = await (await fetch(origin + '/api/bootstrap')).json();
+  const post = (route: string, body: unknown) =>
+    fetch(origin + route, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-DS-Studio': csrf,
+        Origin: origin,
+      },
+      body: JSON.stringify(body),
+    });
+  // Seule la proposition valide survit : pas de rouge sur une carte, types respectés.
+  const reply = await (
+    await post('/api/ask', { question: 'bordure', history: [] })
+  ).json();
+  assert.deepEqual(reply.edits, [
+    { component: 'carte-prevision', slot: 'bordure', token: 'color.brand' },
+  ]);
+  assert.equal(written.length, 0);
+  // Rien n'est écrit sans validation ; une proposition invalide est refusée.
+  assert.equal(
+    (
+      await post('/api/desys/bindings', {
+        edits: [
+          {
+            component: 'carte-prevision',
+            slot: 'bordure',
+            token: 'color.danger',
+          },
+        ],
+      })
+    ).status,
+    400,
+  );
+  const ok = await post('/api/desys/bindings', { edits: reply.edits });
+  assert.equal(ok.status, 200);
+  assert.equal(
+    (await ok.json()).bindings['carte-prevision'].slots.bordure.token,
+    'color.brand',
+  );
+  assert.deepEqual(written, [reply.edits]);
 });

@@ -310,6 +310,30 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : dans un bloc en cours d’édition, le gras et les liens restent écrits
   en `**` et `[ ](…)` ; ils sont rendus dès qu’on quitte le bloc.
 
+## 2026-10-29 — Synchro Figma → desys par PR, composants modifiables via le chat
+
+- **Problème** : desys devait suivre Figma sans manipulation, avec une doc à jour, et
+  un composant devait pouvoir se modifier depuis le chat.
+- **Décision** :
+  - PFE – Components rangé : une page par composant, dans une section à son nom
+    (essai à blanc, écriture approuvée, relecture : IDs et clés inchangés).
+  - GitHub Action `figma-sync` dans desys, à 8 h, 12 h 30 et 19 h (heure d’hiver) ou à
+    la demande : lecture par l’API REST (secret `FIGMA_TOKEN`), relevé
+    `components/figma.json`, clés republiées, icônes, résumé des pages de doc repris
+    des descriptions Figma, tokens si le plan donne accès aux variables (Enterprise) ;
+    PR ouverte si quelque chose change, jamais fusionnée sans relecture.
+  - Les tokens de chaque composant deviennent des données
+    (`desys/components/bindings.json`). Le chat peut en proposer d’autres ; le
+    serveur filtre (emplacement connu, type de token, `color.danger` réservé au
+    bouton destructif) ; aperçu avant / après avec le vrai composant ; « Appliquer à
+    desys » écrit et régénère web et iOS.
+- **Preuves** : desys 15 tests (mapping REST hors réseau, validation des bindings) ;
+  studio 52 tests unitaires (filtrage et écriture), 18 e2e (aperçu du chat).
+- **Limites** : l’Action n’a pas tourné (secret et autorisation des PR à poser dans
+  GitHub) ; variables Figma lisibles par l’API seulement en plan Enterprise ; SwiftUI
+  non compilé ici (licence Xcode) ; le chat ne modifie pas encore le code des
+  composants, seulement les tokens qu’ils utilisent.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { bindingEditSchema } from './bindings.js';
 
 // Ce sous-ensemble explicite utilise les noms $type/$value, pas toute la norme DTCG.
 const color = z
@@ -117,6 +118,8 @@ export const askReplySchema = z
   .object({
     message: z.string().min(1).max(12000),
     sources: z.array(z.string().max(60)).max(10),
+    // Propositions de modification d'un composant (tokens utilisés).
+    edits: z.array(bindingEditSchema).max(12).optional(),
   })
   .strict();
 export type AskReply = z.infer<typeof askReplySchema>;

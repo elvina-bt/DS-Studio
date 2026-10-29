@@ -1,7 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generate } from '@desys-scripts/generate.js';
+import { generate, readBindings, readTokens } from '@desys-scripts/generate.js';
+import type { BindingEdit, Bindings } from '../shared/bindings.js';
 import { tokenKeys, tokensSchema, type Tokens } from '../shared/model.js';
 
 // Le design system vit dans le dépôt voisin ../desys (iso Figma). L'atelier y
@@ -24,4 +25,28 @@ export async function writeDesysTokens(tokens: Tokens): Promise<string[]> {
   await fs.writeFile(tmp, JSON.stringify(ordered, null, 2) + '\n');
   await fs.rename(tmp, tokensFile);
   return generate().changed;
+}
+
+// Tokens utilisés par chaque composant : components/bindings.json, validé par le
+// générateur de desys. Une écriture qui casse la génération est annulée.
+const bindingsFile = path.join(desysRoot, 'components/bindings.json');
+export async function readDesysBindings(): Promise<Bindings> {
+  return readBindings(readTokens(), bindingsFile) as Bindings;
+}
+export async function writeDesysBindings(
+  edits: BindingEdit[],
+): Promise<string[]> {
+  const before = await fs.readFile(bindingsFile, 'utf8');
+  const raw = JSON.parse(before);
+  for (const e of edits) raw[e.component].slots[e.slot].token = e.token;
+  const tmp = `${bindingsFile}.${process.pid}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(raw, null, 2) + '\n');
+  await fs.rename(tmp, bindingsFile);
+  try {
+    return ['components/bindings.json', ...generate().changed];
+  } catch (e) {
+    await fs.writeFile(bindingsFile, before);
+    generate();
+    throw e;
+  }
 }
