@@ -78,7 +78,7 @@ export default function AskPanel({
   return (
     <aside className="ask-panel" aria-label="Demander au Design System">
       <header>
-        <h2>Demander à Claude</h2>
+        <h2>Une question sur desys ?</h2>
         {messages.length > 0 && (
           <button
             type="button"
@@ -95,10 +95,6 @@ export default function AskPanel({
       <div className="ask-messages" ref={log} role="log" aria-live="polite">
         {messages.length === 0 && (
           <div className="ask-empty">
-            <p>
-              Je lis ta doc, tes tokens et tes règles pour répondre. Je ne
-              modifie rien.
-            </p>
             {suggestions.map((s) => (
               <button key={s} type="button" onClick={() => void ask(s)}>
                 {s}

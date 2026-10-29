@@ -2016,6 +2016,11 @@ h2[id] {
   gap: 8px;
   color: var(--doc-muted, #787774);
 }
+/* Texte : libellé au-dessus, champ sur toute la largeur, pour ne rien couper. */
+.story-prop.is-text {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
 .story-prop > span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2154,8 +2159,10 @@ h2[id] {
   border-top: 1px solid var(--doc-line, #ececea);
   font-size: 13px;
 }
-.docs-page .story-meta code {
+.story-meta code {
   margin-right: auto;
+}
+.docs-page .story-meta code {
   background: none;
   color: var(--doc-muted, #787774);
   padding: 0;

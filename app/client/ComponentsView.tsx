@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
 import { storyGroups, storyId } from '@desys/stories.js';
 import { request } from './api.js';
@@ -28,18 +28,47 @@ export default function ComponentsView({
       .catch(() => {});
   }, []);
   const doc = docs.find((d) => d.body.includes(`{{composant:${group.id}}}`));
+  // Variante allumée dans la liste : celle que montrent les propriétés.
+  const [active, setActive] = useState<string | null>(story);
+  const [search, setSearch] = useState('');
+  const query = search.trim().toLowerCase();
+  const found = (text: string) => text.toLowerCase().includes(query);
+  const groups = useMemo(
+    () =>
+      storyGroups
+        .map((g) => ({
+          group: g,
+          stories: query
+            ? found(g.name)
+              ? g.stories
+              : g.stories.filter((s) => found(s.name))
+            : g.id === group.id
+              ? g.stories
+              : [],
+        }))
+        .filter((x) => !query || found(x.group.name) || x.stories.length),
+    [query, group.id],
+  );
 
   return (
     <div className="docs playground">
       <nav className="docs-nav" aria-label="Composants">
-        {storyGroups.map((g) => (
+        <input
+          type="search"
+          className="docs-search"
+          aria-label="Rechercher un composant"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher"
+        />
+        {groups.map(({ group: g, stories }) => (
           <div key={g.id} className="docs-nav-section">
             <ul>
               <li>
                 <a
                   href={`#/composants/${g.id}`}
                   aria-current={
-                    g.id === group.id && !story ? 'page' : undefined
+                    g.id === group.id && !active ? 'page' : undefined
                   }
                   className="playground-group"
                   onClick={(e) => {
@@ -50,25 +79,24 @@ export default function ComponentsView({
                   {g.name}
                 </a>
               </li>
-              {g.id === group.id &&
-                g.stories.map((s) => {
-                  const id = storyId(g.id, s.id);
-                  return (
-                    <li key={s.id}>
-                      <a
-                        href={`#/composants/${g.id}?story=${id}`}
-                        aria-current={story === id ? 'page' : undefined}
-                        className="playground-story"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onNavigate(g.id, id);
-                        }}
-                      >
-                        {s.name}
-                      </a>
-                    </li>
-                  );
-                })}
+              {stories.map((s) => {
+                const id = storyId(g.id, s.id);
+                return (
+                  <li key={s.id}>
+                    <a
+                      href={`#/composants/${g.id}?story=${id}`}
+                      aria-current={active === id ? 'page' : undefined}
+                      className="playground-story"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate(g.id, id);
+                      }}
+                    >
+                      {s.name}
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}
@@ -93,6 +121,7 @@ export default function ComponentsView({
           selected={story}
           large
           linkFor={(id) => `/#/composants/${group.id}?story=${id}`}
+          onStoryChange={setActive}
         />
       </div>
     </div>

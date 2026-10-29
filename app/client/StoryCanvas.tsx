@@ -115,6 +115,7 @@ export default function StoryCanvas({
   selected,
   linkFor,
   large = false,
+  onStoryChange,
 }: {
   group: StoryGroup;
   tokens: Tokens;
@@ -122,6 +123,8 @@ export default function StoryCanvas({
   // Adresse (hash) d'une variante, pour « Copier le lien ».
   linkFor?: (id: string) => string;
   large?: boolean;
+  // Variante courante, pour que la liste de l'onglet Composants la suive.
+  onStoryChange?: (id: string | null) => void;
 }) {
   const preset = (id?: string | null) =>
     group.stories.find((s) => storyId(group.id, s.id) === id) ??
@@ -158,6 +161,9 @@ export default function StoryCanvas({
   const story = matchStory(group, values);
   const id = story ? storyId(group.id, story.id) : null;
   const figma = group.figma(values);
+  useEffect(() => {
+    onStoryChange?.(id);
+  }, [id, onStoryChange]);
   async function copy(text: string, what: string) {
     try {
       await navigator.clipboard.writeText(text);
