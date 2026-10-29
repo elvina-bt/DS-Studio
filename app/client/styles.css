@@ -1480,7 +1480,8 @@ h2[id] {
   color: var(--doc-text);
   /* Plein écran : trois colonnes qui défilent chacune de leur côté. */
   height: calc(100svh - var(--studio-header-h, 0px));
-  overflow: hidden;
+  /* clip et non hidden : un scrollIntoView ne doit pas faire défiler ce cadre. */
+  overflow: clip;
 }
 .docs {
   display: grid;
@@ -1537,16 +1538,32 @@ h2[id] {
   background: #e8e8e6;
   font-weight: 600;
 }
-.docs-nav button,
-.docs-edit {
+.docs-nav button {
   border: 0;
   background: transparent;
   color: var(--doc-muted);
   font-weight: 500;
   padding: 4px 8px;
 }
-.docs-nav button:hover,
+/* Modifier la page : un vrai bouton, contour et icône, pas un simple texte. */
+.docs-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--doc-text);
+  background: white;
+  border: 1px solid #dcdcd9;
+  border-radius: 7px;
+  padding: 5px 12px;
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.06);
+}
 .docs-edit:hover {
+  background: var(--doc-soft);
+  border-color: #c9c9c5;
+}
+.docs-nav button:hover {
   background: #ebebea;
   color: var(--doc-text);
 }
@@ -2140,15 +2157,87 @@ h2[id] {
     padding-right: 88px;
   }
 }
-/* Canvas de stories façon Storybook : variantes, aperçu ou code, outils discrets. */
+/* Canvas façon Storybook : scène (aperçu ou code) à gauche, propriétés façon
+   Figma à droite. */
 .story {
   margin: 20px 0;
   border: 1px solid var(--doc-line, #ececea);
   border-radius: 10px;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+}
+.story-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.story-main > .story-stage,
+.story-main > .story-code {
+  flex: 1;
+}
+.story-props {
+  border-left: 1px solid var(--doc-line, #ececea);
+  padding: 12px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: white;
+}
+.story-props h3 {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--doc-text, #2f3437);
+}
+.story-props-empty {
+  color: var(--doc-muted, #787774);
+  margin: 0;
+}
+.story-prop {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: var(--doc-muted, #787774);
+}
+.story-prop > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.story-prop select,
+.story-prop input[type='text'] {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: #f5f5f5;
+  color: var(--doc-text, #2f3437);
+}
+.story-prop select:hover,
+.story-prop input[type='text']:hover {
+  border-color: #e6e6e6;
+}
+.story-prop input[type='checkbox'] {
+  justify-self: start;
+  width: 28px;
+  height: 16px;
+  accent-color: var(--doc-text, #2f3437);
+}
+@media (max-width: 1240px) {
+  .story {
+    grid-template-columns: 1fr;
+  }
+  .story-props {
+    border-left: 0;
+    border-top: 1px solid var(--doc-line, #ececea);
+  }
 }
 /* Outils du canvas seulement : jamais les composants de l'aperçu. */
-.story-variants button,
 .story-toolbar button,
 .story-toolbar select,
 .story-meta button {
@@ -2160,21 +2249,10 @@ h2[id] {
   padding: 4px 8px;
   border-radius: 6px;
 }
-.story-variants button:hover:not(:disabled),
 .story-toolbar button:hover:not(:disabled),
 .story-toolbar select:hover,
 .story-meta button:hover {
   background: var(--doc-soft, #f7f7f5);
-  color: var(--doc-text, #2f3437);
-}
-.story-variants {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 10px 10px 0;
-}
-.story-variants button[aria-pressed='true'] {
-  background: #efefed;
   color: var(--doc-text, #2f3437);
 }
 .story-toolbar {
@@ -2199,6 +2277,18 @@ h2[id] {
   display: flex;
   align-items: center;
   gap: 2px;
+}
+/* Libellé visible, valeur dans la liste : « Fond  Grille », « Largeur  Libre ». */
+.story-tools label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--doc-muted, #787774);
+  padding-left: 6px;
+}
+.story-tools label select {
+  color: var(--doc-text, #2f3437);
 }
 .story-zoom {
   min-width: 44px;
@@ -2279,4 +2369,45 @@ h2[id] {
 .story .story-meta button.is-failed {
   background: #fdf1f0;
   color: #a5302b;
+}
+/* Onglet Composants : liste à gauche, canvas en grand, sans colonne de chat. */
+.docs.playground {
+  grid-template-columns: 240px minmax(0, 1fr);
+}
+.docs.playground .docs-nav {
+  gap: 2px;
+}
+.playground-main {
+  padding: 28px 32px 48px;
+  display: flex;
+  flex-direction: column;
+}
+.playground-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.playground-head h2 {
+  font-size: 24px;
+  margin: 0;
+}
+.docs-nav a.playground-story {
+  padding-left: 22px;
+  color: var(--doc-muted);
+}
+.docs-nav a.playground-story[aria-current='page'] {
+  color: var(--doc-text);
+}
+.story.is-large {
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 260px;
+}
+.story.is-large .story-stage {
+  min-height: 56vh;
+}
+@media (max-width: 1100px) {
+  .docs.playground {
+    grid-template-columns: 1fr;
+  }
 }

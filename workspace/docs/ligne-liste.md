@@ -11,6 +11,10 @@ figma: Ligne de liste, List row, Liste groupée
 
 {{composant:ligne-liste}}
 
+Les lignes s’assemblent dans une liste groupée :
+
+{{composant:liste-groupee}}
+
 ## Usage
 
 :::do Cible tactile

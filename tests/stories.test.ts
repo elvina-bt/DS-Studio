@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   figmaUrl,
   findStory,
+  matchStory,
   storyCode,
   storyGroups,
   storyId,
@@ -46,6 +47,20 @@ test('stories : chaque variante a son composant dans PFE – Components', () => 
     figmaUrl('9:30'),
     'https://www.figma.com/design/dRoA2PB74Ne8TWXz5Cafin/PFE---Components?node-id=9-30',
   );
+});
+
+test('propriétés : un texte modifié garde la variante, une variante change l’ID', () => {
+  const button = storyGroups.find((g) => g.id === 'bouton')!;
+  const base = findStory('bouton--secondaire')!.story.values;
+  assert.equal(
+    matchStory(button, { ...base, Libellé: 'Autre texte' })?.id,
+    'secondaire',
+  );
+  assert.equal(
+    matchStory(button, { ...base, État: 'Désactivé' })?.id,
+    'secondaire-desactive',
+  );
+  assert.equal(button.figma({ ...base, État: 'Désactivé' })?.node, '9:36');
 });
 
 test('code des stories : JSX lisible généré depuis les mêmes props', () => {

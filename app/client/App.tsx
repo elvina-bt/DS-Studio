@@ -7,6 +7,7 @@ import TokenPreview from './TokenPreview.js';
 import Review from './Review.js';
 import VariablesPanel from './VariablesPanel.js';
 import DocsView from './DocsView.js';
+import ComponentsView from './ComponentsView.js';
 
 const sourceLabel = {
   manual: 'Manuel',
@@ -19,16 +20,28 @@ const sourceLabel = {
 // Deux vues : la documentation, par défaut (#/docs/<page>), et l'atelier (#/), avec une
 // variante de composant facultative (#/docs/<page>?story=<groupe--variante>).
 type Route = {
-  view: 'atelier' | 'docs';
+  view: 'atelier' | 'docs' | 'composants';
+  // Page de doc, ou composant dans l'onglet Composants.
   slug: string | null;
   story?: string | null;
 };
 function readRoute(): Route {
-  const m =
+  const docs =
     /^#\/docs(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
       location.hash,
     );
-  if (m) return { view: 'docs', slug: m[1] ?? null, story: m[2] ?? null };
+  if (docs)
+    return { view: 'docs', slug: docs[1] ?? null, story: docs[2] ?? null };
+  const parts =
+    /^#\/composants(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
+      location.hash,
+    );
+  if (parts)
+    return {
+      view: 'composants',
+      slug: parts[1] ?? null,
+      story: parts[2] ?? null,
+    };
   return location.hash === '#/'
     ? { view: 'atelier', slug: null }
     : { view: 'docs', slug: null };
@@ -146,8 +159,8 @@ export default function App() {
     return () => removeEventListener('hashchange', sync);
   }, []);
   const navigate = (next: Route) => {
-    location.hash =
-      next.view === 'docs' ? `#/docs${next.slug ? `/${next.slug}` : ''}` : '#/';
+    const tail = `${next.slug ? `/${next.slug}` : ''}${next.story ? `?story=${next.story}` : ''}`;
+    location.hash = next.view === 'atelier' ? '#/' : `#/${next.view}${tail}`;
     setRoute(next);
   };
   const [agent, setAgent] = useState('claude');
@@ -369,10 +382,23 @@ export default function App() {
             aria-current={route.view === 'docs' ? 'page' : undefined}
             onClick={(e) => {
               e.preventDefault();
-              navigate({ view: 'docs', slug: route.slug });
+              navigate({
+                view: 'docs',
+                slug: route.view === 'docs' ? route.slug : null,
+              });
             }}
           >
             Documentation
+          </a>
+          <a
+            href="#/composants"
+            aria-current={route.view === 'composants' ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate({ view: 'composants', slug: null });
+            }}
+          >
+            Composants
           </a>
         </nav>
         <div className="header-status">
@@ -385,7 +411,7 @@ export default function App() {
           </button>
         </div>
       </header>
-      <div className="intro" hidden={route.view === 'docs'}>
+      <div className="intro" hidden={route.view !== 'atelier'}>
         <h1 className="pp-sr">DS-Studio · atelier du Design System</h1>
         <div className="intro-actions">
           <button onClick={() => void perform(exportTokens)}>
@@ -518,7 +544,19 @@ export default function App() {
           </ol>
         </div>
       </dialog>
-      {route.view === 'docs' ? (
+      {route.view === 'composants' ? (
+        <main className="docs-shell" aria-label="Composants du Design System">
+          <ComponentsView
+            tokens={state.tokens}
+            component={route.slug}
+            story={route.story ?? null}
+            onNavigate={(slug, story) =>
+              navigate({ view: 'composants', slug, story })
+            }
+            onOpenDoc={(slug) => navigate({ view: 'docs', slug })}
+          />
+        </main>
+      ) : route.view === 'docs' ? (
         <main
           className="docs-shell"
           aria-label="Documentation du Design System"

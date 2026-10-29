@@ -474,8 +474,10 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
   await expect(
     specimen.getByRole('button', { name: 'Nouvelle sortie', exact: true }),
   ).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  // Stories : variante, code généré et lien direct vers une variante.
-  await specimen.getByRole('button', { name: 'Secondaire' }).click();
+  // Propriétés façon Figma : la variante change l'aperçu, le code, l'ID et le lien.
+  const props = specimen.getByRole('complementary', { name: 'Propriétés' });
+  await props.getByLabel('Variante').selectOption('Secondaire');
+  await props.getByLabel('Libellé').fill('Voir les sites');
   await expect(
     specimen.getByRole('button', { name: 'Voir les sites', exact: true }),
   ).toBeVisible();
@@ -493,10 +495,9 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
   const card = page.getByRole('figure', {
     name: 'Aperçu : Carte de prévision',
   });
-  await expect(card.getByRole('button', { name: 'Sans note' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(
+    card.getByRole('complementary', { name: 'Propriétés' }).getByLabel('Note'),
+  ).toHaveValue('Non');
   await expect(card.getByRole('tab', { name: 'Aperçu' })).toHaveAttribute(
     'aria-selected',
     'true',
@@ -574,4 +575,33 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
   await expect(panel).toBeVisible();
   await panel.getByRole('button', { name: 'Effacer' }).click();
   await expect(panel.locator('.ask-answer')).toHaveCount(0);
+});
+
+test('onglet Composants : liste, propriétés façon Figma, lien vers la doc', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Composants', exact: true }).click();
+  await expect(page).toHaveURL(/#\/composants$/);
+  const list = page.getByRole('navigation', { name: 'Composants' });
+  await list.getByRole('link', { name: 'Barre d’onglets' }).click();
+  await list.getByRole('link', { name: 'Profil' }).click();
+  await expect(page).toHaveURL(
+    /#\/composants\/barre-onglets\?story=barre-onglets--profil$/,
+  );
+  const canvas = page.getByRole('figure', { name: 'Aperçu : Barre d’onglets' });
+  const props = canvas.getByRole('complementary', { name: 'Propriétés' });
+  await expect(props.getByLabel('Onglet actif')).toHaveValue('Profil');
+  await expect(canvas.locator('.story-meta code')).toHaveText(
+    'barre-onglets--profil',
+  );
+  await props.getByLabel('Onglet actif').selectOption('Débriefer');
+  await expect(
+    canvas.getByRole('link', { name: 'Ouvrir dans Figma' }),
+  ).toHaveAttribute('href', /node-id=11-74$/);
+  await expect(
+    page.getByRole('button', { name: 'Exporter les tokens' }),
+  ).toBeHidden();
+  await page.getByRole('button', { name: 'Voir la documentation' }).click();
+  await expect(page).toHaveURL(/#\/docs\/barre-onglets$/);
 });

@@ -241,6 +241,23 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   insertion depuis un autre fichier seulement après publication de la bibliothèque ;
   tailles dérivées fixées en dur, sans variable.
 
+## 2026-10-29 — Onglet Composants et propriétés façon Figma
+
+- **Problème** : les variantes étaient des pastilles au-dessus de l’aperçu, sans
+  rapport avec la façon dont Figma présente un composant ; pas de vue dédiée.
+- **Décision** : chaque composant décrit ses propriétés (variantes, textes,
+  booléens) ; panneau Propriétés à droite du canvas, comme dans Figma. L’aperçu,
+  le code, l’ID et le lien Figma suivent les valeurs. Les 22 variantes Figma ont une
+  story (boutons désactivés, chaque type de ligne, chaque onglet actif) ; la Liste
+  groupée devient un composant à part (ID `liste-groupee--reglages`, ancien
+  `ligne-liste--liste`). Nouvel onglet **Composants** (liste à gauche, canvas en
+  grand, lien vers la doc). Fond « Grille » par défaut, libellés « Fond » et
+  « Largeur » visibles. « Modifier la page » devient un bouton.
+- **Preuves** : 54 tests unitaires (dont ID selon les valeurs), 15 e2e (dont l’onglet
+  Composants), macOS ; vérifié à 1440 px.
+- **Limite** : modifier un composant dans Figma ne met pas DS-Studio à jour tout
+  seul (voir la réponse sur la synchro) ; les tailles dérivées restent en dur.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

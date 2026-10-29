@@ -197,8 +197,10 @@ export function DocContent({
                 key={`${i}-${group.id}`}
                 group={group}
                 tokens={tokens}
-                page={page}
                 selected={story}
+                linkFor={
+                  page ? (id) => `/#/docs/${page}?story=${id}` : undefined
+                }
               />
             ) : (
               <p key={i} className="doc-warning">

@@ -155,7 +155,7 @@ export default function AskPanel({
       >
         <textarea
           aria-label="Ta question"
-          placeholder="Pose une question sur le DS…"
+          placeholder="Poser une question sur le design system…"
           rows={2}
           maxLength={4000}
           value={question}

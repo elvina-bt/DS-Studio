@@ -457,6 +457,19 @@ export default function DocsView({
                     setDraft({ ...shown });
                   }}
                 >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 2.5l2.5 2.5L6 12.5H3.5V10z" />
+                  </svg>
                   Modifier la page
                 </button>
               </div>

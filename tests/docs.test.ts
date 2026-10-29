@@ -204,7 +204,7 @@ test('HTTP : enregistrement protégé, plugin Figma en lecture seule', async (t)
   assert.equal(body.docs[0].slug, 'bouton');
   assert.match(body.docs[0].html, /callout do/);
   // Variantes à insérer : une par story du bloc {{composant:bouton}}.
-  assert.equal(body.docs[0].stories.length, 4);
+  assert.equal(body.docs[0].stories.length, 6);
   assert.match(body.docs[0].stories[0].key, /^[0-9a-f]{40}$/);
   assert.match(body.docs[0].stories[0].figma, /node-id=9-30$/);
   assert.equal(body.variables[0].key, 'color.brand');
