@@ -2944,9 +2944,11 @@ body[data-view='home'] .studio-header {
   text-decoration: none;
   color: var(--app-brown-strong);
 }
+/* Logo : le mot desys en DotStudio, comme le titre de l'accueil. */
 .wordmark strong {
+  font-family: 'DotStudio', ui-monospace, Menlo, monospace;
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0;
 }
 .brand-symbol {
