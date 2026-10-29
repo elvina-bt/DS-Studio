@@ -1551,59 +1551,519 @@ h2[id] {
   border-radius: 6px;
   padding: 6px 10px;
 }
+/* Édition façon Notion : la page s'édite telle qu'elle s'affiche. */
 .docs-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 1200px;
-  margin: 0 auto;
+  --be-hover: rgba(55, 53, 47, 0.08);
+  --be-faint: #b9b8b4;
+  --be-shadow:
+    0 0 0 1px rgba(15, 15, 15, 0.05), 0 3px 6px rgba(15, 15, 15, 0.08),
+    0 9px 24px rgba(15, 15, 15, 0.16);
+  padding-bottom: 24px;
 }
-.docs-meta {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 90px;
-  gap: 12px;
-}
-.docs-wide {
-  grid-column: 1 / -1;
-}
-.docs-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.docs-toolbar button {
-  font-size: 13px;
-  padding: 4px 10px;
+.docs-editor .be-title,
+.docs-editor .be-summary,
+.docs-editor .be-input {
+  display: block;
+  width: 100%;
   border: 0;
-  background: var(--doc-soft);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+}
+.docs-editor .be-title {
+  font-size: 40px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  margin: 8px 0 10px;
+}
+.docs-editor .be-summary {
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--doc-muted);
+}
+.docs-editor ::placeholder {
+  color: var(--be-faint);
+  opacity: 1;
+}
+.be-props {
+  margin: 20px 0 0;
+  padding: 12px 0 18px;
+  border-top: 1px solid var(--doc-line);
+  border-bottom: 1px solid var(--doc-line);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.be-props > div {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  min-height: 34px;
+}
+.be-props dt {
+  color: var(--doc-muted);
+}
+.be-props dd {
+  margin: 0;
+}
+.docs-editor .be-props :is(input, select) {
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin-left: -8px;
+  font-size: 14px;
   color: var(--doc-text);
 }
-.docs-toolbar button:hover {
-  background: #ebebea;
+.docs-editor .be-props :is(input, select):hover {
+  background: var(--be-hover);
 }
-.docs-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 24px;
+.be-props input[type='number'] {
+  width: 90px;
 }
-.docs-split textarea {
-  min-height: 560px;
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  border-color: var(--doc-line);
+.be-props input:not([type]) {
+  width: 100%;
 }
-.docs-preview {
-  padding: 0 8px;
-  max-height: 640px;
-  overflow-y: auto;
-  font-size: 15px;
-  line-height: 1.65;
+.docs-editor .be-props .be-status {
+  appearance: none;
+  margin-left: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+  cursor: pointer;
 }
-.docs-preview > h2:first-child {
+.be-status.is-stable {
+  background: #e3f3e9 !important;
+  color: #1d6340 !important;
+}
+.be-status.is-brouillon {
+  background: #eeeeec !important;
+}
+
+.be-blocks {
+  margin-top: 28px;
+}
+.be-row {
+  position: relative;
+  margin: 2px 0;
+  border-radius: 4px;
+  outline: none;
+}
+.be-row:focus-within,
+.be-row:has(.be-gutter.is-open) {
+  z-index: 25;
+}
+.be-row.is-selected,
+.be-row:focus-visible {
+  background: rgba(35, 131, 226, 0.1);
+}
+.be-row-p,
+.be-row-callout,
+.be-row-quote {
+  margin: 8px 0;
+}
+.be-row-h2 {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--doc-line);
+}
+.be-row-h3 {
+  margin-top: 24px;
+}
+.be-row:first-child {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+.be-text {
+  min-height: 1.7em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+  outline: none;
+}
+.be-h2 {
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+.be-h3 {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+.be-h4 {
+  font-weight: 600;
+}
+.be-row-ul .be-content,
+.be-row-ol .be-content {
+  position: relative;
+  padding-left: 26px;
+}
+.be-row-ul .be-content::before {
+  content: '•';
+  position: absolute;
+  left: 8px;
+  top: 0;
+}
+.be-num {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.be-row-quote .be-content {
+  border-left: 3px solid var(--doc-text);
+  padding-left: 16px;
+}
+.be-view[data-empty] {
+  min-height: 1.7em;
+}
+.be-callout .be-view > :first-child {
+  margin-top: 0;
+}
+.be-callout .be-view > :last-child {
+  margin-bottom: 0;
+}
+.be-callout-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.doc-callout.do .be-callout-head {
+  color: #1d6b47;
+}
+.doc-callout.dont .be-callout-head {
+  color: #a5302b;
+}
+.docs-editor .be-callout-head :is(select, input) {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.docs-editor .be-callout-head select,
+.docs-editor .be-props select,
+.docs-editor .be-embed-bar select {
+  field-sizing: content;
+}
+.docs-editor .be-callout-head select {
+  margin-left: -6px;
+  cursor: pointer;
+}
+.docs-editor .be-callout-head input {
+  flex: 1;
+  outline: none;
+}
+.docs-editor .be-callout-head :is(select, input):hover {
+  background: rgba(55, 53, 47, 0.06);
+}
+.be-code {
+  margin: 8px 0;
+}
+.be-code .be-input,
+.docs-editor .be-code textarea {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.be-table .doc-table {
+  margin: 4px 0;
+}
+.be-table .doc-table td {
+  padding: 0;
+}
+.docs-editor .be-table input {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 8px;
+  font-size: 14px;
+  outline: none;
+}
+.docs-editor .be-table input:focus {
+  background: rgba(35, 131, 226, 0.06);
+}
+.docs-editor .be-table .is-head input {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--doc-muted);
+}
+.be-table-tools {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.be-row:hover .be-table-tools,
+.be-row:focus-within .be-table-tools {
+  opacity: 1;
+}
+.docs-editor .be-table-tools button,
+.docs-editor .be-tail {
+  border: 0;
+  background: transparent;
+  color: var(--doc-muted);
+  font-weight: 400;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.docs-editor .be-table-tools button:hover {
+  background: var(--be-hover);
+}
+.be-embed {
+  margin: 12px 0;
+}
+.be-embed-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--doc-muted);
+  margin-bottom: 4px;
+}
+.docs-editor .be-embed-bar select {
+  border: 0;
+  background: transparent;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--doc-text);
+  cursor: pointer;
+}
+.docs-editor .be-embed-bar select:hover {
+  background: var(--be-hover);
+}
+.be-row-rule {
+  padding: 6px 0;
+}
+.be-row-rule hr {
+  margin: 8px 0 !important;
+}
+
+/* Poignées à gauche du bloc survolé : + et ⋮⋮. */
+.be-gutter {
+  position: absolute;
+  left: -52px;
+  top: 2px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 5;
+}
+.be-row-h2 .be-gutter {
+  top: 28px;
+}
+.be-row-h2:first-child .be-gutter {
+  top: 4px;
+}
+.be-row-callout .be-gutter {
+  top: 14px;
+}
+.be-row:hover > .be-gutter,
+.be-gutter.is-open,
+.be-gutter:focus-within {
+  opacity: 1;
+}
+.docs-editor .be-gutter > button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #a3a29e;
+}
+.docs-editor .be-gutter > button:hover {
+  background: var(--be-hover);
+  color: var(--doc-muted);
+}
+.be-gutter svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.be-handle svg {
+  stroke: none;
+}
+.docs-editor .be-handle {
+  cursor: grab;
+}
+.be-row.drop-before::before,
+.be-row.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(35, 131, 226, 0.5);
+  pointer-events: none;
+}
+.be-row.drop-before::before {
+  top: -3px;
+}
+.be-row.drop-after::after {
+  bottom: -3px;
+}
+
+/* Menus : « / » et options du bloc. */
+.be-menu {
+  position: absolute;
+  z-index: 30;
+  width: 280px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: var(--be-shadow);
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--doc-text);
+  font-weight: 400;
+}
+.be-slash {
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+}
+.be-options {
+  top: 28px;
+  left: 0;
+  width: 220px;
+}
+.be-menu p {
+  margin: 4px 8px 6px;
+  font-size: 12px;
+  color: var(--doc-muted);
+}
+.be-menu hr {
+  border: 0;
+  border-top: 1px solid var(--doc-line);
+  margin: 6px 0;
+}
+.docs-editor .be-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-weight: 400;
+  text-align: left;
+}
+.docs-editor .be-menu button:hover,
+.docs-editor .be-menu [aria-selected='true'] {
+  background: var(--be-hover);
+}
+.docs-editor .be-menu .is-danger {
+  color: #a5302b;
+}
+.be-menu small {
+  display: block;
+  font-size: 12px;
+  color: var(--doc-muted);
+}
+.be-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--doc-muted);
+}
+.be-slash .be-icon {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--doc-line);
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+}
+.docs-editor .be-tail {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 0 48px;
+  text-align: left;
+  color: var(--be-faint);
+  font-size: 15px;
+  cursor: text;
+}
+.docs-editor .be-tail:hover {
+  background: transparent;
+  color: var(--doc-muted);
+}
+
+/* Barre d'enregistrement flottante. */
+.be-savebar {
+  position: sticky;
+  bottom: 20px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 6px 6px 6px 18px;
+  background: white;
+  border-radius: 999px;
+  box-shadow: var(--be-shadow);
+  font-size: 14px;
+  line-height: 1.3;
+}
+.be-savebar span {
+  color: var(--doc-muted);
+  margin-right: 8px;
+}
+.docs-editor .be-savebar button {
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+.docs-editor .be-savebar button:not(.studio-primary) {
+  border: 0;
+  background: transparent;
+  color: var(--doc-text);
+}
+.docs-editor .be-savebar button:not(.studio-primary):hover {
+  background: var(--be-hover);
 }
 .docs-diff {
   max-height: 50vh;
@@ -1640,9 +2100,11 @@ h2[id] {
   .docs-page .docs-head h2 {
     font-size: 32px;
   }
-  .docs-split,
-  .docs-meta {
-    grid-template-columns: 1fr;
+  .be-gutter {
+    left: -30px;
+  }
+  .be-gutter .be-add {
+    display: none !important;
   }
 }
 @media (max-width: 740px) {

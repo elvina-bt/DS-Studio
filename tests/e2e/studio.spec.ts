@@ -513,11 +513,19 @@ test('documentation : navigation, aperçu vivant, édition avec diff puis enregi
 
   await page.getByRole('button', { name: 'Modifier la page' }).click();
   const editor = page.getByRole('form', { name: 'Modifier la page' });
-  const body = editor.getByLabel('Contenu (Markdown)');
-  await body.fill((await body.inputValue()) + '\n\n:::note\nTest e2e.\n:::');
-  await expect(
-    page.getByLabel('Aperçu').locator('.doc-callout.note'),
-  ).toHaveCount(1);
+  // Édition façon Notion : « / » ouvre le menu des blocs.
+  await editor
+    .getByRole('button', { name: /Cliquer pour ajouter un bloc/ })
+    .click();
+  await page.keyboard.type('/note');
+  await expect(editor.getByRole('listbox', { name: 'Blocs' })).toContainText(
+    'Note',
+  );
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Test e2e.');
+  await expect(editor.getByLabel('Contenu de l’encadré').last()).toHaveValue(
+    'Test e2e.',
+  );
   await editor.getByRole('button', { name: 'Enregistrer…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Valider la page' });
   await expect(dialog).toContainText('+ :::note');

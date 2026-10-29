@@ -8,7 +8,7 @@ import TokenPreview from './TokenPreview.js';
 
 // Rendu React d'une page de doc : aucun HTML injecté. Les blocs `composant` (canvas
 // de stories) et `tokens` sont vivants : ils utilisent les tokens enregistrés.
-function InlineContent({
+export function InlineContent({
   nodes,
   onNavigate,
 }: {
@@ -123,7 +123,7 @@ function TokenValue({
   );
 }
 
-function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
+export function TokenTable({ group, tokens }: { group: string; tokens: Tokens }) {
   const keys = tokenKeys.filter(
     (k) => k === group || k.startsWith(`${group}.`),
   );

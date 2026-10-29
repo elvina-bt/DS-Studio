@@ -294,6 +294,22 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : DotStudio non distribuée (licence inconnue) : police de repli sur un
   poste qui ne l’a pas ; dates « ajouté » limitées à l’historique git de desys.
 
+## 2026-10-29 — Édition des pages de doc façon Notion
+
+- **Problème** : modifier une page demandait d’écrire du Markdown brut à côté d’un
+  aperçu, avec un formulaire de métadonnées lourd.
+- **Décision** : la page s’édite telle qu’elle s’affiche. Chaque bloc montre son rendu
+  et devient éditable au clic ; « / » ouvre le menu des blocs (texte, titres, listes,
+  citation, À faire / À éviter / Note, composant, tokens, tableau, code, séparateur) ;
+  la poignée ⋮⋮ glisse le bloc ou le transforme, duplique, déplace, supprime ;
+  raccourcis `## `, `- `, `1. `, `> `, ⌘B, ⌘I, ⌘E, ⌘K. Titre et résumé s’écrivent
+  en place, les métadonnées deviennent des propriétés discrètes. Le fichier reste du
+  Markdown (`app/shared/blocks.ts`) et l’enregistrement passe toujours par le diff.
+- **Preuves** : aller-retour blocs → Markdown sans aucune différence sur les 15 pages
+  de desys ; 51 tests unitaires, 17 e2e (ajout d’une note par « / »).
+- **Limites** : dans un bloc en cours d’édition, le gras et les liens restent écrits
+  en `**` et `[ ](…)` ; ils sont rendus dès qu’on quitte le bloc.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type TextareaHTMLAttributes,
+} from 'react';
 import {
   docSchema,
   docSections,
@@ -15,6 +22,7 @@ import { request } from './api.js';
 import { DocContent } from './DocContent.js';
 import PageOutline from './PageOutline.js';
 import AskPanel from './AskPanel.js';
+import PageEditor from './PageEditor.js';
 
 type Stored = Doc & { base: string };
 
@@ -43,18 +51,37 @@ function fileText(d: Stored): string | null {
 }
 
 // Documentation façon zeroheight : pages Markdown de desys/docs/, lues et
-// éditées ici. Un enregistrement montre le diff du fichier avant d'écrire.
-const snippets: { label: string; text: string }[] = [
-  { label: 'À faire', text: '\n:::do Titre\nCe qu’il faut faire.\n:::\n' },
-  { label: 'À éviter', text: '\n:::dont Titre\nCe qu’il faut éviter.\n:::\n' },
-  { label: 'Note', text: '\n:::note\nPrécision utile.\n:::\n' },
-  { label: 'Composant', text: '\n{{composant:bouton}}\n' },
-  { label: 'Tokens', text: '\n{{tokens:color}}\n' },
-  {
-    label: 'Tableau',
-    text: '\n| Colonne | Colonne |\n| ------- | ------- |\n| Valeur | Valeur |\n',
-  },
-];
+// éditées ici comme dans Notion. Un enregistrement montre le diff avant d'écrire.
+
+// Titre et résumé : une ligne qui s'allonge, sans retour à la ligne.
+function AutoTitle({
+  value,
+  onChange,
+  ...props
+}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> & {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = '0';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      value={value}
+      onChange={(e) => onChange(e.target.value.replace(/\n/g, ' '))}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.preventDefault();
+      }}
+      {...props}
+    />
+  );
+}
 
 export const slugify = (title: string) =>
   title
@@ -88,7 +115,7 @@ export default function DocsView({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const dialog = useRef<HTMLDialogElement>(null);
-  const textarea = useRef<HTMLTextAreaElement>(null);
+  const [figmaText, setFigmaText] = useState('');
   const main = useRef<HTMLDivElement>(null);
 
   async function load() {
@@ -118,9 +145,7 @@ export default function DocsView({
   const original =
     draft && docs.find((d) => d.slug === draft.slug && draft.base);
   const dirty =
-    !!draft &&
-    (!original ||
-      JSON.stringify(strip(draft)) !== JSON.stringify(strip(original)));
+    !!draft && (!original || fileText(draft) !== fileText(original));
   const query = search.trim().toLowerCase();
 
   const leave = () =>
@@ -135,17 +160,6 @@ export default function DocsView({
     setNotice('');
     setSection(anchor ?? null);
     if (next !== slug) onNavigate(next);
-  }
-  function insert(text: string) {
-    if (!draft) return;
-    const el = textarea.current;
-    const at = el?.selectionStart ?? draft.body.length;
-    const body = draft.body.slice(0, at) + text + draft.body.slice(at);
-    setDraft({ ...draft, body });
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(at + text.length, at + text.length);
-    });
   }
   async function save() {
     if (!draft) return;
@@ -181,6 +195,7 @@ export default function DocsView({
       className="docs-edit"
       onClick={() => {
         setNotice('');
+        setFigmaText(current.figma.join(', '));
         setDraft({ ...current });
       }}
     >
@@ -266,6 +281,7 @@ export default function DocsView({
             if (!leave()) return;
             setError('');
             setNotice('');
+            setFigmaText('');
             setDraft({
               slug: '',
               base: '',
@@ -309,7 +325,7 @@ export default function DocsView({
         )}
         {editing && draft && (
           <form
-            className="docs-editor"
+            className="docs-editor docs-page"
             aria-label="Modifier la page"
             onSubmit={(e) => {
               e.preventDefault();
@@ -327,136 +343,133 @@ export default function DocsView({
               setConfirming(true);
             }}
           >
-            <div className="docs-meta">
-              <label className="field">
-                Titre
-                <input
-                  required
-                  maxLength={120}
-                  value={draft.title}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      title: e.target.value,
-                      slug: draft.base ? draft.slug : slugify(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label className="field">
-                Section
-                <select
-                  value={draft.section}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      section: e.target.value as DocSection,
-                    })
-                  }
-                >
-                  {docSections.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                Statut
-                <select
-                  value={draft.status}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      status: e.target.value as Doc['status'],
-                    })
-                  }
-                >
-                  <option value="brouillon">Brouillon</option>
-                  <option value="stable">Stable</option>
-                </select>
-              </label>
-              <label className="field">
-                Ordre
-                <input
-                  type="number"
-                  min={0}
-                  max={999}
-                  value={draft.order}
-                  onChange={(e) =>
-                    setDraft({ ...draft, order: Number(e.target.value) || 0 })
-                  }
-                />
-              </label>
-              <label className="field docs-wide">
-                Résumé
-                <input
-                  maxLength={300}
-                  value={draft.summary}
-                  onChange={(e) =>
-                    setDraft({ ...draft, summary: e.target.value })
-                  }
-                />
-              </label>
-              <label className="field docs-wide">
-                Noms dans Figma
-                <input
-                  value={draft.figma.join(', ')}
-                  placeholder="Bouton, Button, color"
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      figma: e.target.value
-                        .split(',')
-                        .map((v) => v.trim())
-                        .filter(Boolean)
-                        .slice(0, 12),
-                    })
-                  }
-                />
-              </label>
-            </div>
-            <div
-              className="docs-toolbar"
-              role="group"
-              aria-label="Insérer un bloc"
-            >
-              {snippets.map((s) => (
-                <button
-                  key={s.label}
-                  type="button"
-                  onClick={() => insert(s.text)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <div className="docs-split">
-              <label className="field">
-                Contenu (Markdown)
-                <textarea
-                  ref={textarea}
-                  value={draft.body}
-                  maxLength={64000}
-                  spellCheck
-                  onChange={(e) => setDraft({ ...draft, body: e.target.value })}
-                />
-              </label>
-              <div className="docs-preview" aria-label="Aperçu">
-                <DocContent
-                  blocks={parseMarkdown(draft.body)}
-                  tokens={tokens}
-                  onNavigate={() => {}}
-                />
+            <header className="docs-head">
+              <div className="docs-crumb">
+                <span>
+                  {docSections.find((s) => s.id === draft.section)?.label}
+                </span>
               </div>
-            </div>
-            <div className="button-row">
-              <button
-                className="studio-primary"
-                disabled={!dirty || !draft.title.trim()}
-              >
-                Enregistrer…
-              </button>
+              <AutoTitle
+                className="be-title"
+                aria-label="Titre"
+                placeholder="Sans titre"
+                required
+                maxLength={120}
+                value={draft.title}
+                onChange={(title) =>
+                  setDraft({
+                    ...draft,
+                    title,
+                    slug: draft.base ? draft.slug : slugify(title),
+                  })
+                }
+              />
+              <AutoTitle
+                className="be-summary"
+                aria-label="Résumé"
+                placeholder="Ajouter un résumé…"
+                maxLength={300}
+                value={draft.summary}
+                onChange={(summary) => setDraft({ ...draft, summary })}
+              />
+              <dl className="be-props">
+                <div>
+                  <dt>Section</dt>
+                  <dd>
+                    <select
+                      aria-label="Section"
+                      value={draft.section}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          section: e.target.value as DocSection,
+                        })
+                      }
+                    >
+                      {docSections.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Statut</dt>
+                  <dd>
+                    <select
+                      aria-label="Statut"
+                      className={`be-status is-${draft.status}`}
+                      value={draft.status}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          status: e.target.value as Doc['status'],
+                        })
+                      }
+                    >
+                      <option value="brouillon">Brouillon</option>
+                      <option value="stable">Stable</option>
+                    </select>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Ordre</dt>
+                  <dd>
+                    <input
+                      aria-label="Ordre"
+                      type="number"
+                      min={0}
+                      max={999}
+                      value={draft.order}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          order: Number(e.target.value) || 0,
+                        })
+                      }
+                    />
+                  </dd>
+                </div>
+                <div>
+                  <dt>Noms Figma</dt>
+                  <dd>
+                    <input
+                      aria-label="Noms dans Figma"
+                      value={figmaText}
+                      placeholder="Vide"
+                      onChange={(e) => {
+                        setFigmaText(e.target.value);
+                        setDraft({
+                          ...draft,
+                          figma: e.target.value
+                            .split(',')
+                            .map((v) => v.trim())
+                            .filter(Boolean)
+                            .slice(0, 12),
+                        });
+                      }}
+                    />
+                  </dd>
+                </div>
+              </dl>
+            </header>
+            <PageEditor
+              key={draft.base || 'new'}
+              body={draft.body}
+              tokens={tokens}
+              onChange={(body) => setDraft((d) => d && { ...d, body })}
+            />
+            <div
+              className="be-savebar"
+              role="group"
+              aria-label="Enregistrement"
+            >
+              <span>
+                {dirty
+                  ? 'Modifications non enregistrées'
+                  : 'Aucune modification'}
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -465,6 +478,12 @@ export default function DocsView({
                 }}
               >
                 Annuler
+              </button>
+              <button
+                className="studio-primary"
+                disabled={!dirty || !draft.title.trim()}
+              >
+                Enregistrer…
               </button>
             </div>
           </form>
