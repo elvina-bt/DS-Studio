@@ -355,6 +355,24 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   Figma (il figure dans le manifeste, section `lab`) ; il assemble les composants
   existants sans en créer de nouveaux visuellement.
 
+## 2026-10-30 — Composants du laboratoire reportés dans Figma
+
+- **Problème** : un composant créé dans le studio n’existait pas dans Figma ; desys
+  n’était plus iso.
+- **Options** : écriture automatique par le studio (impossible : l’API REST de
+  Figma ne fait que lire, et aucune API ne publie une bibliothèque) ; report par
+  Claude Code + MCP avec une validation (retenu).
+- **Décision** : chaque composant du laboratoire porte son état Figma (à créer, à
+  mettre à jour, à publier, iso), affiché dans le laboratoire. `push-lab.js`
+  (desys) le reconstruit dans PFE – Components avec des instances des composants
+  existants, après un essai à blanc validé ; `--record` enregistre nœud et clé ;
+  la synchro GitHub détecte la publication.
+- **Preuves** : essai à blanc réel dans Figma sur un « Résumé de vol » d’exemple :
+  variantes trouvées, textes remplacés (un repris par position, car le badge de
+  Figma et celui du code diffèrent) ; desys 17 tests, studio 55 tests.
+- **Limites** : la publication reste un clic dans Figma ; le composant Figma reprend
+  la variante par défaut (une seule, pas toutes les variantes du laboratoire).
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

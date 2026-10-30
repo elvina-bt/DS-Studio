@@ -10,9 +10,12 @@ import { tokensSchema } from '../app/shared/model.js';
 import {
   labDoc,
   labGroup,
+  labHash,
   labSpecSchema,
+  labStatus,
   type LabSpec,
 } from '../app/shared/lab.js';
+import { labHash as desysLabHash } from '@desys-scripts/sync.js';
 import type { AskContext } from '../connectors/agents/types.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,6 +53,21 @@ test('laboratoire : un composant assemblé se rend comme une story', () => {
     false,
   );
   assert.match(labDoc(spec).body, /\{\{composant:resume-vol\}\}/);
+});
+
+test('laboratoire : même empreinte que desys, état Figma suivi', () => {
+  assert.equal(labHash(spec), desysLabHash(spec));
+  assert.equal(labStatus(spec), 'à créer');
+  const linked = {
+    ...spec,
+    figma: { node: '30:1', key: 'k', hash: labHash(spec), published: true },
+  };
+  assert.equal(labStatus(linked), 'iso');
+  assert.equal(labStatus({ ...linked, description: 'autre' }), 'iso');
+  assert.equal(
+    labStatus({ ...linked, presets: [{ id: 'b', name: 'B', values: {} }] }),
+    'à mettre à jour',
+  );
 });
 
 test('HTTP : le chat propose un composant, l’ajout l’écrit et crée sa page de doc', async (t) => {
@@ -160,6 +178,19 @@ test('HTTP : le chat propose un composant, l’ajout l’écrit et crée sa page
   );
   assert.match(page, /\{\{composant:resume-vol\}\}/);
   assert.match(page, /status: brouillon/);
-  // Une mise à jour ne recrée pas la page de doc.
-  assert.equal((await (await post('/api/lab', { spec })).json()).doc, null);
+  // Une mise à jour ne recrée pas la page de doc et garde le lien Figma de la synchro.
+  saved = saved.map((s) => ({
+    ...s,
+    figma: { node: '30:1', key: 'k', hash: 'h', published: true },
+  }));
+  const updated = await (
+    await post('/api/lab', {
+      spec: {
+        ...spec,
+        figma: { node: 'faux', key: 'x', hash: 'y', published: false },
+      },
+    })
+  ).json();
+  assert.equal(updated.doc, null);
+  assert.equal(saved[0].figma?.node, '30:1');
 });

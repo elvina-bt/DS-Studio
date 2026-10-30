@@ -460,7 +460,13 @@ export async function createStudioServer(options: {
               `« ${b.spec.id} » est déjà un composant de desys.`,
               409,
             );
-          const files = await lab.write(b.spec);
+          // Le lien Figma vient de la synchro, jamais du brouillon : on garde
+          // celui du composant enregistré.
+          const before = (await lab.read()).find((c) => c.id === b.spec.id);
+          const { figma: _ignored, ...draft } = b.spec;
+          const files = await lab.write(
+            before?.figma ? { ...draft, figma: before.figma } : draft,
+          );
           // Première création : sa page de doc, en brouillon.
           let doc: string | null = null;
           const pages = (await docs.list()).docs;

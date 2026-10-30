@@ -78,6 +78,16 @@ export const labSpecSchema = z
       .min(1)
       .max(6),
     template: labNodeSchema,
+    // Lien vers PFE – Components, posé par la synchro Figma (jamais par le chat).
+    figma: z
+      .object({
+        node: z.string().max(40),
+        key: z.string().max(80),
+        hash: z.string().max(16),
+        published: z.boolean(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((spec, ctx) => {
@@ -108,6 +118,23 @@ export const labSpecSchema = z
       });
   });
 export type LabSpec = z.infer<typeof labSpecSchema>;
+
+// Empreinte du contenu, même calcul que desys/scripts/sync.ts (labHash) : elle
+// dit si la version reportée dans Figma est encore la bonne.
+export function labHash(spec: Pick<LabSpec, 'props' | 'presets' | 'template'>) {
+  const text = JSON.stringify([spec.props, spec.presets, spec.template]);
+  let h = 5381;
+  for (let i = 0; i < text.length; i++)
+    h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0');
+}
+export type LabFigmaStatus =
+  'à créer' | 'à mettre à jour' | 'à publier' | 'iso';
+export function labStatus(spec: LabSpec): LabFigmaStatus {
+  if (!spec.figma) return 'à créer';
+  if (spec.figma.hash !== labHash(spec)) return 'à mettre à jour';
+  return spec.figma.published ? 'iso' : 'à publier';
+}
 
 // `{Nom}` dans un texte → valeur de la propriété ; une valeur exactement `{Nom}`
 // garde son type (booléen d'un interrupteur, par exemple).

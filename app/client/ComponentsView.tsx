@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
 import { storyId } from '@desys/stories.js';
-import { labGroup } from '../shared/lab.js';
+import { labGroup, labStatus } from '../shared/lab.js';
 import { request } from './api.js';
 import StoryCanvas from './StoryCanvas.js';
 import AskPanel from './AskPanel.js';
@@ -34,7 +34,16 @@ export default function ComponentsView({
   const draftGroup = useMemo(() => (draft ? labGroup(draft) : null), [draft]);
   const group =
     (isDraft && draftGroup) || all.find((g) => g.id === component) || all[0];
-  const saved = lab?.components.some((c) => c.id === group.id) ?? false;
+  const savedSpec = lab?.components.find((c) => c.id === group.id);
+  const saved = !!savedSpec;
+  // État dans PFE – Components d'un composant du laboratoire enregistré.
+  const figmaStatus = savedSpec && !isDraft ? labStatus(savedSpec) : null;
+  const figmaText = {
+    'à créer': 'À reporter dans Figma',
+    'à mettre à jour': 'À mettre à jour dans Figma',
+    'à publier': 'Dans Figma · à publier',
+    iso: 'Iso Figma',
+  } as const;
   // Page de doc qui montre ce composant (bloc {{composant:id}}).
   const [docs, setDocs] = useState<{ slug: string; body: string }[]>([]);
   const loadDocs = () =>
@@ -176,7 +185,23 @@ export default function ComponentsView({
         ) : (
           <>
             <header className="playground-head">
-              <h2>{group.name}</h2>
+              <h2>
+                {group.name}
+                {figmaStatus && (
+                  <span
+                    className={`lab-figma is-${figmaStatus === 'iso' ? 'iso' : 'pending'}`}
+                    title={
+                      figmaStatus === 'à publier'
+                        ? 'Créé dans PFE – Components : publier la bibliothèque dans Figma (Assets → Publier).'
+                        : figmaStatus === 'iso'
+                          ? 'Publié dans PFE – Components.'
+                          : 'Demander à Claude Code : « reporte le laboratoire dans Figma » (essai à blanc, puis validation).'
+                    }
+                  >
+                    {figmaText[figmaStatus]}
+                  </span>
+                )}
+              </h2>
               {doc && !isDraft && (
                 <button
                   type="button"

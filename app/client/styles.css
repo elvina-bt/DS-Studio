@@ -3671,3 +3671,19 @@ body[data-view='home'][data-scrolled='true'] .studio-header {
   font-size: 13px;
   color: #8a3b14;
 }
+.lab-figma {
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+.lab-figma.is-pending {
+  background: #fbe7da;
+  color: #8a3b14;
+}
+.lab-figma.is-iso {
+  background: #e3f3e9;
+  color: #1d6340;
+}
