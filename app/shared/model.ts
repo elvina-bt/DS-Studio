@@ -162,6 +162,21 @@ export function applyChanges(
   for (const change of changes) next[change.key].$value = change.value as never;
   return tokensSchema.parse(next);
 }
+// Règle desys : une taille de texte est un multiple de 4 px (12, 16, 20…),
+// jamais impaire. Vérifiée sur les nouvelles propositions, pas sur l'historique.
+export function fontSizeIssues(patches: Patch[]): string[] {
+  return patches
+    .filter(
+      (p) =>
+        p.key.startsWith('font.') &&
+        typeof p.after === 'number' &&
+        p.after % 4 !== 0,
+    )
+    .map(
+      (p) =>
+        `${p.key} : ${p.after} px n’est pas un multiple de 4 (12, 16, 20…)`,
+    );
+}
 export function diff(before: Tokens, after: Tokens): Patch[] {
   return tokenKeys
     .filter((key) => before[key].$value !== after[key].$value)

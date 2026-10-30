@@ -422,8 +422,8 @@ test('panneau Variables : groupes, recherche, édition sur place et diff sans é
   await expect(
     page.getByRole('button', { name: 'font.heading', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await panel.getByLabel('Valeur du token').fill('31');
-  await expect(page.getByLabel('Valeur du token')).toHaveValue('31');
+  await panel.getByLabel('Valeur du token').fill('32');
+  await expect(page.getByLabel('Valeur du token')).toHaveValue('32');
   await panel.getByRole('button', { name: 'Proposer', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('font.heading');

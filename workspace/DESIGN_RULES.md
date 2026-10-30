@@ -14,8 +14,10 @@
 - Grand texte et éléments graphiques utiles (icônes, bordures de champ) à 3:1 minimum.
 - Aucune information portée par la seule couleur : une valeur, un mot ou une icône
   accompagne toujours un code couleur.
-- Texte courant à 17 px minimum sur iPhone ; anticiper le Dynamic Type sans casser
+- Texte courant à 16 px minimum sur iPhone ; anticiper le Dynamic Type sans casser
   les tableaux prévu / vécu.
+- Tailles de texte en **multiples de 4 px** (8 de préférence : 12, 16, 20, 24, 28,
+  32…) ; jamais de taille de police en pixels impairs (11, 13, 17…) ni à virgule.
 - Cibles tactiles de 44 × 44 pt minimum (gants fins, doigts froids).
 
 ## Prévision, écart et incertitude

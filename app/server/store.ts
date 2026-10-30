@@ -5,6 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import {
   applyChanges,
   diff,
+  fontSizeIssues,
   stateSchema,
   tokensSchema,
   type State,
@@ -80,6 +81,9 @@ export class Store {
       applyChanges(this.state.tokens, changes),
     );
     if (!patches.length) throw new StudioError('Aucune modification.');
+    const issues = fontSizeIssues(patches);
+    if (issues.length)
+      throw new StudioError(`Règle desys : ${issues.join(' ; ')}.`);
     if (this.proposals.size >= 100)
       this.proposals.delete(this.proposals.keys().next().value!);
     const proposal = { id: randomUUID(), revision, source, patches };

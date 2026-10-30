@@ -225,3 +225,23 @@ test(
     assert.equal(await readFile(target, 'utf8'), original);
   },
 );
+
+test('règle desys : taille de texte en multiple de 4, historique ancien relu', async (t) => {
+  const { dir, store } = await fixture(t);
+  const revision = store.snapshot().revision;
+  // Une taille impaire ou hors multiple de 4 est refusée dès la proposition.
+  assert.throws(
+    () => store.propose(revision, [{ key: 'font.heading', value: 30 }]),
+    /multiple de 4/,
+  );
+  assert.throws(
+    () => store.propose(revision, [{ key: 'font.body', value: 17 }]),
+    /multiple de 4/,
+  );
+  // Un historique qui passe par une ancienne taille (34) se relit toujours.
+  const p = store.propose(revision, [{ key: 'font.heading', value: 32 }]);
+  await store.commit(p.id);
+  const again = new Store(dir, seed);
+  await again.init();
+  assert.equal(again.snapshot().tokens['font.heading'].$value, 32);
+});

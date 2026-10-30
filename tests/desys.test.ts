@@ -25,7 +25,7 @@ test('desys : écart signalé, révision validée écrite dans le dépôt, éche
   // Dépôt simulé : il diffère de l'atelier sur la taille de titre.
   let repo: Tokens = {
     ...seed,
-    'font.heading': { $type: 'dimension', $value: 34 },
+    'font.heading': { $type: 'dimension', $value: 32 },
   };
   let fail = false;
   const written: Tokens[] = [];
@@ -73,7 +73,7 @@ test('desys : écart signalé, révision validée écrite dans le dépôt, éche
     tokens: status.tokens,
   });
   const state = await post('/api/commit', { id: proposal.id });
-  assert.equal(state.tokens['font.heading'].$value, 34);
+  assert.equal(state.tokens['font.heading'].$value, 32);
   assert.deepEqual(state.desys, { files: ['src/web/generated/tokens.css'] });
   assert.equal(written.length, 1);
   assert.deepEqual(
