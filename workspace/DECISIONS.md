@@ -373,6 +373,20 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : la publication reste un clic dans Figma ; le composant Figma reprend
   la variante par défaut (une seule, pas toutes les variantes du laboratoire).
 
+## 2026-10-30 — Éditer la mise en page d’un composant via le chat
+
+- **Problème** : le chat ne pouvait pas ajouter une marge haute à un composant du
+  laboratoire : il n’assemblait que des composants, sans réglage d’espacement.
+- **Décision** : brique `Stack` dans desys (web et SwiftUI) : direction, espacement,
+  marges par côté, alignement, fond et rayon, exprimés en noms de tokens, jamais en
+  pixels. Le chat l’utilise pour la mise en page ; le report Figma en fait un auto
+  layout avec les valeurs des tokens.
+- **Preuves** : desys 18 tests, studio 58 tests et 21 e2e ; dans le navigateur, une
+  réponse simulée ajoute `paddingTop: space.lg` au brouillon « État vide » : 24 px
+  mesurés.
+- **Limites** : `DesysStack` non compilé ici (licence Xcode) ; l’auto layout Figma
+  reçoit des valeurs, pas encore des variables liées.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

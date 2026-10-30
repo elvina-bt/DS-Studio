@@ -28,6 +28,7 @@ import {
   ListToggle,
   SearchField,
   SectionHeader,
+  Stack,
   TabBar,
 } from './ParapenteDS.js';
 
@@ -45,6 +46,7 @@ const registry: Record<ComponentName, ComponentType<any>> = {
   ListToggle,
   ForecastCard,
   TabBar,
+  Stack,
 };
 const noop = () => {};
 // Rendu d'une story avec les vrais composants (canvas, cartes de l'accueil).
