@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
 import { storyId } from '@desys/stories.js';
 import { Button, DesysProvider } from '@desys/components.js';
@@ -63,7 +63,15 @@ export default function ComponentsView({
     kind: 'busy' | 'done' | 'error';
     text: string;
     for: string | null;
+    // Page de doc créée ou existante, ouverte depuis la confirmation.
+    doc?: string;
   } | null>(null);
+  const doneDialog = useRef<HTMLDialogElement>(null);
+  const showDone = status?.kind === 'done' && status.for === component;
+  useEffect(() => {
+    if (showDone && !doneDialog.current?.open) doneDialog.current?.showModal();
+    if (!showDone && doneDialog.current?.open) doneDialog.current.close();
+  }, [showDone]);
   const query = search.trim().toLowerCase();
   const found = (text: string) => text.toLowerCase().includes(query);
   const listed = useMemo(() => {
@@ -99,8 +107,11 @@ export default function ComponentsView({
       onNavigate(id, null);
       setStatus({
         kind: 'done',
-        text: `Ajouté à desys : ${r.files[0]}${r.doc ? ', page de doc créée' : ''}. À commiter dans desys.`,
+        text: `${r.files[0]}${r.doc ? ' et sa page de doc ont été créés' : ' a été mis à jour'}. Pense à commiter dans desys, puis à reporter le composant dans Figma.`,
         for: id,
+        doc:
+          r.doc ??
+          docs.find((d) => d.body.includes(`{{composant:${id}}}`))?.slug,
       });
     } catch (e) {
       setStatus({ kind: 'error', text: (e as Error).message, for: component });
@@ -243,23 +254,9 @@ export default function ComponentsView({
                 )}
               </div>
             )}
-            {status && status.kind !== 'busy' && status.for === component && (
-              <p
-                className={status.kind === 'done' ? 'lab-done' : 'error'}
-                role={status.kind === 'done' ? 'status' : 'alert'}
-              >
-                {status.text}{' '}
-                {status.kind === 'done' && doc && (
-                  <a
-                    href={`#/docs/${doc.slug}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onOpenDoc(doc.slug);
-                    }}
-                  >
-                    Ouvrir la page de doc
-                  </a>
-                )}
+            {status?.kind === 'error' && status.for === component && (
+              <p className="error" role="alert">
+                {status.text}
               </p>
             )}
             <StoryCanvas
@@ -274,6 +271,42 @@ export default function ComponentsView({
           </>
         )}
       </div>
+      {/* Confirmation d'ajout : fenêtre verte, page de doc en un clic. */}
+      <dialog
+        ref={doneDialog}
+        className="lab-success"
+        aria-labelledby="lab-success-title"
+        onClose={() => setStatus(null)}
+      >
+        <span className="lab-success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M6 12.5l4 4L18 8" />
+          </svg>
+        </span>
+        <h2 id="lab-success-title">Ajouté à desys</h2>
+        <p>{status?.kind === 'done' ? status.text : ''}</p>
+        <DesysProvider tokens={tokens}>
+          <button
+            type="button"
+            className="lab-draft-quiet"
+            onClick={() => setStatus(null)}
+          >
+            Fermer
+          </button>
+          {status?.doc && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const slug = status.doc!;
+                setStatus(null);
+                onOpenDoc(slug);
+              }}
+            >
+              Ouvrir la page de doc
+            </Button>
+          )}
+        </DesysProvider>
+      </dialog>
       <AskPanel
         tokens={tokens}
         focus={creating ? null : group.id}

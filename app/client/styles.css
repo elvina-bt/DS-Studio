@@ -3701,3 +3701,65 @@ body[data-view='home'][data-scrolled='true'] .studio-header {
   background: #e3f3e9;
   color: #1d6340;
 }
+/* Laboratoire : confirmation d'ajout dans desys. */
+.lab-success {
+  width: min(440px, calc(100vw - 32px));
+  padding: 28px 28px 20px;
+  border: 1px solid #cfe8d8;
+  border-radius: 16px;
+  background: #eef8f2;
+  color: #1f3d2c;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(15, 15, 15, 0.18);
+}
+.lab-success::backdrop {
+  background: rgba(15, 15, 15, 0.32);
+}
+.lab-success-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1d6b47;
+  color: white;
+}
+.lab-success-icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lab-success h2 {
+  margin: 12px 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d6b47;
+}
+.lab-success p {
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.lab-success .ds {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  font-size: 16px;
+}
+.lab-success .ds-button {
+  font-weight: 400;
+}
+.lab-success .lab-draft-quiet {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #1f3d2c;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.lab-success .lab-draft-quiet:hover {
+  background: rgba(29, 107, 71, 0.08);
+}
