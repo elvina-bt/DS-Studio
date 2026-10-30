@@ -9,7 +9,7 @@
   "documentAccess": "dynamic-page",
   "networkAccess": {
     "allowedDomains": ["none"],
-    "devAllowedDomains": ["http://127.0.0.1:4310", "http://localhost:4310"],
+    "devAllowedDomains": ["http://localhost:4310"],
     "reasoning": "Lit la documentation du Design System servie par DS-Studio sur ce poste."
   }
 }

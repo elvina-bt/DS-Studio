@@ -118,7 +118,8 @@
     <script>
       // Tout est inséré en textContent. Seule écriture, sur clic : « Reporter
       // dans Figma » construit les composants, puis leur lien part dans desys.
-      const hosts = ['http://127.0.0.1:4310', 'http://localhost:4310'];
+      // Figma n'autorise que localhost dans devAllowedDomains (pas d'adresse IP).
+      const hosts = ['http://localhost:4310'];
       const content = document.getElementById('content');
       const status = document.getElementById('status');
       let plan = null;
@@ -163,7 +164,7 @@
           nodes.push(
             el(
               'p',
-              'Lance desys studio sur ce Mac (npm start, adresse http://127.0.0.1:4310), puis Actualiser.',
+              'Lance desys studio sur ce Mac (npm start), puis Actualiser.',
               'note',
             ),
           );

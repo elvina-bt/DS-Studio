@@ -1,3 +1,4 @@
+import http from 'node:http';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
@@ -368,6 +369,34 @@ test('plugin Figma : plan du laboratoire, puis lien Figma enregistré pour la bo
     ])
   ).json();
   assert.deepEqual(ok.recorded, ['Résumé de vol']);
+  // Figma n'autorise que localhost dans les domaines du plugin : même écriture.
+  const viaLocalhost = await new Promise<number>((resolve, reject) => {
+    const port = new URL(origin).port;
+    const req = http.request(
+      {
+        host: '127.0.0.1',
+        port,
+        path: '/plugin/lab-record',
+        method: 'POST',
+        headers: {
+          Host: `localhost:${port}`,
+          Origin: 'null',
+          'Content-Type': 'application/json',
+        },
+      },
+      (res) => {
+        res.resume();
+        resolve(res.statusCode ?? 0);
+      },
+    );
+    req.on('error', reject);
+    req.end(
+      JSON.stringify({
+        created: [{ id: 'resume-vol', node: '40:2', key, hash: 'ancienne' }],
+      }),
+    );
+  });
+  assert.equal(viaLocalhost, 200);
   assert.deepEqual(saved[0].figma, {
     node: '40:2',
     key,

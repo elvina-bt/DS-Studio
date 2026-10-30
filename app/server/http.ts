@@ -116,14 +116,13 @@ export async function createStudioServer(options: {
       `default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'${options.dev ? ' ws://127.0.0.1:*' : ''}; frame-ancestors 'self'; base-uri 'none'; form-action 'self'`,
     );
     try {
-      // `localhost` n'est accepté que pour la lecture du plugin Figma : un nom choisi
-      // par un site tiers (rebinding DNS) reste refusé.
-      const pluginRead =
-        (req.method === 'GET' || req.method === 'OPTIONS') &&
-        !!req.url?.startsWith('/plugin/');
+      // `localhost` n'est accepté que pour le plugin Figma (Figma n'autorise pas
+      // d'adresse IP dans ses domaines de développement) : un nom choisi par un site
+      // tiers (rebinding DNS) reste refusé.
+      const plugin = !!req.url?.startsWith('/plugin/');
       if (
         req.headers.host !== `127.0.0.1:${port}` &&
-        !(pluginRead && req.headers.host === `localhost:${port}`)
+        !(plugin && req.headers.host === `localhost:${port}`)
       )
         throw new StudioError(
           'Hôte refusé. Utilisez l’adresse 127.0.0.1 affichée au démarrage.',
@@ -170,8 +169,6 @@ export async function createStudioServer(options: {
         // Seule écriture du plugin : le lien Figma (nœud, clé) des composants
         // qu'il vient de créer, pour la version exacte qu'il a reçue.
         if (url.pathname === '/plugin/lab-record' && req.method === 'POST') {
-          if (req.headers.host !== `127.0.0.1:${port}`)
-            throw new StudioError('Hôte refusé.', 403);
           if (!req.headers['content-type']?.startsWith('application/json'))
             throw new StudioError('JSON requis.', 415);
           const lab = options.desys?.lab;
