@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
-import { storyId } from '@desys/stories.js';
+import { figmaFile, figmaUrl, storyId } from '@desys/stories.js';
 import { Button, DesysProvider } from '@desys/components.js';
 import { labGroup, labStatus } from '../shared/lab.js';
 import { request } from './api.js';
@@ -67,6 +67,18 @@ export default function ComponentsView({
     doc?: string;
   } | null>(null);
   const doneDialog = useRef<HTMLDialogElement>(null);
+  const figmaDialog = useRef<HTMLDialogElement>(null);
+  // Le plugin Figma renvoie le lien à desys : au retour dans le studio, le
+  // statut est relu (et la fenêtre se ferme une fois le composant reporté).
+  useEffect(() => {
+    const onFocus = () => void refreshLab();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+  useEffect(() => {
+    if (figmaStatus !== 'à créer' && figmaStatus !== 'à mettre à jour')
+      figmaDialog.current?.close();
+  }, [figmaStatus]);
   const showDone = status?.kind === 'done' && status.for === component;
   useEffect(() => {
     if (showDone && !doneDialog.current?.open) doneDialog.current?.showModal();
@@ -199,20 +211,33 @@ export default function ComponentsView({
             <header className="playground-head">
               <h2>
                 {group.name}
-                {figmaStatus && (
-                  <span
-                    className={`lab-figma is-${figmaStatus === 'iso' ? 'iso' : 'pending'}`}
-                    title={
-                      figmaStatus === 'à publier'
-                        ? 'Créé dans PFE – Components : publier la bibliothèque dans Figma (Assets → Publier).'
-                        : figmaStatus === 'iso'
-                          ? 'Publié dans PFE – Components.'
-                          : 'Dans Figma, ouvre PFE – Components puis Plugins → Development → DS-Studio Docs : « Créer dans Figma » le construit et renvoie son lien à desys.'
-                    }
-                  >
-                    {figmaText[figmaStatus]}
-                  </span>
-                )}
+                {figmaStatus &&
+                  (figmaStatus === 'à créer' ||
+                  figmaStatus === 'à mettre à jour' ? (
+                    // À reporter : le plugin Figma le fait, la fenêtre dit comment.
+                    <button
+                      type="button"
+                      className="lab-figma is-pending is-action"
+                      onClick={() => figmaDialog.current?.showModal()}
+                    >
+                      {figmaText[figmaStatus]}
+                      <span aria-hidden="true"> →</span>
+                    </button>
+                  ) : (
+                    <a
+                      className={`lab-figma is-${figmaStatus === 'iso' ? 'iso' : 'pending'}`}
+                      href={figmaUrl(savedSpec!.figma!.node)}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={
+                        figmaStatus === 'à publier'
+                          ? 'Créé dans PFE – Components : publier la bibliothèque dans Figma (Assets → Publier).'
+                          : 'Publié dans PFE – Components.'
+                      }
+                    >
+                      {figmaText[figmaStatus]}
+                    </a>
+                  ))}
               </h2>
               {doc && !isDraft && (
                 <button
@@ -305,6 +330,46 @@ export default function ComponentsView({
               Ouvrir la page de doc
             </Button>
           )}
+        </DesysProvider>
+      </dialog>
+      {/* Report dans Figma : le plugin DS-Studio Docs construit le composant. */}
+      <dialog
+        ref={figmaDialog}
+        className="lab-success lab-figma-steps"
+        aria-labelledby="lab-figma-title"
+      >
+        <h2 id="lab-figma-title">Reporter « {group.name} » dans Figma</h2>
+        <ol>
+          <li>Ouvre PFE – Components dans Figma desktop.</li>
+          <li>
+            Plugins → Development → <strong>DS-Studio Docs</strong>.
+          </li>
+          <li>
+            Section Laboratoire : <strong>Créer dans Figma</strong>. Le plugin
+            construit le composant et renvoie son lien à desys.
+          </li>
+        </ol>
+        <p>Le statut passe ici à « Dans Figma · à publier » tout seul.</p>
+        <DesysProvider tokens={tokens}>
+          <button
+            type="button"
+            className="lab-draft-quiet"
+            onClick={() => figmaDialog.current?.close()}
+          >
+            Fermer
+          </button>
+          <Button
+            variant="primary"
+            onClick={() =>
+              window.open(
+                `https://www.figma.com/design/${figmaFile}/PFE---Components`,
+                '_blank',
+                'noreferrer',
+              )
+            }
+          >
+            Ouvrir PFE – Components
+          </Button>
         </DesysProvider>
       </dialog>
       <AskPanel

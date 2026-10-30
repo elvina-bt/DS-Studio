@@ -3701,6 +3701,46 @@ body[data-view='home'][data-scrolled='true'] .studio-header {
   background: #e3f3e9;
   color: #1d6340;
 }
+button.lab-figma.is-action {
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+button.lab-figma.is-action:hover {
+  background: #f6d5c0;
+}
+a.lab-figma {
+  text-decoration: none;
+}
+/* Laboratoire : étapes pour reporter un composant dans Figma. */
+.lab-success.lab-figma-steps {
+  border-color: #f0d9c9;
+  background: #fffaf6;
+  color: #3a2418;
+  text-align: left;
+}
+.lab-success.lab-figma-steps h2 {
+  margin-top: 0;
+  color: #8a3b14;
+}
+.lab-success.lab-figma-steps ol {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.lab-success.lab-figma-steps li + li {
+  margin-top: 8px;
+}
+.lab-success.lab-figma-steps .ds {
+  justify-content: flex-end;
+}
+.lab-success.lab-figma-steps .lab-draft-quiet {
+  color: #3a2418;
+}
 /* Laboratoire : confirmation d'ajout dans desys. */
 .lab-success {
   width: min(440px, calc(100vw - 32px));
