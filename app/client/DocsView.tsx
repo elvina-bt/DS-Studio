@@ -96,13 +96,11 @@ export default function DocsView({
   tokens,
   slug,
   story,
-  askSeed,
   onNavigate,
 }: {
   tokens: Tokens;
   slug: string | null;
   story: string | null;
-  askSeed?: { question: string; id: number };
   onNavigate: (slug: string | null) => void;
 }) {
   const [docs, setDocs] = useState<Stored[]>([]);
@@ -521,7 +519,7 @@ export default function DocsView({
         )}
       </div>
 
-      <AskPanel tokens={tokens} seed={askSeed} onNavigate={(s) => go(s)} />
+      <AskPanel tokens={tokens} onNavigate={(s) => go(s)} />
 
       <dialog
         ref={dialog}

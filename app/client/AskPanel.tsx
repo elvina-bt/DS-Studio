@@ -4,42 +4,32 @@ import type { Tokens } from '../shared/model.js';
 import { request } from './api.js';
 import { DocContent } from './DocContent.js';
 import ComponentEdit from './ComponentEdit.js';
-import type { BindingEdit } from '../shared/bindings.js';
+import { ask, clearChat, stop, useChat } from './chat.js';
 
-// Questions sur le DS, posées à Claude Code en lecture seule : il reçoit la doc,
-// les tokens validés et les règles, répond et cite ses pages. Il peut proposer
-// les tokens d'un composant : rien n'est écrit sans « Appliquer » ;
-// la conversation vit en mémoire, jamais dans le navigateur. Colonne toujours
-// ouverte, dans le style de claude.ai.
-type Message = {
-  role: 'user' | 'assistant';
-  text: string;
-  sources?: { slug: string; title: string }[];
-  edits?: BindingEdit[];
-};
+// Chat sur le DS, posé à Claude Code en lecture seule : il reçoit la doc, les
+// tokens, les composants (avec un exemple chacun) et le composant ouvert. Il
+// répond, cite ses pages, ouvre le composant concerné dans le laboratoire et
+// peut y proposer des tokens ou un nouveau composant : rien n'est écrit sans
+// validation. Le fil est commun à toutes les vues (chat.ts).
 const suggestions = [
   'Quelle couleur pour un écart entre prévu et vécu ?',
-  'Comment formuler une prévision incertaine ?',
-  'Quelle taille de texte pour les valeurs météo ?',
   'Passe la bordure de la carte de prévision en couleur de marque',
+  'Crée un composant « Résumé de vol » : site, durée, plafond atteint',
 ];
 
 export default function AskPanel({
   tokens,
-  seed,
+  focus = null,
   onNavigate,
 }: {
   tokens: Tokens;
-  // Question venue de l'accueil : envoyée une fois, dès l'ouverture.
-  seed?: { question: string; id: number };
+  // Composant ouvert dans le laboratoire : la question porte d'abord sur lui.
+  focus?: string | null;
   onNavigate: (slug: string) => void;
 }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, pending, error } = useChat();
   const [question, setQuestion] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState('');
-  const controller = useRef<AbortController | null>(null);
   const log = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,65 +39,23 @@ export default function AskPanel({
         setUnavailable(claude?.available ? '' : (claude?.detail ?? ''));
       })
       .catch(() => {});
-    return () => controller.current?.abort();
   }, []);
-  const sent = useRef<number | null>(null);
-  useEffect(() => {
-    if (!seed || sent.current === seed.id) return;
-    sent.current = seed.id;
-    void ask(seed.question);
-  }, [seed]);
-  // Défilement du fil seul : la page de doc ne bouge pas.
+  // Défilement du fil seul : la page ne bouge pas.
   useEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [messages, pending]);
-
-  async function ask(text: string) {
-    const q = text.trim();
-    if (!q || pending) return;
-    const history = messages
-      .slice(-8)
-      .map(({ role, text }) => ({ role, text: text.slice(0, 6000) }));
-    setMessages((m) => [...m, { role: 'user', text: q }]);
+  const send = (text: string) => {
+    if (!text.trim() || pending) return;
     setQuestion('');
-    setError('');
-    setPending(true);
-    controller.current = new AbortController();
-    try {
-      const reply = await request<{
-        message: string;
-        sources: Message['sources'];
-        edits?: BindingEdit[];
-      }>('ask', { question: q, history }, controller.current.signal);
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'assistant',
-          text: reply.message,
-          sources: reply.sources,
-          edits: reply.edits,
-        },
-      ]);
-    } catch (e) {
-      if (!controller.current.signal.aborted) setError((e as Error).message);
-    }
-    controller.current = null;
-    setPending(false);
-  }
+    void ask(text, focus);
+  };
 
   return (
     <aside className="ask-panel" aria-label="Demander au Design System">
       <header>
         <h2>Une question sur desys ?</h2>
         {messages.length > 0 && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              setMessages([]);
-              setError('');
-            }}
-          >
+          <button type="button" disabled={pending} onClick={clearChat}>
             Effacer
           </button>
         )}
@@ -116,7 +64,7 @@ export default function AskPanel({
         {messages.length === 0 && (
           <div className="ask-empty">
             {suggestions.map((s) => (
-              <button key={s} type="button" onClick={() => void ask(s)}>
+              <button key={s} type="button" onClick={() => send(s)}>
                 {s}
               </button>
             ))}
@@ -136,6 +84,16 @@ export default function AskPanel({
               />
               {!!m.edits?.length && (
                 <ComponentEdit edits={m.edits} tokens={tokens} />
+              )}
+              {m.create && (
+                <p className="ask-lab">
+                  Brouillon « {m.create.name} » ouvert dans le laboratoire.
+                </p>
+              )}
+              {m.createError && (
+                <p className="doc-warning">
+                  Composant non retenu : {m.createError}.
+                </p>
               )}
               {!!m.sources?.length && (
                 <ul className="ask-sources" aria-label="Pages citées">
@@ -169,12 +127,16 @@ export default function AskPanel({
         className="ask-form"
         onSubmit={(e) => {
           e.preventDefault();
-          void ask(question);
+          send(question);
         }}
       >
         <textarea
           aria-label="Ta question"
-          placeholder="Poser une question sur le design system…"
+          placeholder={
+            focus
+              ? 'Modifier ce composant, ou en créer un autre…'
+              : 'Poser une question sur le design system…'
+          }
           rows={2}
           maxLength={4000}
           value={question}
@@ -186,7 +148,7 @@ export default function AskPanel({
               !e.nativeEvent.isComposing
             ) {
               e.preventDefault();
-              void ask(question);
+              send(question);
             }
           }}
         />
@@ -195,7 +157,7 @@ export default function AskPanel({
             type="button"
             className="ask-send"
             aria-label="Arrêter"
-            onClick={() => controller.current?.abort()}
+            onClick={stop}
           >
             <span aria-hidden="true">■</span>
           </button>

@@ -120,6 +120,9 @@ export const askReplySchema = z
     sources: z.array(z.string().max(60)).max(10),
     // Propositions de modification d'un composant (tokens utilisés).
     edits: z.array(bindingEditSchema).max(12).optional(),
+    // Composant concerné (ouvert dans le laboratoire) et brouillon de composant.
+    component: z.string().max(60).nullable().optional(),
+    create: z.unknown().optional(),
   })
   .strict();
 export type AskReply = z.infer<typeof askReplySchema>;

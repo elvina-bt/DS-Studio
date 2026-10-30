@@ -334,18 +334,26 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   non compilé ici (licence Xcode) ; le chat ne modifie pas encore le code des
   composants, seulement les tokens qu’ils utilisent.
 
-## 2026-10-30 — Designer un composant depuis l’onglet Aperçu
+## 2026-10-30 — Laboratoire : construire et modifier les composants avec le chat
 
-- **Problème** : modifier l’apparence d’un composant passait seulement par le chat.
-- **Décision** : panneau Design sous le canvas de l’onglet Aperçu. Chaque emplacement
-  du composant (fond, bordure, texte, rayon, marges…) choisit un token du bon type ;
-  l’aperçu suit en direct ; « Enregistrer… » montre le diff, puis écrit
-  `desys/components/bindings.json` et régénère le web et iOS. `color.danger` n’est
-  proposé que pour le fond du bouton destructif.
-- **Preuves** : 20 e2e (aperçu en direct, garde-fou, enregistrement désactivé hors
-  écriture) ; vérifié dans le navigateur, diff ouvert puis fermé sans écrire.
-- **Limites** : on choisit parmi les tokens existants ; créer un token ou une
-  variante de composant reste à faire.
+- **Problème** : le chat répondait sur place ; impossible de voir le composant dont
+  il parlait, ni d’en créer un nouveau.
+- **Décision** :
+  - L’onglet Aperçu devient **Laboratoire** (`#/laboratoire`, anciennes adresses
+    acceptées). Un seul fil de chat pour l’accueil, la doc et le laboratoire.
+  - Une réponse qui porte sur un composant l’ouvre dans le laboratoire (canvas,
+    propriétés, code, chat à droite pour le modifier).
+  - Un composant qui n’existe pas : le chat l’assemble à partir des composants de
+    desys (données, jamais du code : `app/shared/lab.ts`), validé par le serveur,
+    ouvert en brouillon ; « Ajouter à desys » écrit `desys/components/lab/<id>.json`,
+    met à jour le manifeste et crée sa page de doc en brouillon.
+  - Le panneau Design est retiré au profit du chat.
+- **Preuves** : 54 tests unitaires (schéma, rendu, routes, id de desys refusé, page
+  de doc créée une fois) ; 21 e2e (accueil → brouillon dans le laboratoire, question
+  sur un composant existant) ; desys 15 tests.
+- **Limites** : un composant du laboratoire n’existe pas encore en SwiftUI ni dans
+  Figma (il figure dans le manifeste, section `lab`) ; il assemble les composants
+  existants sans en créer de nouveaux visuellement.
 
 ## À compléter par l’étudiant
 

@@ -2,7 +2,7 @@ import { Fragment, useContext, useState } from 'react';
 import { headingAnchors, type Block, type Inline } from '../shared/docs.js';
 import { tokenKeys, type TokenKey, type Tokens } from '../shared/model.js';
 import { TokenEditContext } from './TokenEdit.js';
-import { storyGroups } from '@desys/stories.js';
+import { useGroups } from './chat.js';
 import StoryCanvas from './StoryCanvas.js';
 import TokenPreview from './TokenPreview.js';
 
@@ -199,6 +199,8 @@ export function DocContent({
   story?: string | null;
 }) {
   const anchors = anchored ? headingAnchors(blocks) : null;
+  // Composants de desys et du laboratoire.
+  const storyGroups = useGroups();
   const inline = (c: Inline[]) => (
     <InlineContent nodes={c} onNavigate={onNavigate} />
   );

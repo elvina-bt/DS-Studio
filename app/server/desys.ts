@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generate, readBindings, readTokens } from '@desys-scripts/generate.js';
 import type { BindingEdit, Bindings } from '../shared/bindings.js';
+import { labSpecSchema, type LabSpec } from '../shared/lab.js';
 import { tokenKeys, tokensSchema, type Tokens } from '../shared/model.js';
 
 // Le design system vit dans le dépôt voisin ../desys (iso Figma). L'atelier y
@@ -49,4 +50,28 @@ export async function writeDesysBindings(
     generate();
     throw e;
   }
+}
+
+// Composants du laboratoire : un fichier JSON par composant, validé à la lecture.
+const labDir = path.join(desysRoot, 'components/lab');
+export async function readDesysLab(): Promise<LabSpec[]> {
+  const files = await fs.readdir(labDir).catch(() => [] as string[]);
+  const out: LabSpec[] = [];
+  for (const f of files.filter((f) => f.endsWith('.json'))) {
+    const parsed = labSpecSchema.safeParse(
+      JSON.parse(
+        await fs.readFile(path.join(labDir, f), 'utf8').catch(() => '{}'),
+      ),
+    );
+    if (parsed.success && `${parsed.data.id}.json` === f) out.push(parsed.data);
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+}
+export async function writeDesysLab(spec: LabSpec): Promise<string[]> {
+  await fs.mkdir(labDir, { recursive: true });
+  const file = path.join(labDir, `${spec.id}.json`);
+  const tmp = `${file}.${process.pid}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(spec, null, 2) + '\n');
+  await fs.rename(tmp, file);
+  return [`components/lab/${spec.id}.json`, ...generate().changed];
 }

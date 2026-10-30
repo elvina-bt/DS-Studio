@@ -584,7 +584,7 @@ test('documentation : demander au DS, réponse et page citée (Claude simulé)',
   await expect(panel.locator('.ask-answer')).toHaveCount(0);
 });
 
-test('playground : le chat propose les tokens d’un composant, aperçu avant / après', async ({
+test('laboratoire : le chat propose les tokens d’un composant, aperçu avant / après', async ({
   page,
 }) => {
   // Réponse simulée ; les e2e n'écrivent jamais dans desys (bouton désactivé).
@@ -603,7 +603,7 @@ test('playground : le chat propose les tokens d’un composant, aperçu avant / 
       },
     }),
   );
-  await page.goto('/#/playground/carte-prevision');
+  await page.goto('/#/laboratoire/carte-prevision');
   const panel = page.getByRole('complementary', {
     name: 'Demander au Design System',
   });
@@ -638,46 +638,104 @@ test('playground : le chat propose les tokens d’un composant, aperçu avant / 
   await expect(edit).toContainText('Proposition ignorée.');
 });
 
-test('aperçu : designer un composant, aperçu en direct, rouge réservé au bouton destructif', async ({
+test('laboratoire : un composant demandé au chat de l’accueil arrive en brouillon', async ({
   page,
 }) => {
-  await page.goto('/#/playground/carte-prevision');
-  const design = page.getByRole('region', { name: 'Design' });
-  const card = page.locator('.design-draft .pp-card').first();
-  const before = await card.evaluate(
-    (el) => getComputedStyle(el).borderTopColor,
+  const spec = {
+    id: 'resume-vol',
+    name: 'Résumé de vol',
+    description: 'Résume un vol après l’atterrissage.',
+    props: [{ name: 'Site', type: 'text' }],
+    presets: [
+      { id: 'defaut', name: 'Par défaut', values: { Site: 'Saint-Hilaire' } },
+    ],
+    template: {
+      type: 'Card',
+      children: [
+        { type: 'SectionHeader', children: ['Vol à {Site}'] },
+        { type: 'ListRow', props: { label: 'Durée', value: '1 h 20' } },
+      ],
+    },
+  };
+  // Réponse simulée ; rien n'est écrit dans desys pendant les e2e.
+  await page.route('**/api/ask', (route) =>
+    route.fulfill({
+      json: {
+        message: 'Voici un premier jet du **Résumé de vol**.',
+        sources: [],
+        edits: [],
+        component: 'resume-vol',
+        create: spec,
+      },
+    }),
   );
-  const border = design.getByLabel('Bordure : token');
-  // Garde-fou : un écart n'est jamais rouge, color.danger n'est pas proposé ici.
-  await expect(border.locator('option[value="color.danger"]')).toHaveCount(0);
-  await border.selectOption('color.brand');
-  await expect(card).not.toHaveCSS('border-top-color', before);
-  // Les e2e n'écrivent pas dans desys : l'enregistrement est désactivé, l'aperçu reste.
+  await page.goto('/');
+  await page
+    .getByLabel('Une question sur desys')
+    .fill('Crée un composant Résumé de vol');
+  await page.getByLabel('Une question sur desys').press('Enter');
+  await expect(page).toHaveURL(/#\/laboratoire\/resume-vol$/);
+  await expect(page.locator('.playground-head h2')).toHaveText('Résumé de vol');
+  const draft = page.getByRole('group', { name: 'Brouillon' });
+  await expect(draft).toContainText('pas encore dans desys');
   await expect(
-    design.getByRole('button', { name: 'Enregistrer…' }),
+    draft.getByRole('button', { name: 'Ajouter à desys' }),
   ).toBeDisabled();
-  await design.getByRole('button', { name: 'Réinitialiser' }).click();
-  await expect(card).toHaveCSS('border-top-color', before);
-  await page.goto('/#/playground/bouton');
+  await expect(page.locator('.story-stage')).toContainText(
+    'Vol à Saint-Hilaire',
+  );
+  // Le fil de discussion a suivi : la question de l'accueil est dans le chat.
+  const panel = page.getByRole('complementary', {
+    name: 'Demander au Design System',
+  });
+  await expect(panel).toContainText('Crée un composant Résumé de vol');
+  await expect(panel).toContainText(
+    'Brouillon « Résumé de vol » ouvert dans le laboratoire.',
+  );
+  await draft.getByRole('button', { name: 'Abandonner' }).click();
+  await expect(page.getByRole('group', { name: 'Brouillon' })).toHaveCount(0);
+});
+
+test('laboratoire : une question sur un composant existant l’ouvre', async ({
+  page,
+}) => {
+  await page.route('**/api/ask', (route) =>
+    route.fulfill({
+      json: {
+        message: 'La carte utilise color.border.',
+        sources: [],
+        edits: [],
+        component: 'carte-prevision',
+        create: null,
+      },
+    }),
+  );
+  await page.goto('/#/docs');
+  const panel = page.getByRole('complementary', {
+    name: 'Demander au Design System',
+  });
+  await panel.getByLabel('Ta question').fill('Quelle bordure pour la carte ?');
+  await panel.getByLabel('Ta question').press('Enter');
+  await expect(page).toHaveURL(/#\/laboratoire\/carte-prevision$/);
+  await expect(page.locator('.playground-head h2')).toHaveText(
+    'Carte de prévision',
+  );
   await expect(
-    page
-      .getByRole('region', { name: 'Design' })
-      .getByLabel('Fond (destructif) : token')
-      .locator('option[value="color.danger"]'),
-  ).toHaveCount(1);
+    page.getByRole('complementary', { name: 'Demander au Design System' }),
+  ).toContainText('La carte utilise color.border.');
 });
 
 test('onglet Composants : liste, propriétés façon Figma, lien vers la doc', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Aperçu', exact: true }).click();
-  await expect(page).toHaveURL(/#\/playground$/);
+  await page.getByRole('link', { name: 'Laboratoire', exact: true }).click();
+  await expect(page).toHaveURL(/#\/laboratoire$/);
   const list = page.getByRole('navigation', { name: 'Composants' });
   await list.getByRole('link', { name: 'Barre d’onglets' }).click();
   await list.getByRole('link', { name: 'Profil' }).click();
   await expect(page).toHaveURL(
-    /#\/playground\/barre-onglets\?story=barre-onglets--profil$/,
+    /#\/laboratoire\/barre-onglets\?story=barre-onglets--profil$/,
   );
   const canvas = page.getByRole('figure', { name: 'Aperçu : Barre d’onglets' });
   const props = canvas.getByRole('complementary', { name: 'Propriétés' });
@@ -720,7 +778,7 @@ test('accueil : éléments récents réels, question envoyée au chat de la doc'
     page.getByRole('button', { name: 'Ouvrir Bouton' }).first(),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Ouvrir Bouton' }).first().click();
-  await expect(page).toHaveURL(/#\/playground\/bouton$/);
+  await expect(page).toHaveURL(/#\/laboratoire\/bouton$/);
   await page.getByRole('link', { name: 'Accueil', exact: true }).click();
   await page
     .getByLabel('Une question sur desys')

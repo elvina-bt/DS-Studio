@@ -5,6 +5,8 @@ import {
   desysDocs,
   desysRoot,
   readDesysBindings,
+  readDesysLab,
+  writeDesysLab,
   writeDesysBindings,
   readDesysTokens,
   writeDesysTokens,
@@ -53,6 +55,10 @@ try {
       root: desysRoot,
       read: readDesysTokens,
       write: process.env.DESYS_WRITE === 'off' ? undefined : writeDesysTokens,
+      lab: {
+        read: readDesysLab,
+        write: process.env.DESYS_WRITE === 'off' ? undefined : writeDesysLab,
+      },
       bindings: {
         read: readDesysBindings,
         write:

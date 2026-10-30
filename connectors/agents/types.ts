@@ -25,6 +25,10 @@ export interface AskContext {
   tokens: Tokens;
   // Tokens utilisés par chaque composant : le chat peut proposer d'en changer.
   bindings?: Bindings;
+  // Composants de desys (avec un exemple), composants du labo, composant ouvert.
+  components?: { id: string; name: string; props: unknown; example: unknown }[];
+  lab?: unknown[];
+  focus?: { component?: string; draft?: unknown };
   rules: string;
   history: { role: 'user' | 'assistant'; text: string }[];
 }

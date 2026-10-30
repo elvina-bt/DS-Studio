@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
-import { storyGroups, storyId } from '@desys/stories.js';
+import { storyId } from '@desys/stories.js';
+import { labGroup } from '../shared/lab.js';
 import { request } from './api.js';
 import StoryCanvas from './StoryCanvas.js';
 import AskPanel from './AskPanel.js';
-import DesignPanel from './DesignPanel.js';
+import { dropDraft, refreshLab, useChat, useGroups, useLab } from './chat.js';
 
-// Onglet Composants, façon Storybook : la liste des composants et de leurs
-// variantes à gauche, le canvas en grand au centre, sans le texte de la doc,
-// le panneau Design sous le canvas (tokens du composant), et le chat sur le
-// design system à droite, comme dans la documentation.
+// Laboratoire, façon Storybook : la liste des composants et de leurs variantes
+// à gauche, le canvas en grand au centre, et le chat à droite pour modifier le
+// composant ouvert ou en construire un nouveau. Un composant demandé au chat
+// arrive ici en brouillon ; « Ajouter à desys » l'écrit (desys/components/lab)
+// et crée sa page de doc.
 export default function ComponentsView({
   tokens,
   component,
@@ -23,36 +25,77 @@ export default function ComponentsView({
   onNavigate: (component: string, story: string | null) => void;
   onOpenDoc: (slug: string) => void;
 }) {
-  const group = storyGroups.find((g) => g.id === component) ?? storyGroups[0];
+  const all = useGroups();
+  const lab = useLab();
+  const { draft } = useChat();
+  const creating = component === 'nouveau' && !draft;
+  const isDraft =
+    !!draft && (component === draft.id || component === 'nouveau');
+  const draftGroup = useMemo(() => (draft ? labGroup(draft) : null), [draft]);
+  const group =
+    (isDraft && draftGroup) || all.find((g) => g.id === component) || all[0];
+  const saved = lab?.components.some((c) => c.id === group.id) ?? false;
   // Page de doc qui montre ce composant (bloc {{composant:id}}).
   const [docs, setDocs] = useState<{ slug: string; body: string }[]>([]);
-  useEffect(() => {
+  const loadDocs = () =>
     request<{ docs: { slug: string; body: string }[] }>('docs')
       .then((r) => setDocs(r.docs))
       .catch(() => {});
+  useEffect(() => {
+    void loadDocs();
   }, []);
   const doc = docs.find((d) => d.body.includes(`{{composant:${group.id}}}`));
   // Variante allumée dans la liste : celle que montrent les propriétés.
   const [active, setActive] = useState<string | null>(story);
   const [search, setSearch] = useState('');
+  // Message rattaché au composant qu'il concerne : il disparaît ailleurs.
+  const [status, setStatus] = useState<{
+    kind: 'busy' | 'done' | 'error';
+    text: string;
+    for: string | null;
+  } | null>(null);
   const query = search.trim().toLowerCase();
   const found = (text: string) => text.toLowerCase().includes(query);
-  const groups = useMemo(
-    () =>
-      storyGroups
-        .map((g) => ({
-          group: g,
-          stories: query
-            ? found(g.name)
-              ? g.stories
-              : g.stories.filter((s) => found(s.name))
-            : g.id === group.id
-              ? g.stories
-              : [],
-        }))
-        .filter((x) => !query || found(x.group.name) || x.stories.length),
-    [query, group.id],
-  );
+  const listed = useMemo(() => {
+    const extra =
+      draftGroup && !all.some((g) => g.id === draftGroup.id)
+        ? [draftGroup]
+        : [];
+    return [...all, ...extra]
+      .map((g) => ({
+        group: g,
+        stories: query
+          ? found(g.name)
+            ? g.stories
+            : g.stories.filter((s) => found(s.name))
+          : g.id === group.id && !creating
+            ? g.stories
+            : [],
+      }))
+      .filter((x) => !query || found(x.group.name) || x.stories.length);
+  }, [query, group.id, all, draftGroup, creating]);
+
+  async function addToDesys() {
+    if (!draft) return;
+    setStatus({ kind: 'busy', text: '', for: component });
+    try {
+      const r = await request<{ files: string[]; doc: string | null }>('lab', {
+        spec: draft,
+      });
+      await refreshLab();
+      await loadDocs();
+      const id = draft.id;
+      dropDraft();
+      onNavigate(id, null);
+      setStatus({
+        kind: 'done',
+        text: `Ajouté à desys : ${r.files[0]}${r.doc ? ', page de doc créée' : ''}. À commiter dans desys.`,
+        for: id,
+      });
+    } catch (e) {
+      setStatus({ kind: 'error', text: (e as Error).message, for: component });
+    }
+  }
 
   return (
     <div className="docs playground">
@@ -65,14 +108,16 @@ export default function ComponentsView({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher"
         />
-        {groups.map(({ group: g, stories }) => (
+        {listed.map(({ group: g, stories }) => (
           <div key={g.id} className="docs-nav-section">
             <ul>
               <li>
                 <a
-                  href={`#/composants/${g.id}`}
+                  href={`#/laboratoire/${g.id}`}
                   aria-current={
-                    g.id === group.id && !active ? 'page' : undefined
+                    g.id === group.id && !active && !creating
+                      ? 'page'
+                      : undefined
                   }
                   className="playground-group"
                   onClick={(e) => {
@@ -81,6 +126,12 @@ export default function ComponentsView({
                   }}
                 >
                   {g.name}
+                  {draftGroup?.id === g.id && (
+                    <span className="lab-tag">brouillon</span>
+                  )}
+                  {'lab' in g && draftGroup?.id !== g.id && (
+                    <span className="lab-tag">labo</span>
+                  )}
                 </a>
               </li>
               {stories.map((s) => {
@@ -88,7 +139,7 @@ export default function ComponentsView({
                 return (
                   <li key={s.id}>
                     <a
-                      href={`#/composants/${g.id}?story=${id}`}
+                      href={`#/laboratoire/${g.id}?story=${id}`}
                       aria-current={active === id ? 'page' : undefined}
                       className="playground-story"
                       onClick={(e) => {
@@ -104,35 +155,100 @@ export default function ComponentsView({
             </ul>
           </div>
         ))}
+        <button
+          type="button"
+          className="docs-new"
+          onClick={() => onNavigate('nouveau', null)}
+        >
+          + Nouveau composant
+        </button>
       </nav>
       <div className="docs-main playground-main">
-        <header className="playground-head">
-          <h2>{group.name}</h2>
-          {doc && (
-            <button
-              type="button"
-              className="docs-edit"
-              onClick={() => onOpenDoc(doc.slug)}
-            >
-              Voir la documentation
-            </button>
-          )}
-        </header>
-        <div className="design-draft">
-          <StoryCanvas
-            key={group.id}
-            group={group}
-            tokens={tokens}
-            selected={story}
-            large
-            linkFor={(id) => `/#/composants/${group.id}?story=${id}`}
-            onStoryChange={setActive}
-          />
-        </div>
-        <DesignPanel component={group.id} tokens={tokens} />
+        {creating ? (
+          <div className="lab-empty">
+            <h2>Nouveau composant</h2>
+            <p>
+              Décris-le dans le chat, à droite : ce qu’il montre, ses variantes.
+              Claude l’assemble avec les composants de desys et l’ouvre ici en
+              brouillon ; tu l’ajustes en continuant la conversation.
+            </p>
+          </div>
+        ) : (
+          <>
+            <header className="playground-head">
+              <h2>{group.name}</h2>
+              {doc && !isDraft && (
+                <button
+                  type="button"
+                  className="docs-edit"
+                  onClick={() => onOpenDoc(doc.slug)}
+                >
+                  Voir la documentation
+                </button>
+              )}
+            </header>
+            {isDraft && (
+              <div className="lab-draft" role="group" aria-label="Brouillon">
+                <p>
+                  <strong>
+                    {saved ? 'Modifications en brouillon' : 'Brouillon'}
+                  </strong>{' '}
+                  · pas encore dans desys. Continue dans le chat pour l’ajuster.
+                </p>
+                <div>
+                  <button type="button" onClick={dropDraft}>
+                    Abandonner
+                  </button>
+                  <button
+                    type="button"
+                    className="studio-primary"
+                    disabled={!lab?.writable || status?.kind === 'busy'}
+                    onClick={() => void addToDesys()}
+                  >
+                    {saved ? 'Enregistrer dans desys' : 'Ajouter à desys'}
+                  </button>
+                </div>
+                {!lab?.writable && (
+                  <p className="lab-note">
+                    Écriture dans desys désactivée sur ce poste.
+                  </p>
+                )}
+              </div>
+            )}
+            {status && status.kind !== 'busy' && status.for === component && (
+              <p
+                className={status.kind === 'done' ? 'lab-done' : 'error'}
+                role={status.kind === 'done' ? 'status' : 'alert'}
+              >
+                {status.text}{' '}
+                {status.kind === 'done' && doc && (
+                  <a
+                    href={`#/docs/${doc.slug}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenDoc(doc.slug);
+                    }}
+                  >
+                    Ouvrir la page de doc
+                  </a>
+                )}
+              </p>
+            )}
+            <StoryCanvas
+              key={isDraft ? JSON.stringify(draft) : group.id}
+              group={group}
+              tokens={tokens}
+              selected={story}
+              large
+              linkFor={(id) => `/#/laboratoire/${group.id}?story=${id}`}
+              onStoryChange={setActive}
+            />
+          </>
+        )}
       </div>
       <AskPanel
         tokens={tokens}
+        focus={creating ? null : group.id}
         onNavigate={(slug) => onOpenDoc(slug.split('#')[0])}
       />
     </div>

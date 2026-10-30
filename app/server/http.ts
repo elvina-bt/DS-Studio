@@ -16,6 +16,8 @@ import {
 import { figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
 import { recentItems } from './recent.js';
+import { labDoc, labSpecSchema, type LabSpec } from '../shared/lab.js';
+import { storyGroups } from '@desys/stories.js';
 import {
   bindingEditSchema,
   checkEdits,
@@ -43,6 +45,11 @@ export async function createStudioServer(options: {
     root?: string;
     read: () => Promise<Tokens>;
     write?: (tokens: Tokens) => Promise<string[]>;
+    // Composants construits dans le laboratoire (desys/components/lab).
+    lab?: {
+      read: () => Promise<LabSpec[]>;
+      write?: (spec: LabSpec) => Promise<string[]>;
+    };
     // Tokens utilisés par chaque composant, modifiables via le chat.
     bindings?: {
       read: () => Promise<Bindings>;
@@ -254,6 +261,11 @@ export async function createStudioServer(options: {
               writable: !!options.desys.write,
             });
           }
+          if (url.pathname === '/api/lab')
+            return send(200, {
+              components: (await options.desys?.lab?.read()) ?? [],
+              writable: !!options.desys?.lab?.write,
+            });
           if (url.pathname === '/api/desys/bindings') {
             if (!options.desys?.bindings)
               throw new StudioError('Dépôt desys non configuré.', 404);
@@ -438,6 +450,25 @@ export async function createStudioServer(options: {
             res.off('close', cancel);
           }
         }
+        if (url.pathname === '/api/lab') {
+          const b = z.object({ spec: labSpecSchema }).strict().parse(body);
+          const lab = options.desys?.lab;
+          if (!lab?.write)
+            throw new StudioError('Écriture dans desys désactivée.', 409);
+          if (storyGroups.some((g) => g.id === b.spec.id))
+            throw new StudioError(
+              `« ${b.spec.id} » est déjà un composant de desys.`,
+              409,
+            );
+          const files = await lab.write(b.spec);
+          // Première création : sa page de doc, en brouillon.
+          let doc: string | null = null;
+          const pages = (await docs.list()).docs;
+          if (!pages.some((d) => d.slug === b.spec.id)) {
+            doc = (await docs.save('', labDoc(b.spec))).slug;
+          }
+          return send(200, { components: await lab.read(), files, doc });
+        }
         if (url.pathname === '/api/desys/bindings') {
           const b = z
             .object({ edits: z.array(bindingEditSchema).min(1).max(12) })
@@ -473,6 +504,14 @@ export async function createStudioServer(options: {
                     .strict(),
                 )
                 .max(8),
+              // Composant ouvert dans le laboratoire, ou brouillon en construction.
+              focus: z
+                .object({
+                  component: z.string().max(60).optional(),
+                  draft: labSpecSchema.optional(),
+                })
+                .strict()
+                .optional(),
             })
             .strict()
             .parse(body);
@@ -494,6 +533,8 @@ export async function createStudioServer(options: {
             const bindings = await options.desys?.bindings
               ?.read()
               .catch(() => undefined);
+            const lab =
+              (await options.desys?.lab?.read().catch(() => [])) ?? [];
             const reply = await adapter.ask(
               b.question,
               {
@@ -508,6 +549,15 @@ export async function createStudioServer(options: {
                 })),
                 tokens: store.snapshot().tokens,
                 bindings,
+                // Briques disponibles : chaque composant de desys avec un exemple.
+                components: storyGroups.map((g) => ({
+                  id: g.id,
+                  name: g.name,
+                  props: g.props,
+                  example: g.stories[0].node,
+                })),
+                lab,
+                focus: b.focus,
                 rules: await context('DESIGN_RULES.md'),
                 history: b.history,
               },
@@ -525,7 +575,38 @@ export async function createStudioServer(options: {
               .map((slug) => pages.find((d) => d.slug === slug))
               .filter((d) => d !== undefined)
               .map((d) => ({ slug: d.slug, title: d.title }));
-            return send(200, { message: reply.message, sources, edits });
+            // Nouveau composant (ou mise à jour d'un composant du labo) : un
+            // brouillon validé, jamais écrit ici ; un id de desys est refusé.
+            const parsed = labSpecSchema.safeParse(reply.create);
+            const create =
+              reply.create &&
+              parsed.success &&
+              !storyGroups.some((g) => g.id === parsed.data.id)
+                ? parsed.data
+                : null;
+            const known = (id: string) =>
+              storyGroups.some((g) => g.id === id) ||
+              lab.some((l) => l.id === id) ||
+              b.focus?.draft?.id === id;
+            const component =
+              create?.id ??
+              (reply.component && known(reply.component)
+                ? reply.component
+                : null);
+            return send(200, {
+              message: reply.message,
+              sources,
+              edits,
+              component,
+              create,
+              ...(reply.create && !create
+                ? {
+                    createError: parsed.success
+                      ? 'identifiant déjà pris par desys'
+                      : parsed.error.issues[0]?.message,
+                  }
+                : {}),
+            });
           } finally {
             busy = false;
             active.delete(controller);

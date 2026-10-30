@@ -12,6 +12,7 @@ import HomeView from './HomeView.js';
 import { TokenEditContext } from './TokenEdit.js';
 import ComponentsView from './ComponentsView.js';
 import { useBindings } from './bindings.js';
+import { ask, setComponentOpener } from './chat.js';
 import { bindingsCss } from '../shared/bindings.js';
 
 const sourceLabel = {
@@ -23,7 +24,9 @@ const sourceLabel = {
 } as const;
 
 // Vues : l'accueil (#/, par défaut), la documentation (#/docs/<page>) et le
-// playground des composants (#/playground/<composant>), avec une variante
+// laboratoire des composants (#/laboratoire/<composant> ; #/laboratoire/nouveau
+// pour un composant en cours de création ; anciennes adresses #/playground et
+// #/composants acceptées), avec une variante
 // facultative (?story=<groupe--variante>). L'atelier n'a plus d'onglet : il reste
 // joignable à #/atelier (brief, chat de propositions, outils du starter).
 type Route = {
@@ -34,7 +37,7 @@ type Route = {
 };
 function readRoute(): Route {
   const m =
-    /^#\/(docs|playground|composants)(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
+    /^#\/(docs|laboratoire|playground|composants)(?:\/([a-z0-9-]{1,60})(?:\?story=([a-z0-9-]{1,130}))?)?$/.exec(
       location.hash,
     );
   if (m)
@@ -166,7 +169,7 @@ export default function App() {
       home: '#/',
       atelier: '#/atelier',
       docs: `#/docs${tail}`,
-      composants: `#/playground${tail}`,
+      composants: `#/laboratoire${tail}`,
     }[next.view];
     setRoute(next);
   };
@@ -196,8 +199,10 @@ export default function App() {
     window.addEventListener('scroll', update, { passive: true });
     return () => window.removeEventListener('scroll', update);
   }, []);
-  // Question posée depuis l'accueil, envoyée par le chat de la doc.
-  const [askSeed, setAskSeed] = useState<{ question: string; id: number }>();
+  // Une réponse du chat qui porte sur un composant l'ouvre dans le laboratoire.
+  useEffect(() => {
+    setComponentOpener((id) => navigate({ view: 'composants', slug: id }));
+  });
   // Historique en fenêtre modale centrée : Échap, le fond ou le bouton le ferme ;
   // le navigateur rend le focus au bouton Historique.
   const historyDialog = useRef<HTMLDialogElement>(null);
@@ -458,7 +463,7 @@ export default function App() {
             [
               ['home', 'Accueil', '#/'],
               ['docs', 'Documentation', '#/docs'],
-              ['composants', 'Aperçu', '#/playground'],
+              ['composants', 'Laboratoire', '#/laboratoire'],
             ] as const
           ).map(([view, label, href]) => (
             <a
@@ -655,7 +660,7 @@ export default function App() {
             tokens={state.tokens}
             notice={desysNotice}
             onAsk={(question) => {
-              setAskSeed({ question, id: Date.now() });
+              void ask(question);
               navigate({ view: 'docs', slug: null });
             }}
             onOpen={(target) => navigate({ ...target })}
@@ -683,7 +688,6 @@ export default function App() {
               tokens={state.tokens}
               slug={route.slug}
               story={route.story ?? null}
-              askSeed={askSeed}
               onNavigate={(slug) => navigate({ view: 'docs', slug })}
             />
           </TokenEditContext.Provider>

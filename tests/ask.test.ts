@@ -146,6 +146,8 @@ test('HTTP : question protégée, sources limitées aux pages existantes', async
     message: 'Réponse',
     sources: [{ slug: 'bouton', title: 'Bouton' }],
     edits: [],
+    component: null,
+    create: null,
   });
   assert.match(received?.docs[0].body ?? '', /Un seul bouton principal/);
   assert.deepEqual(received?.docs[0].anchors, [
