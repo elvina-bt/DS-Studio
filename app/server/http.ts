@@ -619,8 +619,12 @@ export async function createStudioServer(options: {
               (reply.component && known(reply.component)
                 ? reply.component
                 : null);
+            // Texte échappé deux fois (« \\n » littéraux) : on rétablit les retours.
+            const message = reply.message.includes('\\n')
+              ? reply.message.replace(/\\n/g, '\n').replace(/\\"/g, '"')
+              : reply.message;
             return send(200, {
-              message: reply.message,
+              message,
               sources,
               edits,
               component,

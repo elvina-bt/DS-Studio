@@ -142,6 +142,19 @@ test('HTTP : le chat propose un composant, l’ajout l’écrit et crée sa page
   assert.equal(r.create.id, 'resume-vol');
   assert.equal(saved.length, 0, 'rien n’est écrit par le chat');
 
+  // Composant renvoyé en texte JSON, message échappé deux fois : rattrapés.
+  reply = {
+    message: 'Voici\\n\\n- un brouillon',
+    component: null,
+    create: JSON.stringify(spec),
+  };
+  r = await (
+    await post('/api/ask', { question: 'crée le', history: [] })
+  ).json();
+  assert.equal(r.component, 'resume-vol');
+  assert.equal(r.create.id, 'resume-vol');
+  assert.equal(r.message, 'Voici\n\n- un brouillon');
+
   // Un brouillon invalide ou qui reprend un id de desys n'est pas retenu.
   reply = { component: null, create: { ...spec, id: 'bouton' } };
   r = await (await post('/api/ask', { question: 'x', history: [] })).json();

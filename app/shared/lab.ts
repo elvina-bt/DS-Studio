@@ -161,6 +161,14 @@ function normalizeNode(n: unknown): unknown {
   return node;
 }
 export function normalizeLab(raw: unknown): unknown {
+  // Le chat renvoie parfois le composant sous forme de texte JSON.
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, ''));
+    } catch {
+      return raw;
+    }
+  }
   if (!raw || typeof raw !== 'object') return raw;
   const spec = { ...(raw as Record<string, unknown>) };
   spec.id = toSlug(spec.id ?? spec.name);
