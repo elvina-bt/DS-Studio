@@ -75,7 +75,9 @@ Markdown du dépôt design system `../desys/docs/`, versionné avec le DS. **Mod
 un éditeur avec aperçu, blocs prêts à l’emploi (À faire, À éviter, Note, aperçu de
 composant vivant, tableau de tokens) et un diff à valider avant l’écriture.
 Le plugin Figma [DS-Studio Docs](figma-plugin/README.md) affiche la page du
-composant sélectionné dans Figma, en lecture seule.
+composant sélectionné dans Figma, en lecture seule. Le plugin
+[desys → Figma](figma-plugin-desys/README.md) reporte dans PFE – Components les
+composants construits dans le laboratoire.
 
 ## Ce qui change en V2
 

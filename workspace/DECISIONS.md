@@ -387,6 +387,21 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : `DesysStack` non compilé ici (licence Xcode) ; l’auto layout Figma
   reçoit des valeurs, pas encore des variables liées.
 
+## 2026-10-30 — Plugin Figma dédié : desys → Figma
+
+- **Problème** : reporter un composant du laboratoire passait par une section du
+  plugin DS-Studio Docs, outil de lecture de la doc ; le geste était caché.
+- **Options** : garder la section dans DS-Studio Docs ; plugin publié (impossible
+  sans studio en ligne : un plugin publié ne joint pas 127.0.0.1) ; plugin de
+  développement dédié (retenu).
+- **Décision** : `figma-plugin-desys/` ne fait que le report : liste à reporter,
+  « Reporter dans Figma », lien renvoyé à desys, liste « à publier ». DS-Studio
+  Docs redevient lecture et insertion. Dans le studio, le badge « À reporter dans
+  Figma » ouvre les étapes et le fichier PFE – Components.
+- **Preuves** : studio 59 tests et 21 e2e ; fenêtre du badge vue dans le navigateur.
+- **Limites** : plugin jamais lancé dans Figma ici ; à importer une fois depuis son
+  manifeste ; la publication de la bibliothèque reste un clic.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

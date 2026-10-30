@@ -332,7 +332,7 @@ export default function ComponentsView({
           )}
         </DesysProvider>
       </dialog>
-      {/* Report dans Figma : le plugin DS-Studio Docs construit le composant. */}
+      {/* Report dans Figma : le plugin desys → Figma construit le composant. */}
       <dialog
         ref={figmaDialog}
         className="lab-success lab-figma-steps"
@@ -342,14 +342,17 @@ export default function ComponentsView({
         <ol>
           <li>Ouvre PFE – Components dans Figma desktop.</li>
           <li>
-            Plugins → Development → <strong>DS-Studio Docs</strong>.
+            Plugins → Development → <strong>desys → Figma</strong>.
           </li>
           <li>
-            Section Laboratoire : <strong>Créer dans Figma</strong>. Le plugin
-            construit le composant et renvoie son lien à desys.
+            <strong>Reporter dans Figma</strong> : le plugin construit le
+            composant et renvoie son lien à desys.
           </li>
         </ol>
-        <p>Le statut passe ici à « Dans Figma · à publier » tout seul.</p>
+        <p>
+          Le statut passe ici à « Dans Figma · à publier » tout seul. Première
+          fois : importe le plugin depuis figma-plugin-desys/manifest.json.
+        </p>
         <DesysProvider tokens={tokens}>
           <button
             type="button"

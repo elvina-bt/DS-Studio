@@ -1,0 +1,14 @@
+{
+  "name": "desys → Figma",
+  "id": "desys-figma-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://127.0.0.1:4310", "http://localhost:4310"],
+    "reasoning": "Lit les composants du laboratoire servis par desys studio sur ce poste, et lui renvoie leur lien Figma."
+  }
+}

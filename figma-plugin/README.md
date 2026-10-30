@@ -8,11 +8,7 @@ composant source dans PFE – Components).
 **Écritures, seulement sur clic** :
 
 - « Insérer » ajoute une instance au centre de l’écran ;
-- « Créer dans Figma » (section **Laboratoire**) crée dans PFE – Components les
-  composants construits dans le laboratoire de desys studio, puis renvoie leur
-  lien Figma (nœud, clé) à desys.
-
-Rien d’autre n’est modifié. En Dev Mode, insertion et création sont refusées.
+  Rien d’autre n’est modifié. En Dev Mode, l’insertion est refusée.
 
 ## Installer (plugin de développement, sur ce Mac)
 
@@ -37,19 +33,7 @@ Sans publication, l’insertion marche seulement dans PFE – Components lui-mê
 
 ## Reporter les composants du laboratoire
 
-Quand un composant du laboratoire affiche « À reporter dans Figma » :
-
-1. Ouvre **PFE – Components** dans Figma desktop, avec DS-Studio lancé.
-2. **Plugins → Development → DS-Studio Docs** : la section **Laboratoire** liste
-   les composants à créer ou à mettre à jour.
-3. **Créer dans Figma** : une page et une section à son nom, un composant fait
-   d’instances des composants existants et de piles (auto layout aux valeurs des
-   tokens). Une mise à jour garde le même nœud et la même clé.
-4. Le lien part dans desys (`components/lab/<id>.json`) : état « à publier ».
-5. **Assets → Publier** la bibliothèque : la synchro GitHub passe l’état à « iso ».
-
-Le plugin ne crée rien hors de PFE – Components (il vérifie le fichier), et
-desys n’enregistre le lien que pour la version exacte du composant envoyée.
+C’est le plugin dédié **desys → Figma** (`figma-plugin-desys/`).
 
 ## Relier une page à Figma
 

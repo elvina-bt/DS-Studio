@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --text: var(--figma-color-text, #1e1e1e);
+        --muted: var(--figma-color-text-secondary, #6b6b6b);
+        --bg: var(--figma-color-bg, #fff);
+        --soft: var(--figma-color-bg-secondary, #f5f5f5);
+        --line: var(--figma-color-border, #e6e6e6);
+        --orange: #da6419;
+      }
+      body {
+        margin: 0;
+        font:
+          12px/1.5 Inter,
+          system-ui,
+          sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+      header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      header strong {
+        font-size: 16px;
+        color: var(--orange);
+      }
+      #status {
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      main {
+        padding: 12px 16px 16px;
+      }
+      h2 {
+        font-size: 12px;
+        font-weight: 600;
+        margin: 12px 0 4px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      ul {
+        list-style: none;
+        margin: 0 0 12px;
+        padding: 0;
+      }
+      li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .tag {
+        padding: 0 8px;
+        border-radius: 999px;
+        background: #fbe7da;
+        color: #8a3b14;
+        white-space: nowrap;
+      }
+      .tag.is-done {
+        background: #e3f3e9;
+        color: #1d6340;
+      }
+      button {
+        font: inherit;
+        border-radius: 8px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.2s ease-in-out;
+      }
+      button.primary {
+        width: 100%;
+        border: 0;
+        background: var(--orange);
+        color: #fff;
+        font-size: 12px;
+      }
+      button.primary:hover {
+        background: #c4560f;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .link {
+        border: 0;
+        padding: 0;
+        background: none;
+        color: var(--orange);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .note {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>desys → Figma</strong>
+      <div id="status">Connexion à desys studio…</div>
+    </header>
+    <main id="content"></main>
+    <script>
+      // Tout est inséré en textContent. Seule écriture, sur clic : « Reporter
+      // dans Figma » construit les composants, puis leur lien part dans desys.
+      const hosts = ['http://127.0.0.1:4310', 'http://localhost:4310'];
+      const content = document.getElementById('content');
+      const status = document.getElementById('status');
+      let plan = null;
+      let fileOk = null;
+
+      const el = (tag, text, className) => {
+        const node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text;
+        if (className) node.className = className;
+        return node;
+      };
+      const send = (pluginMessage) =>
+        parent.postMessage({ pluginMessage }, '*');
+      const studio = (id) => `${hosts[0]}/#/laboratoire/${id}`;
+
+      async function load() {
+        for (const host of hosts) {
+          try {
+            const res = await fetch(`${host}/plugin/lab`);
+            if (res.ok) return await res.json();
+          } catch (e) {
+            /* Hôte suivant. */
+          }
+        }
+        return null;
+      }
+      async function record(created) {
+        const res = await fetch(`${hosts[0]}/plugin/lab-record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ created }),
+        });
+        if (!res.ok)
+          throw new Error((await res.json()).error || 'Enregistrement refusé');
+        return (await res.json()).recorded;
+      }
+
+      function render() {
+        const nodes = [];
+        if (!plan) {
+          status.textContent = 'desys studio injoignable.';
+          nodes.push(
+            el(
+              'p',
+              'Lance desys studio sur ce Mac (npm start, adresse http://127.0.0.1:4310), puis Actualiser.',
+              'note',
+            ),
+          );
+        } else {
+          const n = plan.components.length;
+          status.textContent = n
+            ? `${n} composant${n > 1 ? 's' : ''} à reporter depuis le laboratoire.`
+            : 'Tout le laboratoire est dans Figma.';
+          if (n) {
+            nodes.push(el('h2', 'À reporter'));
+            const list = el('ul');
+            for (const c of plan.components) {
+              const item = el('li');
+              const name = el('button', c.name, 'link');
+              name.title = 'Voir dans le laboratoire de desys studio';
+              name.onclick = () => send({ type: 'open', url: studio(c.id) });
+              item.append(
+                name,
+                el('span', c.update ? 'à mettre à jour' : 'à créer', 'tag'),
+              );
+              list.append(item);
+            }
+            nodes.push(list);
+            const go = el('button', `Reporter dans Figma (${n})`, 'primary');
+            if (fileOk === false) {
+              go.disabled = true;
+              nodes.push(
+                el(
+                  'p',
+                  'Ouvre le fichier PFE – Components : le plugin n’écrit que là.',
+                  'note',
+                ),
+              );
+            }
+            go.onclick = () => {
+              go.disabled = true;
+              status.textContent = 'Construction dans PFE – Components…';
+              send({ type: 'build-lab', plan });
+            };
+            nodes.push(go);
+          }
+          if (plan.published.length) {
+            nodes.push(el('h2', 'Dans Figma · à publier'));
+            const list = el('ul');
+            for (const name of plan.published) {
+              const item = el('li');
+              item.append(el('span', name), el('span', 'à publier', 'tag'));
+              list.append(item);
+            }
+            nodes.push(
+              list,
+              el(
+                'p',
+                'Assets → Publier la bibliothèque : desys passe ensuite à « Iso Figma ».',
+                'note',
+              ),
+            );
+          }
+        }
+        const refresh = el('button', 'Actualiser');
+        refresh.onclick = () => void show();
+        const actions = el('div', undefined, 'actions');
+        actions.append(refresh);
+        nodes.push(actions);
+        content.replaceChildren(...nodes);
+      }
+
+      async function show() {
+        plan = await load();
+        if (plan) send({ type: 'check', fileKey: plan.fileKey });
+        render();
+      }
+
+      onmessage = (event) => {
+        const message = event.data.pluginMessage;
+        if (message?.type === 'file') {
+          fileOk = message.ok;
+          render();
+          return;
+        }
+        if (message?.type !== 'lab-built') return;
+        if (!message.ok) {
+          void show().then(() => (status.textContent = message.error));
+          return;
+        }
+        record(message.created)
+          .then((names) =>
+            show().then(
+              () =>
+                (status.textContent = `Reporté : ${names.join(', ') || 'rien à enregistrer'}. Il reste à publier la bibliothèque.`),
+            ),
+          )
+          .catch((e) => {
+            status.textContent = `Reporté dans Figma, mais lien non enregistré dans desys : ${e.message}`;
+          });
+      };
+      void show();
+      // Le laboratoire change pendant que le plugin est ouvert : relu au retour.
+      window.addEventListener('focus', () => void show());
+    </script>
+  </body>
+</html>
