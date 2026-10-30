@@ -4,10 +4,12 @@ import { storyGroups, storyId } from '@desys/stories.js';
 import { request } from './api.js';
 import StoryCanvas from './StoryCanvas.js';
 import AskPanel from './AskPanel.js';
+import DesignPanel from './DesignPanel.js';
 
 // Onglet Composants, façon Storybook : la liste des composants et de leurs
 // variantes à gauche, le canvas en grand au centre, sans le texte de la doc,
-// et le chat sur le design system à droite, comme dans la documentation.
+// le panneau Design sous le canvas (tokens du composant), et le chat sur le
+// design system à droite, comme dans la documentation.
 export default function ComponentsView({
   tokens,
   component,
@@ -116,15 +118,18 @@ export default function ComponentsView({
             </button>
           )}
         </header>
-        <StoryCanvas
-          key={group.id}
-          group={group}
-          tokens={tokens}
-          selected={story}
-          large
-          linkFor={(id) => `/#/composants/${group.id}?story=${id}`}
-          onStoryChange={setActive}
-        />
+        <div className="design-draft">
+          <StoryCanvas
+            key={group.id}
+            group={group}
+            tokens={tokens}
+            selected={story}
+            large
+            linkFor={(id) => `/#/composants/${group.id}?story=${id}`}
+            onStoryChange={setActive}
+          />
+        </div>
+        <DesignPanel component={group.id} tokens={tokens} />
       </div>
       <AskPanel
         tokens={tokens}

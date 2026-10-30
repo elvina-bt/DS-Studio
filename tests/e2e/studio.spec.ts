@@ -638,6 +638,35 @@ test('playground : le chat propose les tokens d’un composant, aperçu avant / 
   await expect(edit).toContainText('Proposition ignorée.');
 });
 
+test('aperçu : designer un composant, aperçu en direct, rouge réservé au bouton destructif', async ({
+  page,
+}) => {
+  await page.goto('/#/playground/carte-prevision');
+  const design = page.getByRole('region', { name: 'Design' });
+  const card = page.locator('.design-draft .pp-card').first();
+  const before = await card.evaluate(
+    (el) => getComputedStyle(el).borderTopColor,
+  );
+  const border = design.getByLabel('Bordure : token');
+  // Garde-fou : un écart n'est jamais rouge, color.danger n'est pas proposé ici.
+  await expect(border.locator('option[value="color.danger"]')).toHaveCount(0);
+  await border.selectOption('color.brand');
+  await expect(card).not.toHaveCSS('border-top-color', before);
+  // Les e2e n'écrivent pas dans desys : l'enregistrement est désactivé, l'aperçu reste.
+  await expect(
+    design.getByRole('button', { name: 'Enregistrer…' }),
+  ).toBeDisabled();
+  await design.getByRole('button', { name: 'Réinitialiser' }).click();
+  await expect(card).toHaveCSS('border-top-color', before);
+  await page.goto('/#/playground/bouton');
+  await expect(
+    page
+      .getByRole('region', { name: 'Design' })
+      .getByLabel('Fond (destructif) : token')
+      .locator('option[value="color.danger"]'),
+  ).toHaveCount(1);
+});
+
 test('onglet Composants : liste, propriétés façon Figma, lien vers la doc', async ({
   page,
 }) => {

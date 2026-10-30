@@ -334,6 +334,19 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
   non compilé ici (licence Xcode) ; le chat ne modifie pas encore le code des
   composants, seulement les tokens qu’ils utilisent.
 
+## 2026-10-30 — Designer un composant depuis l’onglet Aperçu
+
+- **Problème** : modifier l’apparence d’un composant passait seulement par le chat.
+- **Décision** : panneau Design sous le canvas de l’onglet Aperçu. Chaque emplacement
+  du composant (fond, bordure, texte, rayon, marges…) choisit un token du bon type ;
+  l’aperçu suit en direct ; « Enregistrer… » montre le diff, puis écrit
+  `desys/components/bindings.json` et régénère le web et iOS. `color.danger` n’est
+  proposé que pour le fond du bouton destructif.
+- **Preuves** : 20 e2e (aperçu en direct, garde-fou, enregistrement désactivé hors
+  écriture) ; vérifié dans le navigateur, diff ouvert puis fermé sans écrire.
+- **Limites** : on choisit parmi les tokens existants ; créer un token ou une
+  variante de composant reste à faire.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.
