@@ -402,6 +402,21 @@ locaux validés. Claude et Gemini ne sont pas activés sans qualification.
 - **Limites** : plugin jamais lancé dans Figma ici ; à importer une fois depuis son
   manifeste ; la publication de la bibliothèque reste un clic.
 
+## 2026-10-30 — Un fichier JSON par composant dans desys
+
+- **Problème** : tous les composants tenaient dans deux fichiers communs
+  (`components/components.json`, généré, et `components/bindings.json`, source) :
+  un changement sur un composant touchait le fichier de tous.
+- **Décision** : `components/<id>.json` par composant. Champs source `swift` et
+  `tokens` (modifiés par le studio via le chat) ; propriétés, variantes et liens
+  Figma régénérés depuis `src/web/stories.ts`. Le laboratoire garde
+  `components/lab/<id>.json`. Les dates « ajouté » du studio cherchent dans
+  l’ancien manifeste puis dans le fichier du composant.
+- **Preuves** : sorties web et iOS identiques (seul un commentaire de
+  `Bindings.swift` change) ; desys 18 tests, studio 59 tests.
+- **Limites** : les entrées plus haut citent encore les anciens fichiers, à lire
+  comme historique.
+
 ## À compléter par l’étudiant
 
 Date, problème, options explorées, décision, preuves et limite connue.

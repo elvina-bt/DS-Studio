@@ -27,7 +27,7 @@ test('accueil : révisions et pages en « modifié », ajouts datés sans git pa
     path.join(dir, 'desys/tokens/tokens.json'),
     JSON.stringify(tokens),
   );
-  await writeFile(path.join(dir, 'desys/components/components.json'), '{}');
+  await writeFile(path.join(dir, 'desys/components/bouton.json'), '{}');
   await mkdir(path.join(dir, 'docs'));
   await writeFile(
     path.join(dir, 'docs/bouton.md'),

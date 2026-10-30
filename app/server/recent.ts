@@ -35,14 +35,14 @@ async function git(cwd: string, args: string[]) {
   }
   return null;
 }
-async function firstCommit(cwd: string, needle: string, file: string) {
+async function firstCommit(cwd: string, needle: string, ...files: string[]) {
   const out = await git(cwd, [
     'log',
     '--reverse',
     '--format=%cI',
     `-S${needle}`,
     '--',
-    file,
+    ...files,
   ]);
   return out?.split('\n')[0] || null;
 }
@@ -53,12 +53,12 @@ let cache: { at: number; added: RecentItem[] } | null = null;
 async function addedItems(desysRoot: string): Promise<RecentItem[]> {
   if (cache && Date.now() - cache.at < 60_000) return cache.added;
   const tokensFile = 'tokens/tokens.json';
-  const componentsFile = 'components/components.json';
+  // Un fichier par composant ; avant, un manifeste commun (historique gardé).
+  const legacyComponents = 'components/components.json';
   const tokens = Object.keys(
     JSON.parse(await fs.readFile(path.join(desysRoot, tokensFile), 'utf8')),
   );
   const fallbackTokens = await mtime(path.join(desysRoot, tokensFile));
-  const fallbackComponents = await mtime(path.join(desysRoot, componentsFile));
   const added: RecentItem[] = [
     ...(await Promise.all(
       tokens.map(async (key) => ({
@@ -79,8 +79,13 @@ async function addedItems(desysRoot: string): Promise<RecentItem[]> {
         title: g.name,
         status: 'ajouté' as const,
         date:
-          (await firstCommit(desysRoot, `"id": "${g.id}"`, componentsFile)) ??
-          fallbackComponents ??
+          (await firstCommit(
+            desysRoot,
+            `"id": "${g.id}"`,
+            legacyComponents,
+            `components/${g.id}.json`,
+          )) ??
+          (await mtime(path.join(desysRoot, `components/${g.id}.json`))) ??
           '',
       })),
     )),

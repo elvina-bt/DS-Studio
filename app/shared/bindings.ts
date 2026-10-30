@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Tokens utilisés par chaque composant (desys/components/bindings.json). Le chat
+// Tokens utilisés par chaque composant (desys/components/<id>.json). Le chat
 // peut proposer d'en changer ; la proposition est vérifiée ici, puis validée par
 // l'étudiante avant toute écriture.
 export type Slot = {

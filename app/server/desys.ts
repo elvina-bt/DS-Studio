@@ -28,25 +28,37 @@ export async function writeDesysTokens(tokens: Tokens): Promise<string[]> {
   return generate().changed;
 }
 
-// Tokens utilisés par chaque composant : components/bindings.json, validé par le
-// générateur de desys. Une écriture qui casse la génération est annulée.
-const bindingsFile = path.join(desysRoot, 'components/bindings.json');
+// Tokens utilisés par chaque composant : champ `tokens` de son fichier
+// components/<id>.json, validé par le générateur de desys. Une écriture qui casse
+// la génération est annulée.
+const componentsDir = path.join(desysRoot, 'components');
 export async function readDesysBindings(): Promise<Bindings> {
-  return readBindings(readTokens(), bindingsFile) as Bindings;
+  return readBindings(readTokens(), componentsDir) as Bindings;
 }
 export async function writeDesysBindings(
   edits: BindingEdit[],
 ): Promise<string[]> {
-  const before = await fs.readFile(bindingsFile, 'utf8');
-  const raw = JSON.parse(before);
-  for (const e of edits) raw[e.component].slots[e.slot].token = e.token;
-  const tmp = `${bindingsFile}.${process.pid}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(raw, null, 2) + '\n');
-  await fs.rename(tmp, bindingsFile);
+  const files = [...new Set(edits.map((e) => e.component))].map((id) =>
+    path.join(componentsDir, `${id}.json`),
+  );
+  const before = new Map<string, string>();
+  for (const file of files) before.set(file, await fs.readFile(file, 'utf8'));
+  for (const file of files) {
+    const raw = JSON.parse(before.get(file)!);
+    for (const e of edits)
+      if (file.endsWith(`/${e.component}.json`))
+        raw.tokens[e.slot].token = e.token;
+    const tmp = `${file}.${process.pid}.tmp`;
+    await fs.writeFile(tmp, JSON.stringify(raw, null, 2) + '\n');
+    await fs.rename(tmp, file);
+  }
   try {
-    return ['components/bindings.json', ...generate().changed];
+    return [
+      ...files.map((f) => path.relative(desysRoot, f)),
+      ...generate().changed,
+    ];
   } catch (e) {
-    await fs.writeFile(bindingsFile, before);
+    for (const [file, content] of before) await fs.writeFile(file, content);
     generate();
     throw e;
   }

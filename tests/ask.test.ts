@@ -227,7 +227,7 @@ test('HTTP : modification de composant proposée par le chat, filtrée puis écr
         write: async (edits) => {
           written.push(edits);
           bindings = applyEdits(bindings, edits);
-          return ['components/bindings.json'];
+          return ['components/bouton.json'];
         },
       },
     },
