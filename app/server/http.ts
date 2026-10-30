@@ -13,11 +13,14 @@ import {
   parseMarkdown,
   renderHtml,
 } from '../shared/docs.js';
-import { figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
+import { figmaFile, figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
 import { recentItems } from './recent.js';
+import { labFigmaPlan } from '@desys-scripts/sync.js';
 import {
   labDoc,
+  labHash,
+  labStatus,
   labIssues,
   labSpecSchema,
   normalizeLab,
@@ -136,15 +139,89 @@ export async function createStudioServer(options: {
         // servie par Figma, demande l'accord avant d'appeler une adresse locale.
         if (req.method === 'OPTIONS') {
           res.writeHead(204, {
-            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Methods': 'GET, POST',
+            'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Private-Network': 'true',
             'Access-Control-Max-Age': '600',
           });
           return res.end();
         }
+        const url = new URL(req.url, origin);
+        // Laboratoire : composants à créer dans PFE – Components, avec le plan
+        // de construction (variantes à instancier, textes, piles).
+        if (url.pathname === '/plugin/lab' && req.method === 'GET') {
+          const specs = (await options.desys?.lab?.read()) ?? [];
+          const tokens = options.desys
+            ? await options.desys.read()
+            : store.snapshot().tokens;
+          const plan = labFigmaPlan(
+            specs as never,
+            storyGroups.flatMap((g) => g.stories),
+            figmaFile,
+            tokens,
+          );
+          return send(200, {
+            ...plan,
+            published: specs
+              .filter((c) => labStatus(c) === 'à publier')
+              .map((c) => c.name),
+          });
+        }
+        // Seule écriture du plugin : le lien Figma (nœud, clé) des composants
+        // qu'il vient de créer, pour la version exacte qu'il a reçue.
+        if (url.pathname === '/plugin/lab-record' && req.method === 'POST') {
+          if (req.headers.host !== `127.0.0.1:${port}`)
+            throw new StudioError('Hôte refusé.', 403);
+          if (!req.headers['content-type']?.startsWith('application/json'))
+            throw new StudioError('JSON requis.', 415);
+          const lab = options.desys?.lab;
+          if (!lab?.write)
+            throw new StudioError('Écriture dans desys désactivée.', 409);
+          let raw = '';
+          for await (const chunk of req) {
+            raw += chunk;
+            if (raw.length > 16_000)
+              throw new StudioError('Requête trop lourde.', 413);
+          }
+          const b = z
+            .object({
+              created: z
+                .array(
+                  z
+                    .object({
+                      id: z.string().max(60),
+                      node: z.string().regex(/^\d+:\d+$/),
+                      key: z.string().regex(/^[0-9a-f]{40}$/),
+                      hash: z.string().max(16),
+                    })
+                    .strict(),
+                )
+                .min(1)
+                .max(20),
+            })
+            .strict()
+            .parse(JSON.parse(raw));
+          const specs = await lab.read();
+          const recorded: string[] = [];
+          for (const c of b.created) {
+            const spec = specs.find((x) => x.id === c.id);
+            // Le composant a changé depuis le plan : rien n'est enregistré.
+            if (!spec || labHash(spec) !== c.hash) continue;
+            await lab.write({
+              ...spec,
+              figma: {
+                node: c.node,
+                key: c.key,
+                hash: c.hash,
+                published: false,
+              },
+            });
+            recorded.push(spec.name);
+          }
+          return send(200, { recorded });
+        }
         if (req.method !== 'GET')
           throw new StudioError('Méthode non autorisée.', 405);
-        const url = new URL(req.url, origin);
         if (url.pathname !== '/plugin/lookup')
           throw new StudioError('Route inconnue.', 404);
         const list = (name: string) =>

@@ -295,3 +295,90 @@ test('HTTP : brouillon invalide, une correction demandée à Claude puis ouverte
   assert.equal(r.create.id, 'resume-vol');
   assert.equal(r.component, 'resume-vol');
 });
+
+test('plugin Figma : plan du laboratoire, puis lien Figma enregistré pour la bonne version', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'ds-lab-plugin-'));
+  const seed = tokensSchema.parse(
+    JSON.parse(
+      await readFile(
+        path.join(root, 'workspace/design-system.tokens.json'),
+        'utf8',
+      ),
+    ),
+  );
+  const store = new Store(path.join(directory, 'state'), seed);
+  await store.init();
+  let saved: LabSpec[] = [spec];
+  const app = await createStudioServer({
+    root,
+    store,
+    docsDirectory: path.join(directory, 'docs'),
+    desys: {
+      read: async () => seed,
+      lab: {
+        read: async () => saved,
+        write: async (s) => {
+          saved = saved.map((x) => (x.id === s.id ? s : x));
+          return [];
+        },
+      },
+    },
+  });
+  await new Promise<void>((r) => app.server.listen(0, '127.0.0.1', r));
+  t.after(async () => {
+    await app.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+  const origin = `http://127.0.0.1:${(app.server.address() as { port: number }).port}`;
+  const plan = await (
+    await fetch(origin + '/plugin/lab', { headers: { Origin: 'null' } })
+  ).json();
+  assert.equal(plan.components.length, 1);
+  assert.equal(plan.components[0].id, 'resume-vol');
+  assert.equal(plan.components[0].tree.kind, 'frame');
+  const post = (created: unknown) =>
+    fetch(origin + '/plugin/lab-record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'null' },
+      body: JSON.stringify({ created }),
+    });
+  const key = 'a'.repeat(40);
+  // Version périmée : rien n'est enregistré.
+  assert.deepEqual(
+    (
+      await (
+        await post([{ id: 'resume-vol', node: '40:2', key, hash: 'ancienne' }])
+      ).json()
+    ).recorded,
+    [],
+  );
+  // Une autre origine que l'iframe du plugin est refusée.
+  const foreign = await fetch(origin + '/plugin/lab-record', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: 'https://exemple.test',
+    },
+    body: JSON.stringify({ created: [] }),
+  });
+  assert.equal(foreign.status, 403);
+  const ok = await (
+    await post([
+      { id: 'resume-vol', node: '40:2', key, hash: plan.components[0].hash },
+    ])
+  ).json();
+  assert.deepEqual(ok.recorded, ['Résumé de vol']);
+  assert.deepEqual(saved[0].figma, {
+    node: '40:2',
+    key,
+    hash: plan.components[0].hash,
+    published: false,
+  });
+  assert.equal(labStatus(saved[0]), 'à publier');
+  // Plus rien à créer ; le composant attend la publication.
+  const after = await (
+    await fetch(origin + '/plugin/lab', { headers: { Origin: 'null' } })
+  ).json();
+  assert.equal(after.components.length, 0);
+  assert.deepEqual(after.published, ['Résumé de vol']);
+});

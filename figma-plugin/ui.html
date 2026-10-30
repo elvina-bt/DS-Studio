@@ -140,6 +140,21 @@
       .link {
         color: var(--brand);
       }
+      .lab {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 12px;
+        background: var(--soft);
+      }
+      .lab h2 {
+        margin-top: 0;
+      }
+      button.primary {
+        background: var(--figma-color-bg-brand, #0d6efd);
+        color: var(--figma-color-text-onbrand, #fff);
+        border: 0;
+      }
       .swatch {
         display: inline-block;
         width: 12px;
@@ -185,6 +200,70 @@
           }
         }
         throw new Error('DS-Studio injoignable');
+      }
+
+      // Laboratoire : composants construits dans desys studio, à créer dans
+      // PFE – Components. Un clic les crée, puis le lien Figma part dans desys.
+      let labPlan = null;
+      async function loadLab() {
+        for (const host of hosts) {
+          try {
+            const res = await fetch(`${host}/plugin/lab`);
+            if (res.ok) return await res.json();
+          } catch (e) {
+            /* Hôte suivant. */
+          }
+        }
+        return null;
+      }
+      function renderLab(plan) {
+        const box = el('section', undefined, 'lab');
+        box.append(el('h2', 'Laboratoire'));
+        if (plan.components.length) {
+          const list = el('ul', undefined, 'stories');
+          for (const c of plan.components) {
+            const item = el('li');
+            item.append(el('span', c.name));
+            item.append(
+              el('span', c.update ? 'à mettre à jour' : 'à créer', 'tag'),
+            );
+            list.append(item);
+          }
+          box.append(list);
+          const create = el(
+            'button',
+            `Créer dans Figma (${plan.components.length})`,
+            'primary',
+          );
+          create.onclick = () => {
+            create.disabled = true;
+            status.textContent = 'Création dans PFE – Components…';
+            parent.postMessage(
+              { pluginMessage: { type: 'build-lab', plan } },
+              '*',
+            );
+          };
+          box.append(create);
+        }
+        if (plan.published.length)
+          box.append(
+            el(
+              'p',
+              `À publier : ${plan.published.join(', ')}. Assets → Publier la bibliothèque, pour que desys passe à « iso Figma ».`,
+              'meta',
+            ),
+          );
+        return box;
+      }
+      async function record(created) {
+        const res = await fetch(`${hosts[0]}/plugin/lab-record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ created }),
+        });
+        if (!res.ok)
+          throw new Error((await res.json()).error || 'Enregistrement refusé');
+        return (await res.json()).recorded;
       }
 
       function renderDoc(doc) {
@@ -323,6 +402,9 @@
               'Aucune page de doc pour cette sélection. Dans DS-Studio, ajoute son nom Figma au champ « Noms dans Figma » de la page.',
             ),
           );
+        labPlan = await loadLab();
+        if (labPlan && (labPlan.components.length || labPlan.published.length))
+          nodes.unshift(renderLab(labPlan));
         nodes.push(el('h2', 'Toutes les pages'));
         nodes.push(renderIndex(data.index));
         content.replaceChildren(...nodes);
@@ -334,6 +416,22 @@
           status.textContent = message.ok
             ? `Instance posée : ${message.name}`
             : message.error;
+          return;
+        }
+        if (message?.type === 'lab-built') {
+          if (!message.ok) {
+            status.textContent = message.error;
+            void show();
+            return;
+          }
+          record(message.created)
+            .then((names) => {
+              status.textContent = `Créé dans Figma : ${names.join(', ') || 'rien à enregistrer'}. Publie la bibliothèque (Assets → Publier).`;
+              void show();
+            })
+            .catch((e) => {
+              status.textContent = `Créé dans Figma, mais lien non enregistré dans desys : ${e.message}`;
+            });
           return;
         }
         if (message?.type !== 'selection') return;

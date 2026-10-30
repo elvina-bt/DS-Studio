@@ -207,7 +207,7 @@ export default function ComponentsView({
                         ? 'Créé dans PFE – Components : publier la bibliothèque dans Figma (Assets → Publier).'
                         : figmaStatus === 'iso'
                           ? 'Publié dans PFE – Components.'
-                          : 'Demander à Claude Code : « reporte le laboratoire dans Figma » (essai à blanc, puis validation).'
+                          : 'Dans Figma, ouvre PFE – Components puis Plugins → Development → DS-Studio Docs : « Créer dans Figma » le construit et renvoie son lien à desys.'
                     }
                   >
                     {figmaText[figmaStatus]}
