@@ -3629,25 +3629,39 @@ body[data-view='home'][data-scrolled='true'] .studio-header {
   border-radius: 10px;
   background: #fdf7f2;
   border: 1px solid #f2dccd;
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 400;
 }
 .lab-draft p {
   margin: 0;
+  color: var(--doc-text);
 }
-.lab-draft > div {
+/* Les boutons vivent dans le Provider de desys : ses tokens, sans son fond. */
+.lab-draft .ds {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  font-size: 16px;
 }
-.lab-draft button:not(.studio-primary) {
+.lab-draft .lab-draft-quiet {
   border: 0;
   background: transparent;
+  font: inherit;
   font-weight: 400;
+  color: var(--doc-text);
+  padding: 8px 12px;
+  border-radius: 8px;
 }
-.lab-draft button:not(.studio-primary):hover {
+.lab-draft .lab-draft-quiet:hover {
   background: rgba(55, 53, 47, 0.08);
+}
+.lab-draft .ds-button {
+  font-weight: 400;
 }
 .lab-draft .lab-note {
   flex-basis: 100%;
+  font-size: 13px;
   color: var(--doc-muted);
 }
 .lab-done {

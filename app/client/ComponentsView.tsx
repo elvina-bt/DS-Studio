@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Tokens } from '../shared/model.js';
 import { storyId } from '@desys/stories.js';
+import { Button, DesysProvider } from '@desys/components.js';
 import { labGroup, labStatus } from '../shared/lab.js';
 import { request } from './api.js';
 import StoryCanvas from './StoryCanvas.js';
@@ -215,24 +216,26 @@ export default function ComponentsView({
             {isDraft && (
               <div className="lab-draft" role="group" aria-label="Brouillon">
                 <p>
-                  <strong>
-                    {saved ? 'Modifications en brouillon' : 'Brouillon'}
-                  </strong>{' '}
-                  · pas encore dans desys. Continue dans le chat pour l’ajuster.
+                  {saved ? 'Modifications en brouillon' : 'Brouillon'} · pas
+                  encore dans desys. Continue dans le chat pour l’ajuster.
                 </p>
-                <div>
-                  <button type="button" onClick={dropDraft}>
-                    Abandonner
-                  </button>
+                {/* Bouton principal du design system desys lui-même. */}
+                <DesysProvider tokens={tokens}>
                   <button
                     type="button"
-                    className="studio-primary"
+                    className="lab-draft-quiet"
+                    onClick={dropDraft}
+                  >
+                    Abandonner
+                  </button>
+                  <Button
+                    variant="primary"
                     disabled={!lab?.writable || status?.kind === 'busy'}
                     onClick={() => void addToDesys()}
                   >
                     {saved ? 'Enregistrer dans desys' : 'Ajouter à desys'}
-                  </button>
-                </div>
+                  </Button>
+                </DesysProvider>
                 {!lab?.writable && (
                   <p className="lab-note">
                     Écriture dans desys désactivée sur ce poste.
