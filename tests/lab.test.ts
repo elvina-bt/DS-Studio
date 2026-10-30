@@ -13,6 +13,7 @@ import {
   labHash,
   labSpecSchema,
   labStatus,
+  normalizeLab,
   type LabSpec,
 } from '../app/shared/lab.js';
 import { labHash as desysLabHash } from '@desys-scripts/sync.js';
@@ -193,4 +194,91 @@ test('HTTP : le chat propose un composant, l’ajout l’écrit et crée sa page
   ).json();
   assert.equal(updated.doc, null);
   assert.equal(saved[0].figma?.node, '30:1');
+});
+
+test('laboratoire : un brouillon du chat est remis en forme avant validation', () => {
+  const raw = {
+    id: 'État vide',
+    name: 'État vide',
+    props: [{ name: 'Titre', type: 'string' }],
+    presets: [{ id: 'Défaut', name: 'Défaut', values: { Titre: 3 } }],
+    template: {
+      type: 'Button',
+      props: { onClick: { handler: 'reessayer' } },
+      children: ['Réessayer'],
+    },
+  };
+  const parsed = labSpecSchema.safeParse(normalizeLab(raw));
+  assert.equal(parsed.success, true);
+  if (!parsed.success) return;
+  assert.equal(parsed.data.id, 'etat-vide');
+  assert.equal(parsed.data.presets[0].id, 'defaut');
+  assert.equal(parsed.data.presets[0].values.Titre, '3');
+  assert.equal(parsed.data.props[0].type, 'text');
+});
+
+test('HTTP : brouillon invalide, une correction demandée à Claude puis ouverte', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'ds-lab-retry-'));
+  const seed = tokensSchema.parse(
+    JSON.parse(
+      await readFile(
+        path.join(root, 'workspace/design-system.tokens.json'),
+        'utf8',
+      ),
+    ),
+  );
+  const store = new Store(path.join(directory, 'state'), seed);
+  await store.init();
+  const questions: string[] = [];
+  const replies = [
+    {
+      message: 'Brouillon prêt.',
+      sources: [],
+      component: null,
+      create: { ...spec, template: { type: 'Paragraphe' } },
+    },
+    { message: 'Brouillon prêt.', sources: [], component: null, create: spec },
+  ];
+  const claude = {
+    id: 'claude',
+    async status() {
+      return { available: true, detail: 'Simulation' };
+    },
+    async reply(): Promise<never> {
+      throw new Error('Inutilisé.');
+    },
+    async ask(q: string) {
+      questions.push(q);
+      return replies[questions.length - 1];
+    },
+  };
+  const app = await createStudioServer({
+    root,
+    store,
+    docsDirectory: path.join(directory, 'docs'),
+    claude,
+    desys: { read: async () => seed, lab: { read: async () => [] } },
+  });
+  await new Promise<void>((r) => app.server.listen(0, '127.0.0.1', r));
+  t.after(async () => {
+    await app.close();
+    await rm(directory, { recursive: true, force: true });
+  });
+  const origin = `http://127.0.0.1:${(app.server.address() as { port: number }).port}`;
+  const { csrf } = await (await fetch(origin + '/api/bootstrap')).json();
+  const r = await (
+    await fetch(origin + '/api/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-DS-Studio': csrf,
+        Origin: origin,
+      },
+      body: JSON.stringify({ question: 'crée le', history: [] }),
+    })
+  ).json();
+  assert.equal(questions.length, 2);
+  assert.match(questions[1], /template\.type/);
+  assert.equal(r.create.id, 'resume-vol');
+  assert.equal(r.component, 'resume-vol');
 });

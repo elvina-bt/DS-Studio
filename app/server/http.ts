@@ -16,7 +16,13 @@ import {
 import { figmaUrl, storiesInBody, storyId } from '@desys/stories.js';
 import { tokenKeys, type Tokens } from '../shared/model.js';
 import { recentItems } from './recent.js';
-import { labDoc, labSpecSchema, type LabSpec } from '../shared/lab.js';
+import {
+  labDoc,
+  labIssues,
+  labSpecSchema,
+  normalizeLab,
+  type LabSpec,
+} from '../shared/lab.js';
 import { storyGroups } from '@desys/stories.js';
 import {
   bindingEditSchema,
@@ -541,34 +547,48 @@ export async function createStudioServer(options: {
               .catch(() => undefined);
             const lab =
               (await options.desys?.lab?.read().catch(() => [])) ?? [];
-            const reply = await adapter.ask(
-              b.question,
-              {
-                docs: pages.map((d) => ({
-                  slug: d.slug,
-                  title: d.title,
-                  section: d.section,
-                  body: d.body,
-                  anchors: [
-                    ...headingAnchors(parseMarkdown(d.body)).values(),
-                  ].map(({ id, text }) => ({ id, text })),
-                })),
-                tokens: store.snapshot().tokens,
-                bindings,
-                // Briques disponibles : chaque composant de desys avec un exemple.
-                components: storyGroups.map((g) => ({
-                  id: g.id,
-                  name: g.name,
-                  props: g.props,
-                  example: g.stories[0].node,
-                })),
-                lab,
-                focus: b.focus,
-                rules: await context('DESIGN_RULES.md'),
-                history: b.history,
-              },
-              controller.signal,
-            );
+            const rules = await context('DESIGN_RULES.md');
+            const askClaude = (question: string) =>
+              adapter.ask!(
+                question,
+                {
+                  docs: pages.map((d) => ({
+                    slug: d.slug,
+                    title: d.title,
+                    section: d.section,
+                    body: d.body,
+                    anchors: [
+                      ...headingAnchors(parseMarkdown(d.body)).values(),
+                    ].map(({ id, text }) => ({ id, text })),
+                  })),
+                  tokens: store.snapshot().tokens,
+                  bindings,
+                  // Briques disponibles : chaque composant de desys avec un exemple.
+                  components: storyGroups.map((g) => ({
+                    id: g.id,
+                    name: g.name,
+                    props: g.props,
+                    example: g.stories[0].node,
+                  })),
+                  lab,
+                  focus: b.focus,
+                  rules,
+                  history: b.history,
+                },
+                controller.signal,
+              );
+            let reply = await askClaude(b.question);
+            // Brouillon de composant invalide : une seule correction demandée à
+            // Claude, avec les erreurs, avant de répondre.
+            const check = (r: typeof reply) =>
+              r.create ? labSpecSchema.safeParse(normalizeLab(r.create)) : null;
+            const first = check(reply);
+            if (first && !first.success) {
+              const retry = await askClaude(
+                `${b.question}\n\n[desys studio] Ton composant (create) est invalide : ${labIssues(first.error)}. Renvoie la même réponse avec create corrigé, en n'utilisant que les composants, props et types autorisés.`,
+              );
+              if (check(retry)?.success) reply = retry;
+            }
             // Modifications de composant : seules les propositions valides passent.
             const edits = bindings
               ? checkEdits(reply.edits ?? [], bindings, store.snapshot().tokens)
@@ -583,7 +603,7 @@ export async function createStudioServer(options: {
               .map((d) => ({ slug: d.slug, title: d.title }));
             // Nouveau composant (ou mise à jour d'un composant du labo) : un
             // brouillon validé, jamais écrit ici ; un id de desys est refusé.
-            const parsed = labSpecSchema.safeParse(reply.create);
+            const parsed = labSpecSchema.safeParse(normalizeLab(reply.create));
             const create =
               reply.create &&
               parsed.success &&
@@ -609,7 +629,7 @@ export async function createStudioServer(options: {
                 ? {
                     createError: parsed.success
                       ? 'identifiant déjà pris par desys'
-                      : parsed.error.issues[0]?.message,
+                      : labIssues(parsed.error),
                   }
                 : {}),
             });

@@ -16,7 +16,10 @@ const slug = z
   .regex(/^[a-z][a-z0-9-]{1,40}$/, 'identifiant en minuscules et tirets');
 type NodeIn = {
   type: (typeof componentNames)[number];
-  props?: Record<string, string | number | boolean | NodeIn>;
+  props?: Record<
+    string,
+    string | number | boolean | { handler: string } | NodeIn
+  >;
   children?: (NodeIn | string)[];
 };
 export const labNodeSchema: z.ZodType<NodeIn> = z.lazy(() =>
@@ -30,6 +33,8 @@ export const labNodeSchema: z.ZodType<NodeIn> = z.lazy(() =>
             z.string().max(200),
             z.number(),
             z.boolean(),
+            // Un gestionnaire (onClick…) : un nom, rendu sans effet.
+            z.object({ handler: z.string().max(60) }).strict(),
             labNodeSchema,
           ]),
         )
@@ -100,7 +105,7 @@ export const labSpecSchema = z
           message: 'gabarit trop profond (6 niveaux)',
         });
       for (const v of Object.values(n.props ?? {}))
-        if (typeof v === 'object') walk(v, depth + 1);
+        if (typeof v === 'object' && 'type' in v) walk(v, depth + 1);
       for (const c of n.children ?? [])
         if (typeof c === 'object') walk(c, depth + 1);
     };
@@ -118,6 +123,86 @@ export const labSpecSchema = z
       });
   });
 export type LabSpec = z.infer<typeof labSpecSchema>;
+
+// Ce que le chat renvoie, remis en forme avant validation : identifiants sans
+// accents ni espaces, nombres en texte, types de propriétés courants traduits,
+// variante par défaut si aucune. Ce qui reste invalide est refusé par le schéma.
+const toSlug = (v: unknown) =>
+  String(v ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^[^a-z]+|-$/g, '')
+    .slice(0, 41);
+const propTypes: Record<string, string> = {
+  string: 'text',
+  texte: 'text',
+  select: 'variant',
+  enum: 'variant',
+  variante: 'variant',
+  bool: 'boolean',
+  booleen: 'boolean',
+};
+function normalizeNode(n: unknown): unknown {
+  if (!n || typeof n !== 'object' || Array.isArray(n)) return n;
+  const node = { ...(n as Record<string, unknown>) };
+  if (node.props && typeof node.props === 'object')
+    node.props = Object.fromEntries(
+      Object.entries(node.props as Record<string, unknown>).map(([k, v]) => [
+        k,
+        v && typeof v === 'object' && 'type' in v ? normalizeNode(v) : v,
+      ]),
+    );
+  if (Array.isArray(node.children))
+    node.children = node.children.map((c) =>
+      typeof c === 'number' ? String(c) : normalizeNode(c),
+    );
+  return node;
+}
+export function normalizeLab(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw;
+  const spec = { ...(raw as Record<string, unknown>) };
+  spec.id = toSlug(spec.id ?? spec.name);
+  spec.description =
+    typeof spec.description === 'string' ? spec.description.slice(0, 300) : '';
+  if (Array.isArray(spec.props))
+    spec.props = spec.props.map((p) =>
+      p && typeof p === 'object'
+        ? {
+            ...p,
+            type:
+              propTypes[String((p as { type?: unknown }).type)] ??
+              (p as { type?: unknown }).type,
+          }
+        : p,
+    );
+  else spec.props = [];
+  const presets =
+    Array.isArray(spec.presets) && spec.presets.length
+      ? spec.presets
+      : [{ name: 'Par défaut', values: {} }];
+  spec.presets = presets.map((p, i) => {
+    const preset = (p ?? {}) as Record<string, unknown>;
+    return {
+      id: toSlug(preset.id ?? preset.name) || `variante-${i + 1}`,
+      name: String(preset.name ?? `Variante ${i + 1}`).slice(0, 40),
+      values: Object.fromEntries(
+        Object.entries((preset.values ?? {}) as Record<string, unknown>).map(
+          ([k, v]) => [k, typeof v === 'boolean' ? v : String(v)],
+        ),
+      ),
+    };
+  });
+  spec.template = normalizeNode(spec.template);
+  return spec;
+}
+// Erreurs de validation lisibles, à renvoyer au chat pour qu'il corrige.
+export const labIssues = (error: z.ZodError) =>
+  error.issues
+    .slice(0, 6)
+    .map((i) => `${i.path.join('.') || 'composant'} : ${i.message}`)
+    .join(' ; ');
 
 // Empreinte du contenu, même calcul que desys/scripts/sync.ts (labHash) : elle
 // dit si la version reportée dans Figma est encore la bonne.
@@ -154,7 +239,7 @@ function fill(node: NodeIn, values: Values): StoryNode {
             k,
             typeof v === 'string'
               ? text(v)
-              : typeof v === 'object'
+              : typeof v === 'object' && 'type' in v
                 ? fill(v, values)
                 : v,
           ]),
@@ -196,7 +281,7 @@ export function labDoc(spec: LabSpec) {
   const walk = (n: NodeIn) => {
     used.add(n.type);
     Object.values(n.props ?? {}).forEach(
-      (v) => typeof v === 'object' && walk(v),
+      (v) => typeof v === 'object' && 'type' in v && walk(v),
     );
     (n.children ?? []).forEach((c) => typeof c === 'object' && walk(c));
   };
